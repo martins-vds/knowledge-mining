@@ -1,0 +1,62 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - arm/*
+      - azure-pipeline-infra.yml
+
+variables:
+  vmImageName: 'ubuntu-latest'
+  docsContianerName: 'documents'
+
+stages:
+- stage: Infrastructure
+  displayName: 'Deploy Infrastructure'
+
+  jobs:
+  - job: Deploy
+    displayName: Deploy Azure Services
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: Bash@3
+      displayName: Install Bicep
+      inputs:
+        targetType: 'inline'
+        script: |
+          curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x bicep
+          ./bicep --help
+        workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
+
+    - task: Bash@3
+      displayName: Transpile Bicep templates to ARM template
+      inputs:
+        targetType: 'inline'
+        script: 'rm -f env.json && ./bicep build env.bicep'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
+
+    - task: AzureCLI@2
+      displayName: Create Resource Group
+      inputs:
+        azureSubscription: 'azure-knowledge-mining-arm-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az group create -l $(LOCATION) -n $(RESOURCEGROUP)'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
+
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy ARM Template'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'azure-knowledge-mining-arm-connection'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(RESOURCEGROUP)'
+        location: '$(LOCATION)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/arm/env.json'
+        overrideParameters: '-docsContainerName $(docsContianerName) -spnObjectId $(spnObjectId)'
+        deploymentMode: 'Incremental'
