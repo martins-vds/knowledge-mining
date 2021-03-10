@@ -5,11 +5,12 @@ trigger:
   paths:
     include:
       - arm/*
-      - azure-pipeline-infra.yml
+      - azure-pipelines-infra.yml
 
 variables:
   vmImageName: 'ubuntu-latest'
   docsContianerName: 'documents'
+  deploymentTemplateFileNameNoExtension: 'env'
 
 stages:
 - stage: Infrastructure
@@ -36,7 +37,7 @@ stages:
       displayName: Transpile Bicep templates to ARM template
       inputs:
         targetType: 'inline'
-        script: 'rm -f env.json && ./bicep build env.bicep'
+        script: 'rm -f env*.json && ./bicep build $(deploymentTemplateFileNameNoExtension).bicep'
         workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
 
     - task: AzureCLI@2
@@ -57,6 +58,6 @@ stages:
         resourceGroupName: '$(RESOURCEGROUP)'
         location: '$(LOCATION)'
         templateLocation: 'Linked artifact'
-        csmFile: '$(System.DefaultWorkingDirectory)/arm/env.json'
+        csmFile: '$(System.DefaultWorkingDirectory)/arm/$(deploymentTemplateFileNameNoExtension).json'
         overrideParameters: '-docsContainerName $(docsContianerName) -spnObjectId $(spnObjectId)'
         deploymentMode: 'Incremental'
