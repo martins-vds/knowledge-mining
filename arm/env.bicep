@@ -10,6 +10,9 @@ var webAppName = 'site-${uniqueString(resourceGroup().id)}'
 var functionAppName = 'function-app-${uniqueString(resourceGroup().id)}'
 var appInsightsName = 'app-insights-${uniqueString(resourceGroup().id)}'
 
+var secretKeySearch = 'SEARCHSERVICESECRET'
+var secretKeyStorageKey = 'STORAGEACCOUNTKEYSECRET'
+
 resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: keyVaultName
   location: resourceGroup().location
@@ -40,6 +43,24 @@ resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
           ]
         }
       }
+      {
+        objectId: app_services_website.identity.principalId
+        tenantId: app_services_website.identity.tenantId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+      {
+        objectId: app_services_function_app.identity.principalId
+        tenantId: app_services_function_app.identity.tenantId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
     ]
   }
 }
@@ -49,6 +70,9 @@ resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
   location: resourceGroup().location
   sku: {
     name: 'standard'
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
 }
 
@@ -110,10 +134,24 @@ resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
+resource akv_secret_storage_account_resource_id 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${azure_key_vault.name}/STORAGEACCOUNTRESOURCEID'
+  properties: {
+    value: azure_storage_account_data.id
+  }
+}
+
 resource akv_secret_storage_account_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${azure_key_vault.name}/STORAGEACCOUNTSECRET'
+  name: '${azure_key_vault.name}/STORAGEACCOUNTCONNECTIONSTRING'
   properties: {
     value: 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_data.name};AccountKey=${listKeys(azure_storage_account_data.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+  }
+}
+
+resource akv_secret_storage_account_key_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${azure_key_vault.name}/${secretKeyStorageKey}'
+  properties: {
+    value: listKeys(azure_storage_account_data.id, '2019-06-01').keys[0].value
   }
 }
 
@@ -125,7 +163,7 @@ resource akv_secret_search_endpoint 'Microsoft.KeyVault/vaults/secrets@2019-09-0
 }
 
 resource akv_secret_search_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${azure_key_vault.name}/SEARCHSERVICESECRET'
+  name: '${azure_key_vault.name}/${secretKeySearch}'
   properties: {
     value: listAdminKeys(azure_search_service.id, '2020-08-01').primaryKey
   }
@@ -151,6 +189,9 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   name: webAppName
   location: resourceGroup().location
   kind: 'app,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
@@ -162,7 +203,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'SearchApiKey'
-          value: listAdminKeys(azure_search_service.id, '2020-08-01').primaryKey
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeySearch})'
         }
         {
           name: 'SearchIndexName'
@@ -178,7 +219,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'StorageAccountKey'
-          value: listKeys(azure_storage_account_data.id, '2019-06-01').keys[0].value
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeyStorageKey})'
         }
         {
           name: 'StorageContainerAddress'
@@ -205,6 +246,9 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = {
   name: functionAppName
   location: resourceGroup().location
   kind: 'functionapp'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
@@ -234,4 +278,13 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-output searchServiceEndpoint string = 'https://${azure_search_service.name}.search.windows.net'
+// Role Assignments
+resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(resourceGroup().id, 'Storage Blob Data Reader')
+  scope: azure_storage_account_data
+  properties: {
+    roleDefinitionId: '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+    principalId: azure_search_service.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}

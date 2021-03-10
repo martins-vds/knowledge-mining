@@ -2,9 +2,9 @@
     "description": "Demo files to demonstrate cognitive search capabilities.",
     "type": "azureblob",
     "credentials": {
-        "connectionString": "__ENV_STORAGE_CONNECTION_STRING__"
+        "connectionString": "ResourceId=__STORAGE_RESOURCE_ID__"
     },
     "container": {
-        "name": "__ENV_STORAGE_CONTAINER__"
+        "name": "__STORAGE_CONTAINER__"
     }
 }
