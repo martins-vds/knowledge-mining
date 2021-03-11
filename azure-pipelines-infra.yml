@@ -10,7 +10,7 @@ trigger:
 variables:
   vmImageName: 'ubuntu-latest'
   docsContianerName: 'documents'
-  deploymentTemplateFileNameNoExtension: 'env'
+  deploymentTemplate: 'env-vnet-integration.bicep'
 
 stages:
 - stage: Infrastructure
@@ -23,23 +23,6 @@ stages:
       vmImage: $(vmImageName)
 
     steps:
-    - task: Bash@3
-      displayName: Install Bicep
-      inputs:
-        targetType: 'inline'
-        script: |
-          curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
-          chmod +x bicep
-          ./bicep --help
-        workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
-
-    - task: Bash@3
-      displayName: Transpile Bicep templates to ARM template
-      inputs:
-        targetType: 'inline'
-        script: 'rm -f env*.json && ./bicep build $(deploymentTemplateFileNameNoExtension).bicep'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
-
     - task: AzureCLI@2
       displayName: Create Resource Group
       inputs:
@@ -49,15 +32,11 @@ stages:
         inlineScript: 'az group create -l $(LOCATION) -n $(RESOURCEGROUP)'
         workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
 
-    - task: AzureResourceManagerTemplateDeployment@3
-      displayName: 'Deploy ARM Template'
+    - task: AzureCLI@2
+      displayName: 'Deploy Environment'
       inputs:
-        deploymentScope: 'Resource Group'
-        azureResourceManagerConnection: 'azure-knowledge-mining-arm-connection'
-        action: 'Create Or Update Resource Group'
-        resourceGroupName: '$(RESOURCEGROUP)'
-        location: '$(LOCATION)'
-        templateLocation: 'Linked artifact'
-        csmFile: '$(System.DefaultWorkingDirectory)/arm/$(deploymentTemplateFileNameNoExtension).json'
-        overrideParameters: '-docsContainerName $(docsContianerName) -spnObjectId $(spnObjectId)'
-        deploymentMode: 'Incremental'
+        azureSubscription: 'azure-knowledge-mining-arm-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az deployment group create -g $(RESOURCEGROUP) --template-file $(deploymentTemplate) --parameters docsContainerName=$(docsContianerName) spnObjectId=$(spnObjectId)'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/arm'
