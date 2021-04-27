@@ -27,7 +27,7 @@ Automated deployment will require one Service Principal Account.  This account i
 1. Deploying the Azure Infrastructure
 2. Integrating with Azure Key Vault for key management
 
-The service principal account will need `Contributor` Role assigned (IAM) at the Subscription.  This configuration will allow multiple deployment of the same solution in the same subscription.
+The service principal account will need `Owner` Role assigned (IAM) at the Subscription.  This configuration will allow multiple deployment of the same solution in the same subscription.
 
 Once the service principal is created, document the following information in a secure place:
 
