@@ -1,12 +1,13 @@
 #!/bin/bash
-      
+set -x #echo on
+
 # Constants
 NETCORE_VERSION="netcoreapp3.1"
 
 # Define variables
-WORKING_DIRECTORY=$1
-RGNAME="$2"
-APPSERVICENAME="$3"
+
+RGNAME="$1"
+APPSERVICENAME="$2"
 
 # Build the app and prepare deployment
 dotnet publish -c Release -f netcoreapp3.1 -o publish
@@ -18,6 +19,6 @@ zip -r app.zip ./
 
 # Deploy to App Service Package
 az webapp config appsettings set --resource-group $RGNAME --name $APPSERVICENAME --settings ENABLE_ORYX_BUILD="false"
-az webapp deploy ---resource-group $RGNAME --name $APPSERVICENAME --src-path app.zip --type zip --clean true --restart true
+az webapp deploy --resource-group $RGNAME --name $APPSERVICENAME --src-path app.zip --type zip --clean true --restart true
 
 popd
