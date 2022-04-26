@@ -1,6 +1,6 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
-param deployFunction bool 
+param deployFunction bool  = false
 
 var keyVaultName = 'akv-${uniqueString(resourceGroup().id)}'
 var searchName = 'search-${uniqueString(resourceGroup().id)}'
@@ -488,3 +488,5 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
   }
 }
 
+output storage_data_id string = azure_storage_account_data.id
+output search_enpoint string = 'https://${azure_search_service.name}.search.windows.net'
