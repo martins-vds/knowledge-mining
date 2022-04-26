@@ -105,3 +105,14 @@ Much of the UI is rendered dynamically by javascript. Some important files to kn
 2. **wwroot/js/details.js** - contains the code for rending the detail view once a result is selected
 
 3. **Search/DocumentSearchClient.cs** - contains the code for talking with Azure Cognitive Search's APIs. Setting breakpoints in this file is a great way to debug.
+
+
+## AppService Deployment
+
+To deploy to AppService Run provided `builddeploy.sh` script 
+
+```
+chmod +x ./builddeploy.sh
+
+./builddeploy.sh  <RG Name> <APPSRC Name>
+```
