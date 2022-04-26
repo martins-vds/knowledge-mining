@@ -7,7 +7,7 @@ var cognitiveAccountName = 'cognitive-account-${uniqueString(resourceGroup().id)
 var storageAccountNameData = 'stg${uniqueString(resourceGroup().id)}'
 var appServicePlanName = 'app-plan-${uniqueString(resourceGroup().id)}'
 var webAppName = 'site-${uniqueString(resourceGroup().id)}'
-var functionAppName = 'function-app-${uniqueString(resourceGroup().id)}'
+var functionAppName = '' /*'function-app-${uniqueString(resourceGroup().id)}'*/
 var appInsightsName = 'app-insights-${uniqueString(resourceGroup().id)}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
@@ -258,7 +258,7 @@ resource azure_storage_account_data_blob_pe_dns_reg 'Microsoft.Network/privateEn
   }
 }
 
-resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = if (!empty(functionAppName)) {
   name: 'stgfunc${uniqueString(resourceGroup().id)}'
   location: resourceGroup().location
   kind: 'StorageV2'
@@ -276,7 +276,7 @@ resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019
   }
 }
 
-resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
+resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = if (!empty(functionAppName)) {
   location: resourceGroup().location
   name: '${azure_storage_account_functions.name}-blob-endpoint'
   properties: {
@@ -297,7 +297,7 @@ resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpo
   }
 }
 
-resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' =  if (!empty(functionAppName)) {
   name: '${azure_storage_account_functions_blob_pe.name}/default'
   properties: {
     privateDnsZoneConfigs: [
@@ -414,7 +414,7 @@ resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01
   } 
 }
 
-resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = {
+resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (!empty(functionAppName)) {
   name: functionAppName
   location: resourceGroup().location
   kind: 'functionapp'
@@ -458,7 +458,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
+resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = if (!empty(functionAppName)){
   name: '${app_services_function_app.name}/VirtualNetwork'
   properties: {
     subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'

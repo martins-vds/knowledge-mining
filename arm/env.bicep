@@ -1,5 +1,6 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
+param functionAppName string = ''  
 
 var keyVaultName = 'akv-${uniqueString(resourceGroup().id)}'
 var searchName = 'search-${uniqueString(resourceGroup().id)}'
@@ -7,7 +8,7 @@ var cognitiveAccountName = 'cognitive-account-${uniqueString(resourceGroup().id)
 var storageAccountNameData = 'stg${uniqueString(resourceGroup().id)}'
 var appServicePlanName = 'app-plan-${uniqueString(resourceGroup().id)}'
 var webAppName = 'site-${uniqueString(resourceGroup().id)}'
-var functionAppName = ''                        /*'function-app-${uniqueString(resourceGroup().id)}' */
+                      
 var appInsightsName = 'app-insights-${uniqueString(resourceGroup().id)}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
