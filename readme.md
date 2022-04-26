@@ -126,3 +126,34 @@ Look for references like:
 All 3 pipelines are configured to automatically trigger when changes are made to their respective folders.
 
 All you need to do is push/merge changes into `app`, `arm` and `search-index` folders.  Once complete, their respective pipelines will be automatically triggered.
+
+## Manual deployment
+
+- git clone repo
+
+- build Infra
+
+-- Create App Registrayion and save ObjectID
+-- Create Resource Group and grant Contributor access to App Registration
+-- Run Bicep Deployment
+
+```
+cd arm
+az deployment group create -g <RG NAME> --template-file env-vnet-integration.bicep --parameters docsContainerName=documents spnObjectId=<SPN OBJID>
+```
+
+- build Search Index
+```
+cd search-index
+chmod +x deploy.sh
+./deploy.sh ~/knowledge-mining/search-index/ <STORAGE RESID>  documents <SEARCH ENDPOINT> <SEARCH KEY> <COG SERVICE KEY>
+```
+Note: parameters could be copied from deployment output and keyvaul secrets
+
+- Deploy App
+```
+cd app
+chmod +x builddeploy.sh
+./builddeploy.sh <RG NAME> <APPSVC NAME>
+
+```
