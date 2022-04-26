@@ -1,4 +1,5 @@
 #!/bin/bash
+## USAGE  ./builddeploy.sh <RG NAME> <APPSERVICE NAME>
 set -x #echo on
 
 # Constants
