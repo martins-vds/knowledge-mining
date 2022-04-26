@@ -1,5 +1,6 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
+param deployFunction bool  = false
 
 var keyVaultName = 'akv-${uniqueString(resourceGroup().id)}'
 var searchName = 'search-${uniqueString(resourceGroup().id)}'
@@ -125,15 +126,7 @@ resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
           ]
         }
       }
-      {
-        objectId: app_services_function_app.identity.principalId
-        tenantId: app_services_function_app.identity.tenantId
-        permissions: {
-          secrets: [
-            'get'
-          ]
-        }
-      }
+     
     ]
   }
 }
@@ -258,7 +251,7 @@ resource azure_storage_account_data_blob_pe_dns_reg 'Microsoft.Network/privateEn
   }
 }
 
-resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = if (deployFunction) {
   name: 'stgfunc${uniqueString(resourceGroup().id)}'
   location: resourceGroup().location
   kind: 'StorageV2'
@@ -276,7 +269,7 @@ resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019
   }
 }
 
-resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
+resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = if (deployFunction) {
   location: resourceGroup().location
   name: '${azure_storage_account_functions.name}-blob-endpoint'
   properties: {
@@ -297,7 +290,7 @@ resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpo
   }
 }
 
-resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' =  if (deployFunction) {
   name: '${azure_storage_account_functions_blob_pe.name}/default'
   properties: {
     privateDnsZoneConfigs: [
@@ -414,7 +407,7 @@ resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01
   } 
 }
 
-resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = {
+resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deployFunction) {
   name: functionAppName
   location: resourceGroup().location
   kind: 'functionapp'
@@ -451,14 +444,32 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+          value: deployFunction ? 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net' : ''
         }
       ]
     }
   }
 }
 
-resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
+resource function_access_policy 'Microsoft.KeyVault/vaults/accessPolicies@2021-11-01-preview' = if (deployFunction) {
+  name: 'add'
+  parent: azure_key_vault
+  properties: {
+    accessPolicies: deployFunction ? [
+       {
+        objectId: app_services_function_app.identity.principalId
+        tenantId: app_services_function_app.identity.tenantId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ] : []
+  }
+}
+
+resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = if (deployFunction) {
   name: '${app_services_function_app.name}/VirtualNetwork'
   properties: {
     subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
@@ -476,3 +487,6 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
     principalType: 'ServicePrincipal'
   }
 }
+
+output storage_data_id string = azure_storage_account_data.id
+output search_enpoint string = 'https://${azure_search_service.name}.search.windows.net'
