@@ -133,9 +133,11 @@ All you need to do is push/merge changes into `app`, `arm` and `search-index` fo
 
 - build Infra
 
--- Create App Registrayion and save ObjectID
--- Create Resource Group and grant Contributor access to App Registration
--- Run Bicep Deployment
+  -- Create App Registrayion and save ObjectID
+
+  -- Create Resource Group and grant Contributor access to App Registration
+
+  -- Run Bicep Deployment
 
 ```
 cd arm
