@@ -444,7 +444,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+          value: deployFunction ? 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net' : ''
         }
       ]
     }
@@ -455,7 +455,7 @@ resource function_access_policy 'Microsoft.KeyVault/vaults/accessPolicies@2021-1
   name: 'add'
   parent: azure_key_vault
   properties: {
-    accessPolicies: [
+    accessPolicies: deployFunction ? [
        {
         objectId: app_services_function_app.identity.principalId
         tenantId: app_services_function_app.identity.tenantId
@@ -465,7 +465,7 @@ resource function_access_policy 'Microsoft.KeyVault/vaults/accessPolicies@2021-1
           ]
         }
       }
-    ]
+    ] : []
   }
 }
 
