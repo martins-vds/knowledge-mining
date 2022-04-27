@@ -150,7 +150,7 @@ cd search-index
 chmod +x deploy.sh
 ./deploy.sh ~/knowledge-mining/search-index/ <STORAGE RESID>  documents <SEARCH ENDPOINT> <SEARCH KEY> <COG SERVICE KEY>
 ```
-Note: parameters could be copied from deployment output and keyvaul secrets
+Note: parameters could be copied from deployment output and keyvault secrets
 
 - Deploy App
 ```
