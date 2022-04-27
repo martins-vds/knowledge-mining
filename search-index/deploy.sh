@@ -1,5 +1,6 @@
       #!/bin/bash
-      
+      set -x
+
       # Constants
       SEARCH_SERVICE_APIVERSION="2020-06-30"
 
@@ -19,10 +20,11 @@
       SKILLS_NAME="km-skills"
       
       # Create Data Source
-      DATA_SOURCE_FILE="${WORKING_DIRECTORY}/base-datasource.json"
+      DATA_SOURCE_FILE="${WORKING_DIRECTORY}/datasource.json"
+      BASE_DATA_SOURCE_FILE="${WORKING_DIRECTORY}/base-datasource.json"
 
-      sed -i "s~__STORAGE_RESOURCE_ID__~${STORAGE_RESOURCE_ID}~g" $DATA_SOURCE_FILE
-      sed -i "s/__STORAGE_CONTAINER__/${STORAGE_ACCOUNT_CONTAINER}/g" $DATA_SOURCE_FILE
+      sed -e "s~__STORAGE_RESOURCE_ID__~${STORAGE_RESOURCE_ID}~g" $BASE_DATA_SOURCE_FILE > $DATA_SOURCE_FILE
+      sed -i "s/__STORAGE_CONTAINER__/${STORAGE_ACCOUNT_CONTAINER}/g" $DATA_SOURCE_FILE 
 
       curl --request PUT \
       --url "${SEARCH_SERVICE_ENDPOINT}/datasources/${DATA_SOURCE_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
@@ -42,8 +44,10 @@
       --data @"${INDEX_FILE}"
 
       # Create Skills
-      SKILLS_FILE="${WORKING_DIRECTORY}/base-skills.json"
-      sed -i "s/__COG_SERVICES_KEY__/${COGNITIVE_SERVICE_SECRET}/g" $SKILLS_FILE
+      SKILLS_FILE="${WORKING_DIRECTORY}/skills.json"
+      BASE_SKILLS_FILE="${WORKING_DIRECTORY}/base-skills.json"
+     
+      sed -e "s/__COG_SERVICES_KEY__/${COGNITIVE_SERVICE_SECRET}/g" $BASE_SKILLS_FILE > $SKILLS_FILE
 
       curl --request PUT \
       --url "${SEARCH_SERVICE_ENDPOINT}/skillsets/${SKILLS_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
@@ -53,11 +57,12 @@
       --data @"${SKILLS_FILE}"
 
       # Create Indexer
-      INDEXER_FILE="${WORKING_DIRECTORY}/base-indexer.json"
+      INDEXER_FILE="${WORKING_DIRECTORY}/indexer.json"
+      BASE_INDEXER_FILE="${WORKING_DIRECTORY}/base-indexer.json"
 
-      sed -i "s/__DATASOURCE_NAME__/${DATA_SOURCE_NAME}/g" $INDEXER_FILE
-      sed -i "s/__INDEX_NAME__/${INDEX_NAME}/g" $INDEXER_FILE
-      sed -i "s/__SKILLSET_NAME__/${SKILLS_NAME}/g" $INDEXER_FILE
+      sed -e "s/__DATASOURCE_NAME__/${DATA_SOURCE_NAME}/g" $BASE_INDEXER_FILE > $INDEXER_FILE
+      sed -i "s/__INDEX_NAME__/${INDEX_NAME}/g" $INDEXER_FILE 
+      sed -i "s/__SKILLSET_NAME__/${SKILLS_NAME}/g" $INDEXER_FILE 
 
       curl --request PUT \
       --url "${SEARCH_SERVICE_ENDPOINT}/indexers/${INDEXER_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
