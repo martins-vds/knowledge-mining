@@ -4,6 +4,22 @@
         "name": "content",
         "type": "Edm.String",
         "sortable": false,
+        "searchable": false,
+        "filterable": false,
+        "facetable": false
+      },
+      {
+        "name": "content_filtered",
+        "type": "Edm.String",
+        "sortable": false,
+        "searchable": true,
+        "filterable": false,
+        "facetable": false
+      },
+      {
+        "name": "content_summary",
+        "type": "Edm.String",
+        "sortable": false,
         "searchable": true,
         "filterable": false,
         "facetable": false
@@ -14,7 +30,7 @@
         "searchable": true,
         "sortable": false,
         "filterable": true,
-        "facetable": true
+        "facetable": false
       },
       {
         "name": "organizations",
