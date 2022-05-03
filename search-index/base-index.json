@@ -9,20 +9,19 @@
         "facetable": false
       },
       {
-        "name": "content_filtered",
+        "name": "merged_content",
         "type": "Edm.String",
-        "sortable": false,
-        "searchable": true,
+        "facetable": false,
         "filterable": false,
-        "facetable": false
-      },
-      {
-        "name": "content_summary",
-        "type": "Edm.String",
-        "sortable": false,
+        "key": false,
+        "retrievable": true,
         "searchable": true,
-        "filterable": false,
-        "facetable": false
+        "sortable": false,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
       },
       {
         "name": "keyPhrases",
