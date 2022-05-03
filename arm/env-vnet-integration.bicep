@@ -1,6 +1,6 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
-param deployFunction bool  = false
+param deployFunction bool  = true
 
 var keyVaultName = 'akv-${uniqueString(resourceGroup().id)}'
 var searchName = 'search-${uniqueString(resourceGroup().id)}'
