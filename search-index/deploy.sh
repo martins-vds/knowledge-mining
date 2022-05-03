@@ -13,7 +13,7 @@
       SEARCH_SERVICE_SECRET="$5"
 
       COGNITIVE_SERVICE_SECRET="$6"
-      FUNCTION_URI="$7"
+      FUNCTION_NAME="$7"
       FUNCTION_APICODE="$8"
       
       
@@ -51,7 +51,7 @@
       BASE_SKILLS_FILE="${WORKING_DIRECTORY}/base-skills.json"
      
       sed -e "s/__COG_SERVICES_KEY__/${COGNITIVE_SERVICE_SECRET}/g" $BASE_SKILLS_FILE > $SKILLS_FILE
-      sed -i "s/__FUNCTION_URI__/${FUNCTION_URI}/g" $SKILLS_FILE 
+      sed -i "s/__FUNCTION_NAME__/${FUNCTION_NAME}/g" $SKILLS_FILE 
       sed -i "s/__FUNCTION_APICODE__/${FUNCTION_APICODE}/g" $SKILLS_FILE 
 
       curl --request PUT \

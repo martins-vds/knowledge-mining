@@ -157,13 +157,29 @@ cd ~/knowledge-mining/arm
 az deployment group create -g <RG NAME> --template-file env-vnet-integration.bicep --parameters docsContainerName=documents spnObjectId=<objectID-of-you-or-appregistration>
 ```
 
+- Build and Deploy Custom Email Filtering Skill
+
+```
+cd ~/knowledge-mining/skills
+chmod +x builddeploy.sh
+./builddeploy.sh <RG NAME> <FUNCTION NAME>
+
+```
+
 - build Search Configuration (index, indexer, skillset)
 ```
 cd ~/knowledge-mining/search-index
 chmod +x deploy.sh
-./deploy.sh ~/knowledge-mining/search-index <STORAGE RESID>  documents <SEARCH ENDPOINT> <SEARCH KEY> <COG SERVICE KEY>
+./deploy.sh ~/knowledge-mining/search-index <STORAGE RESID>  documents <SEARCH ENDPOINT> <SEARCH KEY> <COG SERVICE KEY> <FUNCTION APPNAME> <FUNCTION CODE>
 ```
-Note: parameters could be copied from deployment output and keyvault secrets
+
+Example:
+```
+./deploy.sh ~/knowledge-mining/search-index /subscriptions/xxxxx/resourceGroups/gackm/providers/Microsoft.Storage/storageAccounts/storageaccount  documents https://search-xxxxx.search.windows.net DDXXXXX b97a864ccc3a4xxxx  function-app-zzzz Axxxxx==
+```
+
+Note: parameters could be copied from deployment output and keyvault secrets and Funcion itself
+
 
 - Build and Deploy Search Application to App Service
 ```

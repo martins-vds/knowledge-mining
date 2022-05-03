@@ -67,7 +67,7 @@
         "name": "emailfilter",
         "description": null,
         "context": "/document",
-        "uri": "https://__FUNCTION_URI__/api/emailfilter?code=__FUNCTION_APICODE__",
+        "uri": "https://__FUNCTION_NAME__.azurewebsites.net/api/emailfilter?code=__FUNCTION_APICODE__",
         "batchSize": 1,
         "timeout" : "PT3M50S",
         "inputs": [
