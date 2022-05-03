@@ -14,11 +14,11 @@
         "categories": [
           "Person",
           "Organization",
-          "Location",
-          "DateTime"
+          "Location"
+         
         ],
         "defaultLanguageCode": "en",
-        "minimumPrecision": 0.6,
+        "minimumPrecision": null,
         "modelVersion": null,
         "inputs": [
           {
@@ -58,7 +58,7 @@
         "outputs": [
           {
             "name": "keyPhrases",
-            "targetName": "keyPhrases"
+            "targetName": "keyphrases"
           }
         ]
       },

@@ -3,10 +3,12 @@
       {
         "name": "content",
         "type": "Edm.String",
-        "sortable": false,
-        "searchable": false,
         "filterable": false,
-        "facetable": false
+        "facetable": false,
+        "retrievable": true,
+        "searchable": true,
+        "sortable": false,
+        "analyzer": "standard.lucene"
       },
       {
         "name": "merged_content",
@@ -24,7 +26,7 @@
         "fields": []
       },
       {
-        "name": "keyPhrases",
+        "name": "keyphrases",
         "type": "Collection(Edm.String)",
         "searchable": true,
         "sortable": false,
