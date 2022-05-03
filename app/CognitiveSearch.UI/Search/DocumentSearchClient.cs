@@ -124,7 +124,7 @@ namespace CognitiveSearch.UI
             var facets = Model.Facets.Select(f => f.Name).ToList();
             foreach (string f in facets)
             {
-                options.Facets.Add(f+",count:15,sort:count");
+                options.Facets.Add(f+",sort:count");
             }
 
             foreach (string h in Model.SearchableFields)
