@@ -72,6 +72,45 @@
         "sortable": false,
         "filterable": false,
         "facetable": false
+      },
+      {
+        "name": "text",
+        "type": "Collection(Edm.String)",
+        "facetable": false,
+        "filterable": false,
+        "retrievable": true,
+        "searchable": true,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
+        "name": "layoutText",
+        "type": "Collection(Edm.String)",
+        "facetable": false,
+        "filterable": false,
+        "retrievable": true,
+        "searchable": true,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
+        "name": "imageTags",
+        "type": "Collection(Edm.String)",
+        "facetable": false,
+        "filterable": false,
+        "retrievable": true,
+        "searchable": true,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
       }
     ]
   }
