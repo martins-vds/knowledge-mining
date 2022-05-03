@@ -18,7 +18,7 @@
          
         ],
         "defaultLanguageCode": "en",
-        "minimumPrecision": null,
+        "minimumPrecision": 0.5,
         "modelVersion": null,
         "inputs": [
           {

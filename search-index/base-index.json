@@ -8,7 +8,8 @@
         "retrievable": true,
         "searchable": true,
         "sortable": false,
-        "analyzer": "standard.lucene"
+        "analyzer": "standard.lucene",
+        "normalizer": "my_email_normalizer"
       },
       {
         "name": "merged_content",
@@ -113,5 +114,22 @@
         "synonymMaps": [],
         "fields": []
       }
-    ]
+    ],
+    "normalizers":[
+      {
+         "name":"my_email_normalizer",
+         "@odata.type":"#Microsoft.Azure.Search.CustomNormalizer",
+         "charFilters":[
+            "remove_email"
+         ]
+      }
+    ],
+    "charFilters":[
+      {
+         "name":"remove_email",
+         "@odata.type":"#Microsoft.Azure.Search.PatternReplaceCharFilter",
+         "pattern":"[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+",
+         "replacement":" "
+      }
+   ]
   }
