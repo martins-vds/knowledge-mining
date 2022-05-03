@@ -2,7 +2,7 @@
       set -x
 
       # Constants
-      SEARCH_SERVICE_APIVERSION="2020-06-30"
+      SEARCH_SERVICE_APIVERSION="2021-04-30-Preview"
 
       # Define variables
       WORKING_DIRECTORY=$1
