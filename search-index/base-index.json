@@ -10,16 +10,7 @@
         "sortable": false,
         "analyzer": "standard.lucene"
       },
-      {
-        "name": "content_filtered",
-        "type": "Edm.String",
-        "filterable": false,
-        "facetable": false,
-        "retrievable": true,
-        "searchable": true,
-        "sortable": false,
-        "analyzer": "standard.lucene"
-      },
+     
       {
         "name": "merged_content",
         "type": "Edm.String",
