@@ -39,6 +39,10 @@
       "targetFieldName": "merged_content"
     },
     {
+      "sourceFieldName": "/document/content_filtered",
+      "targetFieldName": "content_filtered"
+    },
+    {
       "sourceFieldName": "/document/normalized_images/*/text",
       "targetFieldName": "text"
     },

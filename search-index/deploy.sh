@@ -13,6 +13,7 @@
       SEARCH_SERVICE_SECRET="$5"
 
       COGNITIVE_SERVICE_SECRET="$6"
+      FUNCTION_URL="$7"
       
       INDEX_NAME="km"
       INDEXER_NAME="km-indexer"
@@ -48,6 +49,8 @@
       BASE_SKILLS_FILE="${WORKING_DIRECTORY}/base-skills.json"
      
       sed -e "s/__COG_SERVICES_KEY__/${COGNITIVE_SERVICE_SECRET}/g" $BASE_SKILLS_FILE > $SKILLS_FILE
+      sed -i "s/__EMAIL_FUNCTION_URL__/${FUNCTION_URL}/g" $SKILLS_FILE > $SKILLS_FILE
+     
 
       curl --request PUT \
       --url "${SEARCH_SERVICE_ENDPOINT}/skillsets/${SKILLS_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \

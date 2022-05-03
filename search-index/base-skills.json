@@ -63,6 +63,27 @@
         ]
       },
       {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "emailfilter",
+        "description": null,
+        "context": "/document",
+        "uri": "__EMAIL_FUNCTION_URL__",
+        "batchSize": 1,
+        "timeout" : "PT3M50S",
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/content"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "filtered",
+            "targetName": "content_filtered"
+          }
+        ]
+      },
+      {
         "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
         "name": "#3",
         "description": null,
@@ -72,7 +93,7 @@
         "inputs": [
           {
             "name": "text",
-            "source": "/document/content"
+            "source": "/document/content_filtered"
           },
           {
             "name": "itemsToInsert",

@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using AzureCognitiveSearch.PowerSkills.Common;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
+
 using System;
 
 namespace AzureCognitiveSearch.PowerSkills.Text.Distinct
@@ -58,16 +60,7 @@ namespace AzureCognitiveSearch.PowerSkills.Text.Distinct
         }
 
 
-        [FunctionName("emailfilter")]
-        public static async Task<IActionResult> RunEmailFilter(
-           [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-           ILogger log,
-           ExecutionContext executionContext)
-        {
-            log.LogInformation("EmailFilter Custom Skill: C# HTTP trigger function processed a request.");
+        
 
-            string skillName = executionContext.FunctionName;
-            return new BadRequestObjectResult($"{skillName} - Invalid request record array.");
-        }
     }
 }
