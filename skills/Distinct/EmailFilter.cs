@@ -13,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 
 using System;
+using System.IO;
 
 namespace AzureCognitiveSearch.PowerSkills.Text.EmailFilter
 {
@@ -46,7 +47,8 @@ namespace AzureCognitiveSearch.PowerSkills.Text.EmailFilter
                         throw new ArgumentException("Input data is missing a `text` array of words to de-duplicate.", "text");
                     }
 
-                    outRecord.Data["filtered"] = RemoveEmails(document);
+
+                    outRecord.Data["filtered"] = RemoveEmails(RemoveEmailHeaders(document));
                     return outRecord;
                 });
 
@@ -66,6 +68,42 @@ namespace AzureCognitiveSearch.PowerSkills.Text.EmailFilter
         {
             string normalised = Regex.Replace(text, @"[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+", " ").Trim();
             return normalised;
+        }
+
+        public static string RemoveEmailHeaders(string text)
+        {
+            string aLine, aNextLine, message = null;
+            StringReader strReader = new StringReader(text);
+            while (true)
+            {
+                aLine = strReader.ReadLine();
+                if (aLine != null)
+                {
+                    aLine = aLine.Trim();
+                    if (aLine.StartsWith("From", StringComparison.OrdinalIgnoreCase) || aLine.StartsWith("Recipients", StringComparison.OrdinalIgnoreCase)
+                        || aLine.StartsWith("CC", StringComparison.OrdinalIgnoreCase) || aLine.StartsWith("Bcc", StringComparison.OrdinalIgnoreCase)
+                        || aLine.StartsWith("To", StringComparison.OrdinalIgnoreCase) )
+                    {
+
+                        aNextLine = strReader.ReadLine();
+                        if (aNextLine == null)
+                            break;
+                       
+                    }
+                    else
+                    {
+                        message = message + aLine + "\n";
+
+                    }
+                }
+                else
+                {
+
+                    break;
+                }
+            }
+
+            return message;
         }
 
     }
