@@ -21,6 +21,7 @@
       INDEXER_NAME="km-indexer"
       DATA_SOURCE_NAME="azstorage"
       SKILLS_NAME="km-skills"
+      SYNMAP_NAME="km-synmap"
       
       # Create Data Source
       DATA_SOURCE_FILE="${WORKING_DIRECTORY}/datasource.json"
@@ -35,6 +36,16 @@
       --header "api-key: ${SEARCH_SERVICE_SECRET}" \
       --header 'cache-control: no-cache' \
       --data @"${DATA_SOURCE_FILE}"
+
+      # Create Synonym MAP
+      SYNMAP_FILE="${WORKING_DIRECTORY}/base-synonyms.json"
+
+      curl --request PUT \
+      --url "${SEARCH_SERVICE_ENDPOINT}/synonymmaps/${SYNMAP_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
+      --header 'Content-Type: application/json' \
+      --header "api-key: ${SEARCH_SERVICE_SECRET}" \
+      --header 'cache-control: no-cache' \
+      --data @"${SYNMAP_FILE}"
 
       # Create Index
       INDEX_FILE="${WORKING_DIRECTORY}/base-index.json"

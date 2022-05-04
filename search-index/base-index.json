@@ -8,7 +8,8 @@
         "retrievable": true,
         "searchable": true,
         "sortable": false,
-        "analyzer": "standard.lucene"
+        "analyzer": "standard.lucene",
+        "synonymMaps": ["km-synmap"]
       },
      
       {
@@ -23,8 +24,8 @@
         "analyzer": "standard.lucene",
         "indexAnalyzer": null,
         "searchAnalyzer": null,
-        "synonymMaps": [],
-        "fields": []
+        "synonymMaps": ["km-synmap"]
+       
       },
       {
         "name": "keyphrases",

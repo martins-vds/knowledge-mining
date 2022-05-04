@@ -1,0 +1,17 @@
+{
+    "format": "solr",
+    "synonyms": "
+    Thermobaric bomb, vacuum bomb, Thermobaric weapon\n
+    Donetsk, Donetska\n
+    Kyiv, Kiev\n
+    Lviv, Lvivska\n
+    International Monetary Fund, IMF\n
+    United Nations, UN, United Nations Security Council, UNSC\n
+    European Union, EU\n 
+    Joe Biden, Biden\n
+    Justin Trudeau, Trudeau\n
+    Nancy Pelosi, Pelosi\n 
+    Sergei Lavrov, Lavrov\n 
+    Vladimir Putin, Putin\n
+    Volodomyr Zelenskyy, Zelenskyy\n"
+}
