@@ -28,12 +28,12 @@
        
       },
       {
-        "name": "keyphrases",
+        "name": "keyPhrases",
         "type": "Collection(Edm.String)",
         "searchable": true,
         "sortable": false,
         "filterable": true,
-        "facetable": false
+        "facetable": true
       },
       {
         "name": "organizations",

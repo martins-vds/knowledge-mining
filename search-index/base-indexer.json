@@ -31,8 +31,8 @@
       "targetFieldName": "locations"
     },
     {
-      "sourceFieldName": "/document/merged_content/keyphrases",
-      "targetFieldName": "keyphrases"
+      "sourceFieldName": "/document/merged_content/keyPhrases",
+      "targetFieldName": "keyPhrases"
     },
     {
       "sourceFieldName": "/document/merged_content",
