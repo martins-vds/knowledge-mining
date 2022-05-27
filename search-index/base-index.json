@@ -114,6 +114,32 @@
         "searchAnalyzer": null,
         "synonymMaps": [],
         "fields": []
-      }
+      },
+      {
+        "name": "date",
+        "type": "Collection(Edm.String)",
+        "facetable": true,
+        "filterable": true,
+        "retrievable": true,
+        "searchable": true,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
+        "name": "mission",
+        "type": "Collection(Edm.String)",
+        "facetable": true,
+        "filterable": true,
+        "retrievable": true,
+        "searchable": true,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      }  
     ]
   }
