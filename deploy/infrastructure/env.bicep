@@ -1,22 +1,24 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
-param functionAppName string = ''  
+param functionAppName string
+param location string = resourceGroup().location
 
-var keyVaultName = 'akv-${uniqueString(resourceGroup().id)}'
-var searchName = 'search-${uniqueString(resourceGroup().id)}'
-var cognitiveAccountName = 'cognitive-account-${uniqueString(resourceGroup().id)}'
-var storageAccountNameData = 'stg${uniqueString(resourceGroup().id)}'
-var appServicePlanName = 'app-plan-${uniqueString(resourceGroup().id)}'
-var webAppName = 'site-${uniqueString(resourceGroup().id)}'
+var uniqueness = uniqueString(resourceGroup().id)
+var keyVaultName = 'akv-${uniqueness}'
+var searchName = 'search-${uniqueness}'
+var cognitiveAccountName = 'cognitive-account-${uniqueness}'
+var storageAccountNameData = 'stg${uniqueness}'
+var appServicePlanName = 'app-plan-${uniqueness}'
+var webAppName = 'site-${uniqueness}'
                       
-var appInsightsName = 'app-insights-${uniqueString(resourceGroup().id)}'
+var appInsightsName = 'app-insights-${uniqueness}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
 var secretKeyStorageKey = 'STORAGEACCOUNTKEYSECRET'
 
 resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: keyVaultName
-  location: resourceGroup().location
+  location: location
   properties: {
     sku: {
       family: 'A'
@@ -68,7 +70,7 @@ resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 
 resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
   name: searchName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'standard'
   }
@@ -79,7 +81,7 @@ resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
 
 resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-18' = {
   name: cognitiveAccountName
-  location: resourceGroup().location
+  location: location
   kind: 'CognitiveServices'
 
   sku: {
@@ -89,7 +91,7 @@ resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-
 
 resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountNameData
-  location: resourceGroup().location
+  location: location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
@@ -102,8 +104,8 @@ resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-0
 }
 
 resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = {
-  name: 'stgfunc${uniqueString(resourceGroup().id)}'
-  location: resourceGroup().location
+  name: 'stgfunc${uniqueness}'
+  location: location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
@@ -124,7 +126,7 @@ resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts
 
 resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
   name: appServicePlanName
-  location: resourceGroup().location
+  location: location
   kind: 'Linux'
   sku: {
     tier: 'Standard'
@@ -179,7 +181,7 @@ resource akv_secret_cognitive_services_secret 'Microsoft.KeyVault/vaults/secrets
 
 resource app_insights 'Microsoft.Insights/components@2015-05-01' = {
   name: appInsightsName
-  location: resourceGroup().location
+  location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
@@ -188,7 +190,7 @@ resource app_insights 'Microsoft.Insights/components@2015-05-01' = {
 
 resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   name: webAppName
-  location: resourceGroup().location
+  location: location
   kind: 'app,linux'
   identity: {
     type: 'SystemAssigned'
@@ -232,7 +234,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'IsPathBase64Encoded'
-          value: true
+          value: 'true'
         }
         {
           name: 'InstrumentationKey'
@@ -245,7 +247,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
 
 resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (!empty(functionAppName)) {
   name: functionAppName
-  location: resourceGroup().location
+  location: location
   kind: 'functionapp'
   identity: {
     type: 'SystemAssigned'

@@ -1,15 +1,17 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
 param deployFunction bool  = true
+param location string = resourceGroup().location
 
-var keyVaultName = 'akv-${uniqueString(resourceGroup().id)}'
-var searchName = 'search-${uniqueString(resourceGroup().id)}'
-var cognitiveAccountName = 'cognitive-account-${uniqueString(resourceGroup().id)}'
-var storageAccountNameData = 'stg${uniqueString(resourceGroup().id)}'
-var appServicePlanName = 'app-plan-${uniqueString(resourceGroup().id)}'
-var webAppName = 'site-${uniqueString(resourceGroup().id)}'
-var functionAppName = 'function-app-${uniqueString(resourceGroup().id)}'
-var appInsightsName = 'app-insights-${uniqueString(resourceGroup().id)}'
+var uniqueness = uniqueString(resourceGroup().id)
+var keyVaultName = 'akv-${uniqueness}'
+var searchName = 'search-${uniqueness}'
+var cognitiveAccountName = 'cognitive-account-${uniqueness}'
+var storageAccountNameData = 'stg${uniqueness}'
+var appServicePlanName = 'app-plan-${uniqueness}'
+var webAppName = 'site-${uniqueness}'
+var functionAppName = 'function-app-${uniqueness}'
+var appInsightsName = 'app-insights-${uniqueness}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
 var secretKeyStorageKey = 'STORAGEACCOUNTKEYSECRET'
@@ -36,7 +38,7 @@ var ipAddressToAllow = [
 
 // Networking
 resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-  location: resourceGroup().location
+  location: location
   name: 'vnet'
   properties: {
     addressSpace: {
@@ -89,7 +91,7 @@ resource storageBlobPrivateZoneVirtualNetworkLink 'Microsoft.Network/privateDnsZ
 // Key Vault
 resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: keyVaultName
-  location: resourceGroup().location
+  location: location
   properties: {
     sku: {
       family: 'A'
@@ -176,7 +178,7 @@ resource akv_secret_cognitive_services_secret 'Microsoft.KeyVault/vaults/secrets
 // Search
 resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
   name: searchName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'standard'
   }
@@ -188,7 +190,7 @@ resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
 // Cognitive Services
 resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-18' = {
   name: cognitiveAccountName
-  location: resourceGroup().location
+  location: location
   kind: 'CognitiveServices'
 
   sku: {
@@ -199,7 +201,7 @@ resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-
 // Storage Accounts
 resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountNameData
-  location: resourceGroup().location
+  location: location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
@@ -217,7 +219,7 @@ resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-0
 }
 
 resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
-  location: resourceGroup().location
+  location: location
   name: '${azure_storage_account_data.name}-blob-endpoint'
   properties: {
     subnet: {
@@ -252,8 +254,8 @@ resource azure_storage_account_data_blob_pe_dns_reg 'Microsoft.Network/privateEn
 }
 
 resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = if (deployFunction) {
-  name: 'stgfunc${uniqueString(resourceGroup().id)}'
-  location: resourceGroup().location
+  name: 'stgfunc${uniqueness}'
+  location: location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
@@ -270,7 +272,7 @@ resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019
 }
 
 resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = if (deployFunction) {
-  location: resourceGroup().location
+  location: location
   name: '${azure_storage_account_functions.name}-blob-endpoint'
   properties: {
     subnet: {
@@ -314,7 +316,7 @@ resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts
 // App Service
 resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
   name: appServicePlanName
-  location: resourceGroup().location
+  location: location
   kind: 'Linux'
   sku: {
     tier: 'Standard'
@@ -327,7 +329,7 @@ resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
 
 resource app_insights 'Microsoft.Insights/components@2015-05-01' = {
   name: appInsightsName
-  location: resourceGroup().location
+  location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
@@ -336,7 +338,7 @@ resource app_insights 'Microsoft.Insights/components@2015-05-01' = {
 
 resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   name: webAppName
-  location: resourceGroup().location
+  location: location
   kind: 'app,linux'
   identity: {
     type: 'SystemAssigned'
@@ -409,7 +411,7 @@ resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01
 
 resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deployFunction) {
   name: functionAppName
-  location: resourceGroup().location
+  location: location
   kind: 'functionapp'
   identity: {
     type: 'SystemAssigned'
