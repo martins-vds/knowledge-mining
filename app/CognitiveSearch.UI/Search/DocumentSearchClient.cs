@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace CognitiveSearch.UI
@@ -124,7 +123,7 @@ namespace CognitiveSearch.UI
             var facets = Model.Facets.Select(f => f.Name).ToList();
             foreach (string f in facets)
             {
-                options.Facets.Add(f+",sort:count");
+                options.Facets.Add(f + ",sort:count");
             }
 
             foreach (string h in Model.SearchableFields)
@@ -174,14 +173,14 @@ namespace CognitiveSearch.UI
             if (polygonString != null && polygonString.Length > 0)
             {
                 string geoQuery = "geo.intersects(geoLocation, geography'POLYGON((" + polygonString + "))')";
-                
+
                 if (options.Filter != null && options.Filter.Length > 0)
-                { 
-                    options.Filter += " and " + geoQuery; 
+                {
+                    options.Filter += " and " + geoQuery;
                 }
                 else
-                { 
-                    options.Filter = geoQuery; 
+                {
+                    options.Filter = geoQuery;
                 }
             }
 
@@ -268,9 +267,9 @@ namespace CognitiveSearch.UI
         {
             var facets = new List<String>();
 
-            foreach (var facet in facetNames) 
+            foreach (var facet in facetNames)
             {
-                 facets.Add($"{facet}, count:{maxCount}");
+                facets.Add($"{facet}, count:{maxCount}");
             }
 
             // Execute search based on query string
@@ -287,7 +286,7 @@ namespace CognitiveSearch.UI
                 {
                     options.Facets.Add(s);
                 }
-                
+
                 return _searchIndexClient.GetSearchClient(IndexName).Search<SearchDocument>(searchText, options);
             }
             catch (Exception ex)
@@ -409,7 +408,8 @@ namespace CognitiveSearch.UI
             {
                 s_containerAddressesLength--;
             }
-            for (int i = 0; i < s_containerAddressesLength; i++) {
+            for (int i = 0; i < s_containerAddressesLength; i++)
+            {
                 BlobContainerClient container = new BlobContainerClient(new Uri(s_containerAddresses[i]), new StorageSharedKeyCredential(accountName, accountKey));
                 var policy = new BlobSasBuilder
                 {
@@ -422,7 +422,7 @@ namespace CognitiveSearch.UI
                 };
                 policy.SetPermissions(BlobSasPermissions.Read);
                 var sas = policy.ToSasQueryParameters(storageSharedKeyCredential);
-                BlobUriBuilder  sasUri = new BlobUriBuilder(container.Uri);
+                BlobUriBuilder sasUri = new BlobUriBuilder(container.Uri);
                 sasUri.Sas = sas;
 
                 s_tokens[i] = "?" + sasUri.Sas.ToString();
@@ -517,7 +517,7 @@ namespace CognitiveSearch.UI
                 {
                     if (element.Values.ToString().Length >= 4)
                     {
-                       
+
                         cleanValues.Add(new FacetValue() { value = element.Value.ToString(), count = element.Count });
                     }
                 }

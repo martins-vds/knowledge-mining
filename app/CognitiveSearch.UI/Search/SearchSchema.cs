@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Azure.Search.Documents.Indexes.Models;
-using Azure.Search.Documents.Models;
 using Microsoft.Spatial;
 using System;
 using System.Collections.Generic;
@@ -50,7 +49,7 @@ namespace CognitiveSearch.UI
             else if (field.Type == SearchFieldDataType.Int64) type = typeof(Int64);
             else if (field.Type == SearchFieldDataType.String) type = typeof(string);
             else if (field.Type == SearchFieldDataType.GeographyPoint) type = typeof(GeographyPoint);
-   
+
             // Azure Search SearchFieldDataType objects don't follow value comparisons, so use overloaded string conversion operator to be a consistent representation
             else if (field.Type.ToString() == SearchFieldDataType.Collection(SearchFieldDataType.String).ToString()) type = typeof(string[]);
             else if (field.Type == SearchFieldDataType.Complex) type = typeof(string);

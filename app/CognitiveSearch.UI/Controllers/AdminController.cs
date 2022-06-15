@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using CognitiveSearch.UI.Configuration;
+﻿using CognitiveSearch.UI.Configuration;
 using CognitiveSearch.UI.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CognitiveSearch.UI.Controllers
 {
@@ -104,7 +103,7 @@ namespace CognitiveSearch.UI.Controllers
             var path = Path.Combine("", webPath + $"\\css\\{fileName}.css");
 
             var fileText = await System.IO.File.ReadAllTextAsync(path);
-            
+
             var nameStart = fileText.IndexOf("../images/") + "..images/".Length + 1;
             var nameEnd = fileText.IndexOf("');");
             var length = nameEnd - nameStart;
@@ -146,7 +145,7 @@ namespace CognitiveSearch.UI.Controllers
             var path = Path.Combine("", webPath + @"\css\custom.css");
 
             var memory = new MemoryStream();
-            using(var stream = new FileStream(path, FileMode.Open))
+            using (var stream = new FileStream(path, FileMode.Open))
             {
                 await stream.CopyToAsync(memory);
             }

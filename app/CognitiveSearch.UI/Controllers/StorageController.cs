@@ -1,16 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Linq;
+using Azure.Storage;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
+using System;
 using System.IO;
-using System.Web;
-using Azure.Storage.Blobs;
-using Azure.Storage;
-using Azure.Storage.Blobs.Models;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Net;
 
 namespace CognitiveSearch.UI.Controllers
 {
@@ -60,7 +60,7 @@ namespace CognitiveSearch.UI.Controllers
         [HttpGet("preview/{storageIndex}/{fileName}/{mimeType}")]
         public async Task<FileContentResult> GetDocumentInline(int storageIndex, string fileName, string mimeType)
         {
-            var decodedFilename = HttpUtility.UrlDecode(fileName);
+            var decodedFilename = WebUtility.UrlDecode(fileName);
             var container = GetStorageContainer(storageIndex);
             var blob = container.GetBlobClient(decodedFilename);
             using (var ms = new MemoryStream())
@@ -68,7 +68,7 @@ namespace CognitiveSearch.UI.Controllers
                 var downlaodInfo = await blob.DownloadAsync();
                 await downlaodInfo.Value.Content.CopyToAsync(ms);
                 Response.Headers.Add("Content-Disposition", "inline; filename=" + decodedFilename);
-                return File(ms.ToArray(), HttpUtility.UrlDecode(mimeType));
+                return File(ms.ToArray(), WebUtility.UrlDecode(mimeType));
             }
         }
 
@@ -79,7 +79,7 @@ namespace CognitiveSearch.UI.Controllers
 
             var containerKey = "StorageContainerAddress";
             if (storageIndex > 0)
-                containerKey += (storageIndex+1).ToString();
+                containerKey += (storageIndex + 1).ToString();
             var containerAddress = _configuration.GetSection(containerKey)?.Value.ToLower();
 
             var container = new BlobContainerClient(new Uri(containerAddress), new StorageSharedKeyCredential(accountName, accountKey));

@@ -1,17 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using CognitiveSearch.UI.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using CognitiveSearch.UI.Models;
 
 namespace CognitiveSearch.UI.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : Microsoft.AspNetCore.Mvc.Controller
     {
         private IConfiguration _configuration { get; set; }
         private DocumentSearchClient _docSearch { get; set; }
@@ -65,7 +65,7 @@ namespace CognitiveSearch.UI.Controllers
 
         }
 
-        public IActionResult Search([FromQuery]string q, [FromQuery]string facets = "", [FromQuery]int page = 1)
+        public IActionResult Search([FromQuery] string q, [FromQuery] string facets = "", [FromQuery] int page = 1)
         {
             // Split the facets.
             //  Expected format: &facets=key1_val1,key1_val2,key2_val1
@@ -99,7 +99,7 @@ namespace CognitiveSearch.UI.Controllers
         }
 
         [HttpPost]
-        public SearchResultViewModel SearchView([FromForm]SearchOptions searchParams)
+        public SearchResultViewModel SearchView([FromForm] SearchOptions searchParams)
         {
             if (searchParams.q == null)
                 searchParams.q = "*";
@@ -153,7 +153,7 @@ namespace CognitiveSearch.UI.Controllers
         }
 
         [HttpPost]
-        public ActionResult GetGraphData(string query, string[] fields, int maxLevels, int maxNodes)
+        public Microsoft.AspNetCore.Mvc.ActionResult GetGraphData(string query, string[] fields, int maxLevels, int maxNodes)
         {
             string[] facetNames = fields;
 
@@ -176,7 +176,7 @@ namespace CognitiveSearch.UI.Controllers
         }
 
         [HttpPost, HttpGet]
-        public ActionResult Suggest(string term, bool fuzzy = true)
+        public Microsoft.AspNetCore.Mvc.ActionResult Suggest(string term, bool fuzzy = true)
         {
             // Change to _docSearch.Suggest if you would prefer to have suggestions instead of auto-completion
             var response = _docSearch.Autocomplete(term, fuzzy);
