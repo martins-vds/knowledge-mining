@@ -1,0 +1,24 @@
+{
+    "format": "solr",
+    "synonyms": "
+    Refugee, Vulnterable people, Displaced\n
+    Humanitarian corridor, Humanitarian Assistance\n
+    Food, Food Security\n
+    NATO, Allies, Alliance\n
+    Thermobaric bomb, vacuum bomb, Thermobaric weapon\n
+    Donetsk, Donetska\n
+    Kyiv, Kiev\n
+    Lviv, Lvivska\n
+    International Monetary Fund, IMF\n
+    United Nations, UN, United Nations Security Council, UNSC, United Nations Human Rights Council, UNHRC\n
+    European Union, EU\n 
+    Elizabeth Truss, Liz Truss\n
+    Joe Biden, Biden\n
+    Justin Trudeau, Trudeau\n
+    Kamala Harris, Harris\n
+    Melanie Joly, Joly\n
+    Nancy Pelosi, Pelosi\n 
+    Sergei Lavrov, Lavrov\n 
+    Vladimir Putin, Putin\n
+    Volodomyr Zelenskyy, Zelenskyy\n"
+}
