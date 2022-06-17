@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 # Constants
 SEARCH_SERVICE_APIVERSION="2021-04-30-Preview"

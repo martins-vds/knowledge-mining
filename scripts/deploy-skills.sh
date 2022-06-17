@@ -1,6 +1,6 @@
 #!/bin/bash
 ## USAGE  ./deploy-app.sh <RG NAME> <APPSERVICE NAME> <ZIP PACKAGE>
-set -xe #echo on
+set -ex #echo on
 
 # Define variables
 

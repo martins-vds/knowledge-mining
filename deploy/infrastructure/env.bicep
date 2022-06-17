@@ -370,7 +370,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           value: 'https://${azure_search_service.name}.search.windows.net'
         }
         {
-          name: 'Search__ApiKey'
+          name: 'Search__Credential__Key'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeySearch})'
         }
         {
@@ -391,7 +391,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'Storage__ServiceUri'
-          value: 'https://${azure_storage_account_data.name}.blob.core.windows.net'
+          value: azure_storage_account_data.properties.primaryEndpoints.blob
         }
         {
           name: 'Storage__AccountKey'
