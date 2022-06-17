@@ -1,7 +1,7 @@
 param docsContainerName string = 'documents'
-param spnObjectId string
-param deployFunction bool  = true
+param deployFunction bool = true
 param location string = resourceGroup().location
+param servicePrincipalId string = ''
 
 var uniqueness = uniqueString(resourceGroup().id)
 var keyVaultName = 'akv-${uniqueness}'
@@ -33,8 +33,7 @@ var subnetPrivateEndpointsName = 'PrivateEndpoints'
     }
   ]
 */
-var ipAddressToAllow = [
-]
+var ipAddressToAllow = []
 
 // Networking
 resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
@@ -106,9 +105,19 @@ resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
       bypass: 'AzureServices'
       defaultAction: 'Allow'
     }
-    accessPolicies: [
+    accessPolicies: empty(servicePrincipalId) ? [
       {
-        objectId: spnObjectId
+        objectId: app_services_website.identity.principalId
+        tenantId: app_services_website.identity.tenantId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ] : [
+      {
+        objectId: servicePrincipalId
         tenantId: subscription().tenantId
         permissions: {
           secrets: [
@@ -128,7 +137,6 @@ resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
           ]
         }
       }
-     
     ]
   }
 }
@@ -292,7 +300,7 @@ resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpo
   }
 }
 
-resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' =  if (deployFunction) {
+resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = if (deployFunction) {
   name: '${azure_storage_account_functions_blob_pe.name}/default'
   properties: {
     privateDnsZoneConfigs: [
@@ -306,7 +314,7 @@ resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/priv
   }
 }
 
-resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01'  = {
+resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
   name: '${azure_storage_account_data.name}/default/${docsContainerName}'
   properties: {
     publicAccess: 'None'
@@ -346,7 +354,8 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|3.1'
+      linuxFxVersion: 'DOTNETCORE|6.0'
+      alwaysOn: true
       appSettings: [
         {
           name: 'WEBSITE_DNS_SERVER' // required for VNET Integration + Azure DNS Private Zones
@@ -398,6 +407,8 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         }
       ]
     }
+    httpsOnly: true
+    clientAffinityEnabled: false
   }
 }
 
@@ -406,7 +417,7 @@ resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01
   properties: {
     subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
     swiftSupported: true
-  } 
+  }
 }
 
 resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deployFunction) {
@@ -430,7 +441,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~3'
+          value: '~4'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -458,7 +469,7 @@ resource function_access_policy 'Microsoft.KeyVault/vaults/accessPolicies@2021-1
   parent: azure_key_vault
   properties: {
     accessPolicies: deployFunction ? [
-       {
+      {
         objectId: app_services_function_app.identity.principalId
         tenantId: app_services_function_app.identity.tenantId
         permissions: {
@@ -476,7 +487,7 @@ resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-
   properties: {
     subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
     swiftSupported: true
-  } 
+  }
 }
 
 // Role Assignments

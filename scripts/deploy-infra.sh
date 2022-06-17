@@ -1,16 +1,21 @@
 #!/bin/bash
-## USAGE  ./deploy-infra.sh <LOCATION> <RESOURCE GROUP> <DEPLOYMENT TEMPLATE> <DOCS CONTAIRNER NAME> <SPN OBJECT ID>
-set -x #echo on
+## USAGE  ./deploy-infra.sh <LOCATION> <RESOURCE GROUP> <DEPLOYMENT TEMPLATE> <DOCS CONTAIRNER NAME> <SERVICE PRINCIPAL ID>
+set -x
 
-LOCATION="$1"
-RESOURCEGROUP="$2"
-DEPLOYMENTTEMPLATE="$3"
-DOCSCONTAINERNAME="$4"
-SPNOBJECTID="$5"
+location="$1"
+resource_group="$2"
+deployment_template="$3"
+docs_container_name="$4"
+service_principal_id="$5"
 
-az group create -l $LOCATION -n $RESOURCEGROUP
+if [[ $(az group exists -n $resource_group) == 'false' ]]; then
+    az group create -l $location -n $resource_group
+fi
 
-az deployment group create -g $RESOURCEGROUP \
-                            --template-file $DEPLOYMENTTEMPLATE \
-                            --parameters docsContainerName=$DOCSCONTAINERNAME \
-                                         spnObjectId=$SPNOBJECTID
+let "uniqueness=RANDOM*RANDOM"
+
+az deployment group create -g $resource_group \
+                           -n deploy-knowledge-mining-$uniqueness \
+                           --template-file $deployment_template \
+                           --parameters docsContainerName=$docs_container_name \
+                                        servicePrincipalId=$service_principal_id
