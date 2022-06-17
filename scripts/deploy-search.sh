@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 # Constants
 SEARCH_SERVICE_APIVERSION="2021-04-30-Preview"
@@ -63,7 +63,6 @@ BASE_SKILLS_FILE="${WORKING_DIRECTORY}/base-skills.json"
 sed -e "s/__COG_SERVICES_KEY__/${COGNITIVE_SERVICE_SECRET}/g" $BASE_SKILLS_FILE > $SKILLS_FILE
 sed -i "s/__FUNCTION_NAME__/${FUNCTION_NAME}/g" $SKILLS_FILE 
 sed -i "s/__FUNCTION_APICODE__/${FUNCTION_APICODE}/g" $SKILLS_FILE 
-
 
 curl --request PUT \
 --url "${SEARCH_SERVICE_ENDPOINT}/skillsets/${SKILLS_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \

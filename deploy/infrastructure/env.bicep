@@ -366,44 +366,64 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           value: '1'
         }
         {
-          name: 'SearchServiceName'
-          value: azure_search_service.name
+          name: 'Search__Endpoint'
+          value: 'https://${azure_search_service.name}.search.windows.net'
         }
         {
-          name: 'SearchApiKey'
+          name: 'Search__ApiKey'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeySearch})'
         }
         {
-          name: 'SearchIndexName'
+          name: 'Search__IndexName'
           value: 'km'
         }
         {
-          name: 'SearchIndexerName'
+          name: 'Search__IndexerName'
           value: 'km-indexer'
         }
         {
-          name: 'StorageAccountName'
-          value: azure_storage_account_data.name
-        }
-        {
-          name: 'StorageAccountKey'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeyStorageKey})'
-        }
-        {
-          name: 'StorageContainerAddress'
-          value: 'https://${azure_storage_account_data.name}.blob.core.windows.net/${docsContainerName}'
-        }
-        {
-          name: 'KeyField'
+          name: 'Search__KeyField'
           value: 'metadata_storage_path'
         }
         {
-          name: 'IsPathBase64Encoded'
+          name: 'Search__IsPathBase64Encoded'
           value: 'true'
         }
         {
-          name: 'InstrumentationKey'
-          value: app_insights.properties.InstrumentationKey
+          name: 'Storage__ServiceUri'
+          value: 'https://${azure_storage_account_data.name}.blob.core.windows.net'
+        }
+        {
+          name: 'Storage__AccountKey'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeyStorageKey})'
+        }
+        {
+          name: 'Storage__ContainerName'
+          value: docsContainerName
+        }
+        {
+          name: 'Graph__Facets'
+          value: 'keyPhrases, locations'
+        }
+        {
+          name: 'Customizations__Enabled'
+          value: 'true'
+        }
+        {
+          name: 'Customizations__OrganizationName'
+          value: 'Microsoft'
+        }
+        {
+          name: 'Customizations__OrganizationLogo'
+          value: '~/images/logo.png'
+        }
+        {
+          name: 'Customizations__OrganizationWebSiteUrl'
+          value: 'https://www.microsoft.com'
+        }
+        {
+          name: 'ApplicationInsights__ConnectionString'
+          value: app_insights.properties.ConnectionString
         }
       ]
     }
@@ -430,6 +450,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
   properties: {
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
+      alwaysOn: true
       appSettings: [
         {
           name: 'WEBSITE_DNS_SERVER' // required for VNET Integration + Azure DNS Private Zones
@@ -452,6 +473,10 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
           value: '10.14.1'
         }
         {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+        {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: app_insights.properties.InstrumentationKey
         }
@@ -461,6 +486,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
         }
       ]
     }
+    httpsOnly: true
   }
 }
 

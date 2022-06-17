@@ -1,0 +1,10 @@
+{
+    "description": "Demo files to demonstrate cognitive search capabilities.",
+    "type": "azureblob",
+    "credentials": {
+        "connectionString": "ResourceId=/subscriptions/7806cf8d-3992-4f6a-ab99-e493a143ad1b/resourceGroups/poc-knowledge-mining/providers/Microsoft.Storage/storageAccounts/stgezldohycgd6oy"
+    },
+    "container": {
+        "name": "documents"
+    }
+}
