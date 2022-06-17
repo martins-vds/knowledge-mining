@@ -14,7 +14,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace AzureCognitiveSearch.PowerSkills.Common
+namespace KnowledgeMining.Functions.Skills
 {
     public static class WebApiSkillHelpers
     {
@@ -24,7 +24,7 @@ namespace AzureCognitiveSearch.PowerSkills.Common
         public static IEnumerable<WebApiRequestRecord> GetRequestRecords(HttpRequest req)
         {
             string jsonRequest = new StreamReader(req.Body).ReadToEnd();
-            if(String.IsNullOrEmpty(jsonRequest))
+            if (String.IsNullOrEmpty(jsonRequest))
             {
                 return null;
             }
@@ -46,7 +46,7 @@ namespace AzureCognitiveSearch.PowerSkills.Common
                 }
                 catch (Exception e)
                 {
-                    outRecord.Errors.Add(new WebApiErrorWarningContract() { Message = $"{functionName} - Error processing the request record : {e.ToString() }" });
+                    outRecord.Errors.Add(new WebApiErrorWarningContract() { Message = $"{functionName} - Error processing the request record : {e.ToString()}" });
                 }
                 response.Values.Add(outRecord);
             }
@@ -68,7 +68,7 @@ namespace AzureCognitiveSearch.PowerSkills.Common
                 }
                 catch (Exception e)
                 {
-                    outRecord.Errors.Add(new WebApiErrorWarningContract() { Message = $"{functionName} - Error processing the request record : {e.ToString() }" });
+                    outRecord.Errors.Add(new WebApiErrorWarningContract() { Message = $"{functionName} - Error processing the request record : {e.ToString()}" });
                 }
                 response.Values.Add(outRecord);
             }

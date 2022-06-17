@@ -5,7 +5,6 @@ using KnowledgeMining.UI.Models;
 using KnowledgeMining.UI.Options;
 using KnowledgeMining.UI.Services.Search;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -25,7 +24,7 @@ namespace KnowledgeMining.UI.Controllers
         private readonly AzureMapsOptions _azureMapsOptions;
         private readonly GraphOptions _graphOptions;
 
-        public HomeController(ISearchService searchService, 
+        public HomeController(ISearchService searchService,
                               IOptions<AzureMapsOptions> azureMapsOptions,
                               IOptions<GraphOptions> graphOptions,
                               ILogger<HomeController> logger)

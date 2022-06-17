@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using System;
 using System.IO;
 
 namespace KnowledgeMining.UI
@@ -71,12 +70,13 @@ namespace KnowledgeMining.UI
             }
 
             app.UseHttpsRedirection();
-            
+
             app.UseStaticFiles();
-            
+
             app.UseCookiePolicy();
 
-            app.UseEndpoints(endpoints => {
+            app.UseEndpoints(endpoints =>
+            {
                 endpoints.MapControllers();
             });
         }

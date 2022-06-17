@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace AzureCognitiveSearch.PowerSkills.Common
+namespace KnowledgeMining.Functions.Skills
 {
     public class WebApiSkillRequest
     {

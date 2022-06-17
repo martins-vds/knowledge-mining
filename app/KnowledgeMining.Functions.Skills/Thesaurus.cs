@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace AzureCognitiveSearch.PowerSkills.Text.Distinct
+namespace KnowledgeMining.Functions.Skills
 {
     public class Thesaurus
     {

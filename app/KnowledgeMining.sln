@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29911.84
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnowledgeMining.UI", "KnowledgeMining.UI\KnowledgeMining.UI.csproj", "{7A95287B-A883-45DF-AC29-A821601F9DC0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnowledgeMining.Functions.Skills", "KnowledgeMining.Functions.Skills\KnowledgeMining.Functions.Skills.csproj", "{8BD883F3-2D95-44F0-95E5-434051F51ECB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{7A95287B-A883-45DF-AC29-A821601F9DC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A95287B-A883-45DF-AC29-A821601F9DC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A95287B-A883-45DF-AC29-A821601F9DC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

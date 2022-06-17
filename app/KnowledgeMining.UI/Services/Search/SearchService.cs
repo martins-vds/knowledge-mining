@@ -1,16 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
-using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
-using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -61,21 +57,21 @@ namespace KnowledgeMining.UI.Services.Search
 
         public async ValueTask<SearchModel> GetSearchModel(CancellationToken cancellationToken)
         {
-            if(_searchModel == null)
+            if (_searchModel == null)
             {
                 var fields = await _searchIndexClient.GetIndexAsync(_searchOptions.IndexName, cancellationToken);
                 var schema = new SearchSchema().AddFields(fields.Value.Fields);
                 _searchModel = new SearchModel(schema);
             }
-            
+
             return _searchModel;
         }
 
         public async Task<SearchResults<SearchDocument>> Search(
-            string searchText, 
-            SearchFacet[] searchFacets, 
-            string[] selectFilter, 
-            int currentPage, 
+            string searchText,
+            SearchFacet[] searchFacets,
+            string[] selectFilter,
+            int currentPage,
             string polygonString,
             CancellationToken cancellationToken)
         {
@@ -89,8 +85,8 @@ namespace KnowledgeMining.UI.Services.Search
 
         private async Task<SearchOptions> GenerateSearchOptions(
             SearchFacet[] searchFacets,
-            string[] selectFilter, 
-            int currentPage, 
+            string[] selectFilter,
+            int currentPage,
             string polygonString,
             CancellationToken cancellationToken)
         {

@@ -7,7 +7,7 @@ namespace KnowledgeMining.UI.Extensions
     public static class SearchClientBuilderExtensions
     {
         public static IAzureClientBuilder<SearchIndexerClient, SearchClientOptions> AddSearchIndexerClient<TBuilder, TConfiguration>(
-            this TBuilder builder, 
+            this TBuilder builder,
             TConfiguration configuration)
             where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>
         {

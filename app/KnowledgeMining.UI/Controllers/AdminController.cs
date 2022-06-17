@@ -1,5 +1,4 @@
-﻿using KnowledgeMining.UI.Options;
-using KnowledgeMining.UI.Models;
+﻿using KnowledgeMining.UI.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
@@ -7,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace KnowledgeMining.UI.Controllers
 {
@@ -17,7 +16,7 @@ namespace KnowledgeMining.UI.Controllers
         private readonly IFileProvider _fileProvider;
         private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public AdminController(IFileProvider fileProvider, 
+        public AdminController(IFileProvider fileProvider,
                                IWebHostEnvironment hostingEnvironment)
         {
             _fileProvider = fileProvider;
