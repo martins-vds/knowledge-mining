@@ -44,8 +44,6 @@ namespace KnowledgeMining.UI.Controllers
                 var file = Request.Form.Files[0];
                 if (file.FileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    var fi = new FileInfo(file.FileName);
-
                     var webPath = _hostingEnvironment.WebRootPath;
                     var path = Path.Combine("", webPath + @"\images\logo.png");
 

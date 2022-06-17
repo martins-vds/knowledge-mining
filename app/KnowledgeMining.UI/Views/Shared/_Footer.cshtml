@@ -1,11 +1,12 @@
 ﻿@using KnowledgeMining.UI.Options
-@inject OrganizationConfig OrgConfig
+@using Microsoft.Extensions.Options
+@inject IOptions<CustomizationsOptions> CustomizationsOptions
 
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 <div>
 	<footer class="main-footer navbar-bg">
 		<div class="content">
-			<span class="copyright navbar-text-color">&copy; @DateTime.Now.Year - @OrgConfig.Name</span>
+			<span class="copyright navbar-text-color">&copy; @DateTime.Now.Year - @CustomizationsOptions.Value.OrganizationName</span>
 		</div>
 	</footer>
 </div>

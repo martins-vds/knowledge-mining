@@ -1,5 +1,6 @@
 @using KnowledgeMining.UI.Options
-@inject AppOptions AppConfig
+@using Microsoft.Extensions.Options
+@inject IOptions<CustomizationsOptions> Customizations
 
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-bg">
@@ -7,10 +8,10 @@
         <div class="content">
             <div class="navbar-header">
                 <a class="navbar-brand-logo" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/logo.png" height="35" id="navbar-img" alt="@AppConfig.Organization.Name logo" title="@AppConfig.Organization.Name logo" class="logo-container logo-sgv" asp-append-version="true" />
+                    <img src="~/images/logo.png" height="35" id="navbar-img" alt="@Customizations.Value.OrganizationName logo" title="@Customizations.Value.OrganizationName logo" class="logo-container logo-sgv" asp-append-version="true" />
                 </a>
             </div>
-            @if (AppConfig.Customizable)
+            @if (Customizations.Value.Enabled)
             {
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
