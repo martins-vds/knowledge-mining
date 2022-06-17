@@ -53,7 +53,8 @@ namespace KnowledgeMining.UI
             services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")));
 
             services.AddApplicationInsightsTelemetry();
-
+            services.AddServiceProfiler();
+            
             services.AddControllersWithViews();
         }
 
