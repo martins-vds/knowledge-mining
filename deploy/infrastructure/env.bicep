@@ -358,6 +358,50 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
       alwaysOn: true
       appSettings: [
         {
+          name: 'APPINSIGHTS_PROFILERFEATURE_VERSION'
+          value: '1.0.0'
+        }
+        {
+          name: 'XDT_MicrosoftApplicationInsights_Mode'
+          value: 'recommended'
+        }
+        {
+          name: 'APPINSIGHTS_SNAPSHOTFEATURE_VERSION'
+          value: '1.0.0'
+        }
+        {
+          name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
+          value: '~3'
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: app_insights.properties.InstrumentationKey
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: app_insights.properties.ConnectionString
+        }
+        {
+          name: 'DiagnosticServices_EXTENSION_VERSION'
+          value: '~3'
+        }
+        {
+          name: 'InstrumentationEngine_EXTENSION_VERSION'
+          value: 'enabled'
+        }
+        {
+          name: 'SnapshotDebugger_EXTENSION_VERSION'
+          value: 'enabled'
+        }
+        {
+          name: 'XDT_MicrosoftApplicationInsights_BaseExtensions'
+          value: 'enabled'
+        }
+        {
+          name: 'XDT_MicrosoftApplicationInsights_PreemptSdk'
+          value: 'enabled'
+        }
+        {
           name: 'WEBSITE_DNS_SERVER' // required for VNET Integration + Azure DNS Private Zones
           value: '168.63.129.16'
         }
@@ -421,10 +465,6 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           name: 'Customizations__OrganizationWebSiteUrl'
           value: 'https://www.microsoft.com'
         }
-        {
-          name: 'ApplicationInsights__ConnectionString'
-          value: app_insights.properties.ConnectionString
-        }
       ]
     }
     httpsOnly: true
@@ -453,6 +493,50 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
       alwaysOn: true
       appSettings: [
         {
+          name: 'APPINSIGHTS_PROFILERFEATURE_VERSION'
+          value: '1.0.0'
+        }
+        {
+          name: 'XDT_MicrosoftApplicationInsights_Mode'
+          value: 'recommended'
+        }
+        {
+          name: 'APPINSIGHTS_SNAPSHOTFEATURE_VERSION'
+          value: '1.0.0'
+        }
+        {
+          name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
+          value: '~3'
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: app_insights.properties.InstrumentationKey
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: app_insights.properties.ConnectionString
+        }
+        {
+          name: 'DiagnosticServices_EXTENSION_VERSION'
+          value: '~3'
+        }
+        {
+          name: 'InstrumentationEngine_EXTENSION_VERSION'
+          value: 'enabled'
+        }
+        {
+          name: 'SnapshotDebugger_EXTENSION_VERSION'
+          value: 'enabled'
+        }
+        {
+          name: 'XDT_MicrosoftApplicationInsights_BaseExtensions'
+          value: 'enabled'
+        }
+        {
+          name: 'XDT_MicrosoftApplicationInsights_PreemptSdk'
+          value: 'enabled'
+        }
+        {
           name: 'WEBSITE_DNS_SERVER' // required for VNET Integration + Azure DNS Private Zones
           value: '168.63.129.16'
         }
@@ -475,10 +559,6 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
         {
           name: 'WEBSITE_RUN_FROM_PACKAGE'
           value: '1'
-        }
-        {
-          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: app_insights.properties.InstrumentationKey
         }
         {
           name: 'AzureWebJobsStorage'
@@ -529,3 +609,5 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
 
 output storage_data_id string = azure_storage_account_data.id
 output search_enpoint string = 'https://${azure_search_service.name}.search.windows.net'
+output app_name string = app_services_website.name
+output skills_name string = app_services_function_app.name
