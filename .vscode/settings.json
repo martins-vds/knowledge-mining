@@ -1,0 +1,10 @@
+{
+    "azureFunctions.deploySubpath": "skills/Distinct/bin/Release/netcoreapp3.1/publish",
+    "azureFunctions.projectLanguage": "C#",
+    "azureFunctions.projectRuntime": "~2",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.projectSubpath": "skills/Distinct",
+    "azureFunctions.preDeployTask": "publish (functions)",
+    "bashIde.explainshellEndpoint": "http://localhost:5000",
+    "bashIde.highlightParsingErrors": true
+}

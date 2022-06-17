@@ -1,6 +1,6 @@
 param docsContainerName string = 'documents'
 param spnObjectId string
-param functionAppName string
+param deployFunction bool  = true
 param location string = resourceGroup().location
 
 var uniqueness = uniqueString(resourceGroup().id)
@@ -10,12 +10,85 @@ var cognitiveAccountName = 'cognitive-account-${uniqueness}'
 var storageAccountNameData = 'stg${uniqueness}'
 var appServicePlanName = 'app-plan-${uniqueness}'
 var webAppName = 'site-${uniqueness}'
-                      
+var functionAppName = 'function-app-${uniqueness}'
 var appInsightsName = 'app-insights-${uniqueness}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
 var secretKeyStorageKey = 'STORAGEACCOUNTKEYSECRET'
 
+var subnetAppServiceName = 'AppService'
+var subnetPrivateEndpointsName = 'PrivateEndpoints'
+
+/*
+  Example:
+
+  var ipAddressToAllow = [
+    {
+      value: 'x.x.x.x'
+      action: 'Allow'
+    }
+    {
+      value: 'y.y.y.y/a'
+      action: 'Allow'
+    }
+  ]
+*/
+var ipAddressToAllow = [
+]
+
+// Networking
+resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+  location: location
+  name: 'vnet'
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        '10.0.0.0/16'
+      ]
+    }
+    subnets: [
+      {
+        name: subnetAppServiceName
+        properties: {
+          addressPrefix: '10.0.1.0/24'
+          delegations: [
+            {
+              name: 'appservice-serverfarm'
+              properties: {
+                serviceName: 'Microsoft.Web/serverFarms'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: subnetPrivateEndpointsName
+        properties: {
+          addressPrefix: '10.0.2.0/24'
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+    ]
+  }
+}
+
+resource storageBlobPrivateZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+  name: 'privatelink.blob.core.windows.net'
+  location: 'global'
+}
+
+resource storageBlobPrivateZoneVirtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+  name: '${storageBlobPrivateZone.name}/${uniqueString(vnet.id)}'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: vnet.id
+    }
+    registrationEnabled: false
+  }
+}
+
+// Key Vault
 resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: keyVaultName
   location: location
@@ -55,85 +128,8 @@ resource azure_key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
           ]
         }
       }
-      {
-        objectId: app_services_function_app.identity.principalId
-        tenantId: app_services_function_app.identity.tenantId
-        permissions: {
-          secrets: [
-            'get'
-          ]
-        }
-      }
+     
     ]
-  }
-}
-
-resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
-  name: searchName
-  location: location
-  sku: {
-    name: 'standard'
-  }
-  identity: {
-    type: 'SystemAssigned'
-  }
-}
-
-resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-18' = {
-  name: cognitiveAccountName
-  location: location
-  kind: 'CognitiveServices'
-
-  sku: {
-    name: 'S0'
-  }
-}
-
-resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-01' = {
-  name: storageAccountNameData
-  location: location
-  kind: 'StorageV2'
-  sku: {
-    name: 'Standard_LRS'
-  }
-  properties: {
-    allowBlobPublicAccess: false
-    minimumTlsVersion: 'TLS1_2'
-    supportsHttpsTrafficOnly: true
-  }
-}
-
-resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = {
-  name: 'stgfunc${uniqueness}'
-  location: location
-  kind: 'StorageV2'
-  sku: {
-    name: 'Standard_LRS'
-  }
-  properties: {
-    allowBlobPublicAccess: false
-    minimumTlsVersion: 'TLS1_2'
-    supportsHttpsTrafficOnly: true
-  }
-}
-
-resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01'  = {
-  name: '${azure_storage_account_data.name}/default/${docsContainerName}'
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: appServicePlanName
-  location: location
-  kind: 'Linux'
-  sku: {
-    tier: 'Standard'
-    name: 'S1'
-  }
-  properties: {
-    reserved: true
   }
 }
 
@@ -179,6 +175,158 @@ resource akv_secret_cognitive_services_secret 'Microsoft.KeyVault/vaults/secrets
   }
 }
 
+// Search
+resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
+  name: searchName
+  location: location
+  sku: {
+    name: 'standard'
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+}
+
+// Cognitive Services
+resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-18' = {
+  name: cognitiveAccountName
+  location: location
+  kind: 'CognitiveServices'
+
+  sku: {
+    name: 'S0'
+  }
+}
+
+// Storage Accounts
+resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+  name: storageAccountNameData
+  location: location
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  properties: {
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'AzureServices, Logging, Metrics'
+      ipRules: ipAddressToAllow
+    }
+  }
+}
+
+resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
+  location: location
+  name: '${azure_storage_account_data.name}-blob-endpoint'
+  properties: {
+    subnet: {
+      id: '${vnet.id}/subnets/${subnetPrivateEndpointsName}'
+    }
+    privateLinkServiceConnections: [
+      {
+        name: '${azure_storage_account_data.name}-blob-endpoint'
+        properties: {
+          privateLinkServiceId: azure_storage_account_data.id
+          groupIds: [
+            'blob'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource azure_storage_account_data_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+  name: '${azure_storage_account_data_blob_pe.name}/default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink_blob_core_windows_net'
+        properties: {
+          privateDnsZoneId: storageBlobPrivateZone.id
+        }
+      }
+    ]
+  }
+}
+
+resource azure_storage_account_functions 'Microsoft.Storage/storageAccounts@2019-06-01' = if (deployFunction) {
+  name: 'stgfunc${uniqueness}'
+  location: location
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  properties: {
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'Logging, Metrics'
+    }
+  }
+}
+
+resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = if (deployFunction) {
+  location: location
+  name: '${azure_storage_account_functions.name}-blob-endpoint'
+  properties: {
+    subnet: {
+      id: '${vnet.id}/subnets/${subnetPrivateEndpointsName}'
+    }
+    privateLinkServiceConnections: [
+      {
+        name: '${azure_storage_account_functions.name}-blob-endpoint'
+        properties: {
+          privateLinkServiceId: azure_storage_account_functions.id
+          groupIds: [
+            'blob'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' =  if (deployFunction) {
+  name: '${azure_storage_account_functions_blob_pe.name}/default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink_blob_core_windows_net'
+        properties: {
+          privateDnsZoneId: storageBlobPrivateZone.id
+        }
+      }
+    ]
+  }
+}
+
+resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01'  = {
+  name: '${azure_storage_account_data.name}/default/${docsContainerName}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+// App Service
+resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
+  name: appServicePlanName
+  location: location
+  kind: 'Linux'
+  sku: {
+    tier: 'Standard'
+    name: 'S1'
+  }
+  properties: {
+    reserved: true
+  }
+}
+
 resource app_insights 'Microsoft.Insights/components@2015-05-01' = {
   name: appInsightsName
   location: location
@@ -200,6 +348,14 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|3.1'
       appSettings: [
+        {
+          name: 'WEBSITE_DNS_SERVER' // required for VNET Integration + Azure DNS Private Zones
+          value: '168.63.129.16'
+        }
+        {
+          name: 'WEBSITE_VNET_ROUTE_ALL'
+          value: '1'
+        }
         {
           name: 'SearchServiceName'
           value: azure_search_service.name
@@ -245,7 +401,15 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (!empty(functionAppName)) {
+resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
+  name: '${app_services_website.name}/VirtualNetwork'
+  properties: {
+    subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
+    swiftSupported: true
+  } 
+}
+
+resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deployFunction) {
   name: functionAppName
   location: location
   kind: 'functionapp'
@@ -257,12 +421,20 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (!empty
     siteConfig: {
       appSettings: [
         {
+          name: 'WEBSITE_DNS_SERVER' // required for VNET Integration + Azure DNS Private Zones
+          value: '168.63.129.16'
+        }
+        {
+          name: 'WEBSITE_VNET_ROUTE_ALL'
+          value: '1'
+        }
+        {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~3'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'node'
+          value: 'dotnet'
         }
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
@@ -274,11 +446,37 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (!empty
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+          value: deployFunction ? 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net' : ''
         }
       ]
     }
   }
+}
+
+resource function_access_policy 'Microsoft.KeyVault/vaults/accessPolicies@2021-11-01-preview' = if (deployFunction) {
+  name: 'add'
+  parent: azure_key_vault
+  properties: {
+    accessPolicies: deployFunction ? [
+       {
+        objectId: app_services_function_app.identity.principalId
+        tenantId: app_services_function_app.identity.tenantId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ] : []
+  }
+}
+
+resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = if (deployFunction) {
+  name: '${app_services_function_app.name}/VirtualNetwork'
+  properties: {
+    subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
+    swiftSupported: true
+  } 
 }
 
 // Role Assignments
@@ -291,3 +489,6 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
     principalType: 'ServicePrincipal'
   }
 }
+
+output storage_data_id string = azure_storage_account_data.id
+output search_enpoint string = 'https://${azure_search_service.name}.search.windows.net'
