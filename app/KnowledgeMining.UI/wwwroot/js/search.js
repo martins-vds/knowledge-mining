@@ -64,7 +64,7 @@ function UpdateResultsView() {
         }
     }
 
-    $.post('/home/searchview',
+    $.post('/home/search',
         {
             q: q !== undefined ? q : "*",
             searchFacets: selectedFacets,

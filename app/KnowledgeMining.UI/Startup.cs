@@ -73,11 +73,13 @@ namespace KnowledgeMining.UI
 
             app.UseStaticFiles();
 
+            app.UseRouting();
+
             app.UseCookiePolicy();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapDefaultControllerRoute();
             });
         }
     }
