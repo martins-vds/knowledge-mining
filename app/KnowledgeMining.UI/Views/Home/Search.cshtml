@@ -12,6 +12,7 @@
     aspViewModel = @Html.Raw(Json.Serialize(Model));
     q = @Html.Raw(Json.Serialize(Model.query));
     searchId = @Html.Raw(Json.Serialize((Model.searchId)));
+
 </script>
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 
@@ -148,6 +149,6 @@
 
 @section Scripts
 {
-    <script src="~/js/search.js"></script>
+    
 }
 

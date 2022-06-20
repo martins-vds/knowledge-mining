@@ -61,7 +61,7 @@ namespace KnowledgeMining.UI.Controllers
                 .Select(g => new SearchFacet { Key = g.Key, Value = g.Select(f => f[1]).ToArray() })
                 .ToArray();
 
-            var viewModel = await DoSearch(new SearchOptions()
+            var viewModel = await Search(new SearchOptions()
             {
                 q = q,
                 searchFacets = searchFacets,
@@ -79,13 +79,13 @@ namespace KnowledgeMining.UI.Controllers
             public string polygonString { get; set; }
         }
 
-        //[HttpPost]
-        public async Task<SearchResultViewModel> DoSearch([FromForm] SearchOptions searchParams, CancellationToken cancellationToken)
+        [HttpPost]
+        public async Task<SearchResultViewModel> Search([FromForm]SearchOptions searchParams, CancellationToken cancellationToken)
         {
             if (searchParams.q == null)
                 searchParams.q = "*";
             if (searchParams.searchFacets == null)
-                searchParams.searchFacets = new SearchFacet[0];
+                searchParams.searchFacets = Array.Empty<SearchFacet>();
             if (searchParams.currentPage == 0)
                 searchParams.currentPage = 1;
 
@@ -149,10 +149,10 @@ namespace KnowledgeMining.UI.Controllers
             FacetGraphGenerator graphGenerator = new FacetGraphGenerator(_searchService);
             var graphJson = await graphGenerator.GetFacetGraphNodes(query, facetNames.ToList<string>(), maxLevels, maxNodes, cancellationToken);
 
-            return Json(graphJson.ToString());
+            return Content(graphJson.ToString(), "application/json");
         }
 
-        [HttpPost, HttpGet]
+        [HttpGet]
         public async Task<IActionResult> Suggest(string term, bool fuzzy, CancellationToken cancellationToken)
         {
             // Change to _docSearch.Suggest if you would prefer to have suggestions instead of auto-completion
