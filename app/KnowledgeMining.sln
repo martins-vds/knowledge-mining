@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnowledgeMining.UI", "Knowl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnowledgeMining.Functions.Skills", "KnowledgeMining.Functions.Skills\KnowledgeMining.Functions.Skills.csproj", "{8BD883F3-2D95-44F0-95E5-434051F51ECB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KnowledgeMining.Blazor", "KnowledgeMining.Blazor\KnowledgeMining.Blazor.csproj", "{B0FB2353-5D44-4524-982D-8BCBE6C39A69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8BD883F3-2D95-44F0-95E5-434051F51ECB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0FB2353-5D44-4524-982D-8BCBE6C39A69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0FB2353-5D44-4524-982D-8BCBE6C39A69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0FB2353-5D44-4524-982D-8BCBE6C39A69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0FB2353-5D44-4524-982D-8BCBE6C39A69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

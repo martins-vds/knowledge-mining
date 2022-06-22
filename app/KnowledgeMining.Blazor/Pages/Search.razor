@@ -1,0 +1,146 @@
+﻿@page "/search"
+
+<PageTitle>Search</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudGrid>
+        <MudItem xs="0" md="1">
+
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudAutocomplete T="string" @bind-Value="value1" SearchFunc="@AutoComplete"
+                             ResetValueOnEmptyText="@resetValueOnEmptyText"
+                             CoerceText="@coerceText"
+                             CoerceValue="@coerceValue"
+                             AdornmentIcon="@Icons.Material.Filled.Search"
+                             AdornmentColor="Color.Primary"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.None" />
+            <MudExpansionPanels Class="mt-6">
+                <MudExpansionPanel Text="Key Phrases">
+
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+            <MudExpansionPanels Class="mt-6">
+                <MudExpansionPanel Text="Locations">
+
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+            <MudExpansionPanels Class="mt-6">
+                <MudExpansionPanel Text="Persons">
+
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudItem>
+        <MudItem xs="12" md="9">
+            <MudTabs Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
+                <div class="d-flex flex-column">
+                    <MudTabPanel Text="Search Results">
+                        <MudGrid>
+                            <MudItem xs="12" sm="3">
+                                <MudCard Outlined="true">
+                                    <MudCardContent Class="d-flex flex-column align-content-start">
+                                        <div class="d-flex flex-row flex-fill gap-2">
+                                            <div>
+                                                <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <div>
+                                                    <MudText>Story of the day</MudText>
+                                                </div>
+                                                <div class="d-flex flex-row flex-wrap pt-1">
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudCard Outlined="true">
+                                    <MudCardContent>
+                                        <div class="d-flex flex-row flex-fill gap-2">
+                                            <div>
+                                                <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <div>
+                                                    <MudText>Story of the day</MudText>
+                                                </div>
+                                                <div class="d-flex flex-row flex-wrap pt-1">
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                    <MudChip Color="Color.Info">Tag</MudChip>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex align-center flex-column pt-4">
+                            <MudPagination Color="Color.Primary" Count="4" @bind-Selected="@_selected" />
+                        </div>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Entity Map">
+                        <div class="d-flex flex-row-reverse flex-fill">
+                            <div>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <MudSlider Min="1" Max="3" Step="1" Value="@value" ValueLabel="true">Max Levels</MudSlider>
+                                <MudSlider Min="3" Max="30" Step="1" Value="@value" ValueLabel="true">Max Levels</MudSlider>
+                                <MudExpansionPanels Class="mt-6">
+                                    <MudExpansionPanel Text="Select Facets">
+
+                                    </MudExpansionPanel>
+                                </MudExpansionPanels>
+                            </div>
+                        </div>
+                    </MudTabPanel>
+                </div>
+            </MudTabs>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private IEnumerable<string> Strings = new List<string>() { "test" };
+
+    private bool resetValueOnEmptyText;
+    private bool coerceText;
+    private bool coerceValue;
+    private string value1, value2;
+
+    private MudTheme Theme = new MudTheme();
+
+    private int _selected = 1;
+
+    double value = 10.0;
+
+    private string[] states =
+    {
+    };
+
+    private async Task<IEnumerable<string>> AutoComplete(string value)
+    {
+        // In real life use an asynchronous function for fetching data from an api.
+        await Task.Delay(5);
+
+        // if text is null or empty, show complete list
+        if (string.IsNullOrEmpty(value))
+            return states;
+        return states.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+}
