@@ -12,6 +12,7 @@ namespace KnowledgeMining.UI.Services.Search
     {
         string GetSearchId();
         Task<AutocompleteResults> Autocomplete(string searchText, bool fuzzy, CancellationToken cancellationToken);
+
         Task<DocumentResult> GetDocumentById(string id, CancellationToken cancellationToken);
         Task<DocumentResult> GetDocuments(string q, SearchFacet[] searchFacets, int currentPage, string polygonString, CancellationToken cancellationToken);
         Task<SearchResults<SearchDocument>> GetFacets(string searchText, List<string> facetNames, int maxCount, CancellationToken cancellationToken);

@@ -1,12 +1,14 @@
 ﻿@page "/"
+
 @inject NavigationManager NavigationManager
+@inject ISearchService _searchService
 
 <PageTitle>Home</PageTitle>
 
 <MudPaper Height="400px" Width="100%" Class="mud-theme-info d-flex align-center" Square="true" Elevation="0">
     <MudContainer MaxWidth="MaxWidth.Small">
         <MudPaper Style="@($"background: {Theme.Palette.White}")" Elevation="1">
-            <MudAutocomplete T="string" Label="What are you searching for today?" @bind-Value="value1" SearchFunc="@AutoComplete"
+            <MudAutocomplete T="string" Label="What are you searching for today?" @bind-Value="searchQuery" SearchFunc="@AutoComplete"
                              ResetValueOnEmptyText="@resetValueOnEmptyText"
                              CoerceText="@coerceText"
                              CoerceValue="@coerceValue"
@@ -30,42 +32,19 @@
     private bool resetValueOnEmptyText;
     private bool coerceText;
     private bool coerceValue;
-    private string value1, value2;
+    private string? searchQuery;
 
     private MudTheme Theme = new MudTheme();
 
-    private string[] states =
-    {
-    //"Alabama", "Alaska", "American Samoa", "Arizona",
-    //"Arkansas", "California", "Colorado", "Connecticut",
-    //"Delaware", "District of Columbia", "Federated States of Micronesia",
-    //"Florida", "Georgia", "Guam", "Hawaii", "Idaho",
-    //"Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
-    //"Louisiana", "Maine", "Marshall Islands", "Maryland",
-    //"Massachusetts", "Michigan", "Minnesota", "Mississippi",
-    //"Missouri", "Montana", "Nebraska", "Nevada",
-    //"New Hampshire", "New Jersey", "New Mexico", "New York",
-    //"North Carolina", "North Dakota", "Northern Mariana Islands", "Ohio",
-    //"Oklahoma", "Oregon", "Palau", "Pennsylvania", "Puerto Rico",
-    //"Rhode Island", "South Carolina", "South Dakota", "Tennessee",
-    //"Texas", "Utah", "Vermont", "Virgin Island", "Virginia",
-    //"Washington", "West Virginia", "Wisconsin", "Wyoming",
-    };
-
     private async Task<IEnumerable<string>> AutoComplete(string value)
     {
-        // In real life use an asynchronous function for fetching data from an api.
-        await Task.Delay(5);
-
-        // if text is null or empty, show complete list
-        if (string.IsNullOrEmpty(value))
-            return states;
-        return states.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        return await _searchService.Autocomplete(value, true, cancellationTokenSource.Token).ConfigureAwait(false);
     }
 
-    private async void GoToSearchPage()
+    private void GoToSearchPage()
     {
-        NavigationManager.NavigateTo("/search");
+        NavigationManager.NavigateTo($"/search?q={searchQuery ?? string.Empty}");
     }
 }
 

@@ -1,5 +1,7 @@
 ﻿@page "/search"
 
+@inject ISearchService _searchService
+
 <PageTitle>Search</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
@@ -8,7 +10,7 @@
 
         </MudItem>
         <MudItem xs="12" md="2">
-            <MudAutocomplete T="string" @bind-Value="value1" SearchFunc="@AutoComplete"
+            <MudAutocomplete T="string" @bind-Value="SearchQuery" SearchFunc="@AutoComplete"
                              ResetValueOnEmptyText="@resetValueOnEmptyText"
                              CoerceText="@coerceText"
                              CoerceValue="@coerceValue"
@@ -116,12 +118,11 @@
 </MudContainer>
 
 @code {
-    private IEnumerable<string> Strings = new List<string>() { "test" };
+    [Parameter, SupplyParameterFromQuery(Name = "q")] public string? SearchQuery { get; set; }
 
     private bool resetValueOnEmptyText;
     private bool coerceText;
     private bool coerceValue;
-    private string value1, value2;
 
     private MudTheme Theme = new MudTheme();
 
@@ -129,18 +130,9 @@
 
     double value = 10.0;
 
-    private string[] states =
-    {
-    };
-
     private async Task<IEnumerable<string>> AutoComplete(string value)
     {
-        // In real life use an asynchronous function for fetching data from an api.
-        await Task.Delay(5);
-
-        // if text is null or empty, show complete list
-        if (string.IsNullOrEmpty(value))
-            return states;
-        return states.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        return await _searchService.Autocomplete(value, true, cancellationTokenSource.Token).ConfigureAwait(false);
     }
 }

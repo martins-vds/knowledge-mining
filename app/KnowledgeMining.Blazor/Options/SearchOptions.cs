@@ -8,6 +8,7 @@
         public string IndexName { get; set; }
 
         public string IndexerName { get; set; }
+        public string SuggesterName { get; set; }
         public bool IsPathBase64Encoded { get; set; } = true;
         public string KeyField { get; set; }
 
