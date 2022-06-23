@@ -7,6 +7,7 @@ using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
+using KnowledgeMining.Blazor.Services.Search.Models;
 using KnowledgeMining.UI.Services.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -72,6 +73,165 @@ namespace KnowledgeMining.UI.Services.Search
             
 
             return response.Value.Results.Select(r => r.Text).Distinct();
+        }
+
+        public async Task<SearchResponse> SearchDocuments(SearchRequest request, CancellationToken cancellationToken)
+        {
+            var searchOptions = await GenerateSearchOptions(request, cancellationToken);
+
+            var searchResults = await _searchClient.SearchAsync<Document>(request.Query, searchOptions, cancellationToken);
+
+            if (searchResults == null || searchResults?.Value == null)
+            {
+                return new SearchResponse();
+            }
+
+            return new SearchResponse()
+            {
+                TotalCount = searchResults.Value.TotalCount ?? 0,
+                Documents = searchResults.Value.GetResults().Select(d => d.Document),
+                Facets = AggregateFacets(searchResults.Value.Facets),
+                Tags = AggregateFacets(searchResults.Value.Facets),
+                Page = request.Page, // Not sure if I need to return page in the search result
+                FacetableFields = request.SearchFacets, // Not sure if I need to return page in the search result
+                SearchId = GetSearchId(searchResults)
+            }
+        }
+
+        private IEnumerable<AggregateFacet> AggregateFacets(IDictionary<string, IList<FacetResult>> facets)
+        {
+            return facets
+                           .Select(x => new AggregateFacet() { Facet = x.Key, Count = x.Value.Count })
+                           .ToList();
+        }
+
+        private async Task<SearchOptions> GenerateSearchOptions(
+            SearchRequest request,
+            CancellationToken cancellationToken)
+        {
+            var schema = await GenerateSearchSchema(cancellationToken);
+            var options = new SearchOptions()
+            {
+                SearchMode = SearchMode.All,
+                Size = 10,
+                Skip = (request.Page - 1) * 10,
+                IncludeTotalCount = true,
+                QueryType = SearchQueryType.Full,
+                HighlightPreTag = "<b>",
+                HighlightPostTag = "</b>"
+            };
+
+            foreach (string s in schema.SelectFilter)
+            {
+                options.Select.Add(s);
+            }
+
+            var facets = schema.Facets.Select(f => f.Name).ToList();
+            foreach (string f in facets)
+            {
+                options.Facets.Add(f + ",sort:count");
+            }
+
+            foreach (string h in schema.SearchableFields)
+            {
+                options.HighlightFields.Add(h);
+            }
+
+
+            string filter = null;
+            var filterStr = string.Empty;
+
+            if (request.SearchFacets != null)
+            {
+                foreach (var item in request.SearchFacets)
+                {
+                    var facet = schema.Facets.Where(f => f.Name == item.Key).FirstOrDefault();
+
+                    filterStr = string.Join(",", item.Value);
+
+                    // Construct Collection(string) facet query
+                    if (facet.Type == typeof(string[]))
+                    {
+                        if (string.IsNullOrEmpty(filter))
+                            filter = $"{item.Key}/any(t: search.in(t, '{filterStr}', ','))";
+                        else
+                            filter += $" and {item.Key}/any(t: search.in(t, '{filterStr}', ','))";
+                    }
+                    // Construct string facet query
+                    else if (facet.Type == typeof(string))
+                    {
+                        if (string.IsNullOrEmpty(filter))
+                            filter = $"{item.Key} eq '{filterStr}'";
+                        else
+                            filter += $" and {item.Key} eq '{filterStr}'";
+                    }
+                    // Construct DateTime facet query
+                    else if (facet.Type == typeof(DateTime))
+                    {
+                        // TODO: Date filters
+                    }
+                }
+            }
+
+            options.Filter = filter;
+
+            // Add Filter based on geographic polygon if it is set.
+            if (!string.IsNullOrWhiteSpace(request.PolygonString))
+            {
+                string geoQuery = $"geo.intersects(geoLocation, geography'POLYGON(({request.PolygonString}))')";
+
+                if (options.Filter != null && options.Filter.Length > 0)
+                {
+                    options.Filter += " and " + geoQuery;
+                }
+                else
+                {
+                    options.Filter = geoQuery;
+                }
+            }
+
+            return options;
+        }
+
+        private BlobContainerClient GetBlobContainerClient()
+        {
+            return _blobServiceClient.GetBlobContainerClient(_storageOptions.ContainerName);
+        }
+
+        private Uri GetServiceSasUriForContainer(BlobContainerClient containerClient,
+                                          string storedPolicyName = null)
+        {
+            // Check whether this BlobContainerClient object has been authorized with Shared Key.
+            if (containerClient.CanGenerateSasUri)
+            {
+                BlobSasBuilder sasBuilder = new BlobSasBuilder()
+                {
+                    BlobContainerName = containerClient.Name,
+                    Resource = "c"
+                };
+
+                if (storedPolicyName == null)
+                {
+                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(1);
+                    sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
+                    sasBuilder.StartsOn = DateTimeOffset.UtcNow.AddMinutes(-10);
+                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(60);
+                    sasBuilder.IPRange = new SasIPRange(IPAddress.None, IPAddress.None);
+                }
+                else
+                {
+                    sasBuilder.Identifier = storedPolicyName;
+                }
+                sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+                return containerClient.GenerateSasUri(sasBuilder);
+            }
+            else
+            {
+                _logger.LogWarning(@"BlobContainerClient must be authorized with Shared Key 
+                          credentials to create a service SAS.");
+                return null;
+            }
         }
     }
 }
