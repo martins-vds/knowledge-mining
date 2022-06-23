@@ -1,4 +1,6 @@
 ﻿@page "/search"
+@using KnowledgeMining.Blazor.Models
+@using KnowledgeMining.UI.Services.Search.Models
 
 @inject ISearchService _searchService
 
@@ -10,90 +12,27 @@
 
         </MudItem>
         <MudItem xs="12" md="2">
-            <MudAutocomplete T="string" @bind-Value="SearchQuery" SearchFunc="@AutoComplete"
-                             ResetValueOnEmptyText="@resetValueOnEmptyText"
-                             CoerceText="@coerceText"
-                             CoerceValue="@coerceValue"
+            <MudAutocomplete T="string" @bind-Value="SearchText" 
+                             SearchFunc="@AutoComplete"
+                             ResetValueOnEmptyText="true"
+                             CoerceText="true"
+                             CoerceValue="true"
                              AdornmentIcon="@Icons.Material.Filled.Search"
                              AdornmentColor="Color.Primary"
+                             OnAdornmentClick="@(() => SearchDocuments())"
                              Variant="Variant.Outlined"
                              Margin="Margin.None" />
-            <MudExpansionPanels Class="mt-6">
-                <MudExpansionPanel Text="Key Phrases">
-
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-            <MudExpansionPanels Class="mt-6">
-                <MudExpansionPanel Text="Locations">
-
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-            <MudExpansionPanels Class="mt-6">
-                <MudExpansionPanel Text="Persons">
-
-                </MudExpansionPanel>
-            </MudExpansionPanels>
+            <FacetsFilterComponent Facets="@_searchState.Facets"></FacetsFilterComponent>
         </MudItem>
         <MudItem xs="12" md="9">
             <MudTabs Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
                     <MudTabPanel Text="Search Results">
-                        <MudGrid>
-                            <MudItem xs="12" sm="3">
-                                <MudCard Outlined="true">
-                                    <MudCardContent Class="d-flex flex-column align-content-start">
-                                        <div class="d-flex flex-row flex-fill gap-2">
-                                            <div>
-                                                <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <div>
-                                                    <MudText>Story of the day</MudText>
-                                                </div>
-                                                <div class="d-flex flex-row flex-wrap pt-1">
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </MudCardContent>
-                                </MudCard>
-                            </MudItem>
-                            <MudItem xs="12" sm="3">
-                                <MudCard Outlined="true">
-                                    <MudCardContent>
-                                        <div class="d-flex flex-row flex-fill gap-2">
-                                            <div>
-                                                <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
-                                            </div>
-                                            <div class="d-flex flex-column">
-                                                <div>
-                                                    <MudText>Story of the day</MudText>
-                                                </div>
-                                                <div class="d-flex flex-row flex-wrap pt-1">
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                    <MudChip Color="Color.Info">Tag</MudChip>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </MudCardContent>
-                                </MudCard>
-                            </MudItem>
-                        </MudGrid>
+                        <SearchResultsComponent Documents="@_searchState.Documents"></SearchResultsComponent>
                         <div class="d-flex align-center flex-column pt-4">
-                            <MudPagination Color="Color.Primary" Count="4" @bind-Selected="@_selected" />
+                            @if(_searchState.TotalCount > 0){
+                                <MudPagination Color="Color.Primary" Count="@_searchState.TotalPages" @bind-Selected="@_selectedPage" />
+                            }
                         </div>
                     </MudTabPanel>
                     <MudTabPanel Text="Entity Map">
@@ -118,21 +57,44 @@
 </MudContainer>
 
 @code {
-    [Parameter, SupplyParameterFromQuery(Name = "q")] public string? SearchQuery { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "q")] public string? SearchText { get; set; }
 
-    private bool resetValueOnEmptyText;
-    private bool coerceText;
-    private bool coerceValue;
-
-    private MudTheme Theme = new MudTheme();
-
-    private int _selected = 1;
+    private SearchState _searchState = new();
+    private int _selectedPage = 1;
 
     double value = 10.0;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await SearchDocuments(firstRender: true);
+    }
+
     private async Task<IEnumerable<string>> AutoComplete(string value)
     {
-        var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         return await _searchService.Autocomplete(value, true, cancellationTokenSource.Token).ConfigureAwait(false);
+    }
+
+    private async Task SearchDocuments(bool firstRender = false)
+    {
+        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+        var request = new SearchRequest(SearchText, _selectedPage, null, null);
+        var response = await _searchService.SearchDocuments(request, cancellationTokenSource.Token).ConfigureAwait(false);
+
+        //_searchState.Reset();
+
+        //if (!firstRender)
+        //{
+        //    await InvokeAsync(() => StateHasChanged());
+        //}
+
+        _searchState.Documents = response.Documents;
+        _searchState.FacetableFields = response.FacetableFields;
+        _searchState.Facets = response.Facets;
+        _searchState.Tags = response.Tags;
+        _searchState.TotalCount = response.TotalCount;
+        _searchState.TotalPages = (int)response.TotalPages;
+
+        
     }
 }

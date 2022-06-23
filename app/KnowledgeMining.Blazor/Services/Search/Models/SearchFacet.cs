@@ -1,8 +1,8 @@
 ﻿namespace KnowledgeMining.UI.Services.Search.Models
 {
-    public class AggregateFacet
+    public class SearchFacet
     {
-        public string Facet { get; set; }
-        public long Count { get; set; }
+        public string Key { get; set; }
+        public IEnumerable<string> Value { get; set; } = Enumerable.Empty<string>();
     }
 }

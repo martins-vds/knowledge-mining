@@ -1,23 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
-using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
-using KnowledgeMining.Blazor.Services.Search.Models;
+using KnowledgeMining.Blazor.Models;
 using KnowledgeMining.UI.Services.Search.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace KnowledgeMining.UI.Services.Search
 {
@@ -55,31 +48,32 @@ namespace KnowledgeMining.UI.Services.Search
         public async Task<SearchSchema> GenerateSearchSchema(CancellationToken cancellationToken)
         {
             var response = await _searchIndexClient.GetIndexAsync(_searchOptions.IndexName, cancellationToken);
-            
+
             return new SearchSchema(response.Value.Fields);
         }
 
         public async Task<IEnumerable<string>> Autocomplete(string searchText, bool fuzzy, CancellationToken cancellationToken)
         {
             // Execute search based on query string
-            AutocompleteOptions options = new ()
+            AutocompleteOptions options = new()
             {
                 Mode = AutocompleteMode.OneTermWithContext,
                 UseFuzzyMatching = fuzzy,
-                Size = 8
+                Size = _searchOptions.PageSize
             };
 
             var response = await _searchClient.AutocompleteAsync(searchText, _searchOptions.SuggesterName, options, cancellationToken);
-            
+
 
             return response.Value.Results.Select(r => r.Text).Distinct();
         }
 
         public async Task<SearchResponse> SearchDocuments(SearchRequest request, CancellationToken cancellationToken)
         {
+            var searchSchema = await GenerateSearchSchema(cancellationToken);
             var searchOptions = await GenerateSearchOptions(request, cancellationToken);
 
-            var searchResults = await _searchClient.SearchAsync<Document>(request.Query, searchOptions, cancellationToken);
+            var searchResults = await _searchClient.SearchAsync<DocumentMetadata>(request.SearchText, searchOptions, cancellationToken);
 
             if (searchResults == null || searchResults?.Value == null)
             {
@@ -92,17 +86,49 @@ namespace KnowledgeMining.UI.Services.Search
                 Documents = searchResults.Value.GetResults().Select(d => d.Document),
                 Facets = AggregateFacets(searchResults.Value.Facets),
                 Tags = AggregateFacets(searchResults.Value.Facets),
-                Page = request.Page, // Not sure if I need to return page in the search result
-                FacetableFields = request.SearchFacets, // Not sure if I need to return page in the search result
+                // Not sure if I need to return page in the search result
+                TotalPages = CalculateTotalPages(searchResults.Value.TotalCount ?? 0),
+                FacetableFields = searchSchema.Facets.Select(f => f.Name), // Not sure if I need to return page in the search result
                 SearchId = GetSearchId(searchResults)
+            };
+        }
+
+        private long CalculateTotalPages(long resultsTotalCount)
+        {
+            var pageCount = resultsTotalCount / _searchOptions.PageSize;
+
+            if (resultsTotalCount % _searchOptions.PageSize > 0)
+            {
+                pageCount++;
             }
+
+            return pageCount;
+        }
+
+        private string GetSearchId(Response<SearchResults<DocumentMetadata>> searchResults)
+        {
+            IEnumerable<string> headerValues;
+            string searchId = null;
+            if (searchResults.GetRawResponse().Headers.TryGetValues("x-ms-azs-searchid", out headerValues))
+            {
+                searchId = headerValues.FirstOrDefault();
+            }
+            return searchId ?? string.Empty;
         }
 
         private IEnumerable<AggregateFacet> AggregateFacets(IDictionary<string, IList<FacetResult>> facets)
         {
-            return facets
-                           .Select(x => new AggregateFacet() { Facet = x.Key, Count = x.Value.Count })
-                           .ToList();
+            return facets.Where(f => f.Value.Any()).Select(f => new AggregateFacet()
+            {
+                Name = f.Key,
+                Count = f.Value.Count,
+                Values = f.Value.Select(v => new Facet()
+                {
+                    Name = f.Key,
+                    Value = v.AsValueFacetResult<string>().Value,
+                    Count = v.Count ?? 0
+                })
+            });
         }
 
         private async Task<SearchOptions> GenerateSearchOptions(
@@ -113,8 +139,8 @@ namespace KnowledgeMining.UI.Services.Search
             var options = new SearchOptions()
             {
                 SearchMode = SearchMode.All,
-                Size = 10,
-                Skip = (request.Page - 1) * 10,
+                Size = _searchOptions.PageSize,
+                Skip = (request.Page - 1) * _searchOptions.PageSize,
                 IncludeTotalCount = true,
                 QueryType = SearchQueryType.Full,
                 HighlightPreTag = "<b>",

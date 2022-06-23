@@ -80,7 +80,7 @@ namespace KnowledgeMining.UI.Controllers
         }
 
         [HttpPost]
-        public async Task<SearchResultViewModel> Search([FromForm]SearchOptions searchParams, CancellationToken cancellationToken)
+        public async Task<SearchResultViewModel> Search([FromForm] SearchOptions searchParams, CancellationToken cancellationToken)
         {
             if (searchParams.q == null)
                 searchParams.q = "*";

@@ -1,0 +1,36 @@
+﻿@using KnowledgeMining.Blazor.Models
+<MudGrid>
+    @foreach (var document in Documents)
+    {
+        <MudItem xs="12" sm="4">
+        <MudCard Outlined="true">
+            <MudCardContent Class="d-flex flex-column align-content-start">
+                <div class="d-flex flex-row flex-fill gap-2">
+                    <div>
+                        <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
+                    </div>
+                    <div class="d-flex flex-column">
+                        <div>
+                            <MudText>@document.Name</MudText>
+                        </div>
+                        <div class="d-flex flex-row flex-wrap pt-1">
+                            @foreach (var keyPhrase in document.KeyPhrases.Take(6))
+                                {
+                                    <MudChip Color="Color.Info">@keyPhrase</MudChip>
+                                }
+                        </div>
+                    </div>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    }
+</MudGrid>
+
+@code {
+    [Parameter]
+    public IEnumerable<DocumentMetadata> Documents { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnDocumentClicked{ get; set; }
+}

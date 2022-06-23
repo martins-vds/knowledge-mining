@@ -54,7 +54,7 @@ namespace KnowledgeMining.UI
 
             services.AddApplicationInsightsTelemetry();
             services.AddServiceProfiler();
-            
+
             services.AddControllersWithViews();
         }
 

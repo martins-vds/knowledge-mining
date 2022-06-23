@@ -2,8 +2,6 @@ using Azure.Identity;
 using KnowledgeMining.UI.Extensions;
 using KnowledgeMining.UI.Options;
 using KnowledgeMining.UI.Services.Search;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.FileProviders;
 using MudBlazor.Services;
@@ -49,7 +47,7 @@ namespace KnowledgeMining.Blazor
             builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")));
 
             builder.Services.AddApplicationInsightsTelemetry();
-            builder.Services.AddServiceProfiler();
+            //builder.Services.AddServiceProfiler();
 
             var app = builder.Build();
 
@@ -66,7 +64,7 @@ namespace KnowledgeMining.Blazor
             app.UseStaticFiles();
 
             app.UseRouting();
-            
+
             app.UseCookiePolicy();
 
             app.MapBlazorHub();

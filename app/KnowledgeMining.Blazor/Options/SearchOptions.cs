@@ -11,6 +11,7 @@
         public string SuggesterName { get; set; }
         public bool IsPathBase64Encoded { get; set; } = true;
         public string KeyField { get; set; }
+        public int PageSize { get; set; }
 
     }
 }
