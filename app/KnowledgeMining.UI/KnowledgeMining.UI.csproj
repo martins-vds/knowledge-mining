@@ -22,6 +22,9 @@
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.3" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\Storage\" />
+  </ItemGroup>
   <ProjectExtensions>
     <VisualStudio>
       <UserProperties wwwroot_4lib_4bootstrap_4dist_4css_4bootstrap_1min_1css_1map__JsonSchema="" />

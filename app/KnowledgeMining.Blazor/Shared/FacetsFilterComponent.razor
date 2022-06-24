@@ -1,12 +1,12 @@
 ﻿@using KnowledgeMining.Blazor.Models
 
-@foreach (var facet in Facets)
+@foreach (var aggregateFacet in Facets)
 {
     <MudExpansionPanels Class="mt-6">
-        <MudExpansionPanel Text="@facet.Name">
-            @foreach (var selectableFacet in _selectedFacets.Where(f => f.Facet.Name == facet.Name).Take(10))
+        <MudExpansionPanel Text="@aggregateFacet.Name">
+            @foreach (var facet in aggregateFacet.Values.Take(10))
             {
-                <MudCheckBox @bind-Checked="selectableFacet.IsSelected" Label="@($"{selectableFacet.Facet.Value} ({selectableFacet.Facet.Count})")"></MudCheckBox>
+                <MudCheckBox T="bool" Label="@($"{facet.Value} ({facet.Count})")" CheckedChanged="@(() => HandleCheckedChanged(facet))"></MudCheckBox>
             }
         </MudExpansionPanel>
     </MudExpansionPanels>
@@ -16,20 +16,11 @@
     [Parameter]
     public IEnumerable<AggregateFacet> Facets { get; set; }
 
-    private List<SelectableFacet> _selectedFacets = new();
+    [Parameter]
+    public EventCallback<Facet> OnFacetSelectedChanged { get; set; }
 
-    protected override void OnParametersSet()
+    private Task HandleCheckedChanged(Facet facet)
     {
-        _selectedFacets.AddRange(Facets.SelectMany(f => f.Values.Select(v => new SelectableFacet()
-            {
-                Facet = v,
-                IsSelected = false
-            })));
-    }
-
-    private class SelectableFacet
-    {
-        public Facet Facet { get; set; }
-        public bool IsSelected { get; set; }
+        return OnFacetSelectedChanged.InvokeAsync(facet);
     }
 }

@@ -2,7 +2,12 @@
 {
     public class SearchFacet
     {
-        public string Key { get; set; }
-        public IEnumerable<string> Value { get; set; } = Enumerable.Empty<string>();
+        public string Name { get; set; }
+        public IList<string> Values { get; set; }
+
+        public SearchFacet()
+        {
+            Values = new List<string>();
+        }
     }
 }

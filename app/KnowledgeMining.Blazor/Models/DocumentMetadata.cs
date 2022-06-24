@@ -11,8 +11,6 @@ namespace KnowledgeMining.Blazor.Models
         public string Id { get; set; }
         [JsonPropertyName("metadata_storage_name")]
         public string Name { get; set; }
-        [JsonPropertyName("content")]
-        public string Content { get; set; }
         [JsonPropertyName("keyPhrases")]
         public IEnumerable<string> KeyPhrases { get; set; }
         [JsonPropertyName("organizations")]

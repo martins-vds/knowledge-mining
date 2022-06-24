@@ -19,21 +19,16 @@
                              CoerceValue="true"
                              AdornmentIcon="@Icons.Material.Filled.Search"
                              AdornmentColor="Color.Primary"
-                             OnAdornmentClick="@(() => SearchDocuments())"
+                             OnAdornmentClick="@(() => SearchDocuments(new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets)))"
                              Variant="Variant.Outlined"
                              Margin="Margin.None" />
-            <FacetsFilterComponent Facets="@_searchState.Facets"></FacetsFilterComponent>
+            <FacetsFilterComponent Facets="@_searchState.Facets" OnFacetSelectedChanged="UpdateSearchFacetsAndSearch"></FacetsFilterComponent>
         </MudItem>
         <MudItem xs="12" md="9">
             <MudTabs Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
                     <MudTabPanel Text="Search Results">
-                        <SearchResultsComponent Documents="@_searchState.Documents"></SearchResultsComponent>
-                        <div class="d-flex align-center flex-column pt-4">
-                            @if(_searchState.TotalCount > 0){
-                                <MudPagination Color="Color.Primary" Count="@_searchState.TotalPages" @bind-Selected="@_selectedPage" />
-                            }
-                        </div>
+                        <SearchResultsComponent Documents="@_searchState.Documents" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" @bind-SelectedPage="_selectedPage"></SearchResultsComponent>
                     </MudTabPanel>
                     <MudTabPanel Text="Entity Map">
                         <div class="d-flex flex-row-reverse flex-fill">
@@ -54,19 +49,25 @@
             </MudTabs>
         </MudItem>
     </MudGrid>
+    <DocumentDetailsComponent @bind-IsOpen="showDocumentDetails"></DocumentDetailsComponent>
 </MudContainer>
 
 @code {
     [Parameter, SupplyParameterFromQuery(Name = "q")] public string? SearchText { get; set; }
 
     private SearchState _searchState = new();
-    private int _selectedPage = 1;
 
+    private int _selectedPage;
+    private List<SearchFacet> _selectedFacets = new();
+    private string poligonString = string.Empty;
+
+    private bool showDocumentDetails = false;
     double value = 10.0;
 
     protected override async Task OnInitializedAsync()
     {
-        await SearchDocuments(firstRender: true);
+        var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
+        await SearchDocuments(request);
     }
 
     private async Task<IEnumerable<string>> AutoComplete(string value)
@@ -75,18 +76,42 @@
         return await _searchService.Autocomplete(value, true, cancellationTokenSource.Token).ConfigureAwait(false);
     }
 
-    private async Task SearchDocuments(bool firstRender = false)
+    private async Task UpdateSearchFacetsAndSearch(Facet facet)
+    {
+        SearchFacet searchFacet;
+
+        if (!_selectedFacets.Any(f => f.Name == facet.Name))
+        {
+            searchFacet = new SearchFacet()
+                {
+                    Name = facet.Name
+                };
+            _selectedFacets.Add(searchFacet);
+        }
+        else
+        {
+            searchFacet = _selectedFacets.First(f => f.Name == facet.Name);
+        }
+
+        if(searchFacet.Values.Any(fv => fv == facet.Value))
+        {
+            searchFacet.Values.Remove(facet.Value);
+        }
+        else
+        {
+            searchFacet.Values.Add(facet.Value);
+        }
+
+        var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
+
+        await SearchDocuments(request);
+    }
+
+    private async Task SearchDocuments(SearchRequest request)
     {
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(6));
-        var request = new SearchRequest(SearchText, _selectedPage, null, null);
+
         var response = await _searchService.SearchDocuments(request, cancellationTokenSource.Token).ConfigureAwait(false);
-
-        //_searchState.Reset();
-
-        //if (!firstRender)
-        //{
-        //    await InvokeAsync(() => StateHasChanged());
-        //}
 
         _searchState.Documents = response.Documents;
         _searchState.FacetableFields = response.FacetableFields;
@@ -94,7 +119,11 @@
         _searchState.Tags = response.Tags;
         _searchState.TotalCount = response.TotalCount;
         _searchState.TotalPages = (int)response.TotalPages;
+    }
 
-        
+    private Task GetDocumentDetails(string documentId)
+    {
+        showDocumentDetails = true;
+        return Task.CompletedTask;
     }
 }

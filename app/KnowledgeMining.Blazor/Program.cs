@@ -1,4 +1,5 @@
 using Azure.Identity;
+using KnowledgeMining.Blazor.Services.Storage;
 using KnowledgeMining.UI.Extensions;
 using KnowledgeMining.UI.Options;
 using KnowledgeMining.UI.Services.Search;
@@ -13,6 +14,8 @@ namespace KnowledgeMining.Blazor
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.WebHost.CaptureStartupErrors(true);
 
             // Add services to the container.
             builder.Services.AddRazorPages();
@@ -44,7 +47,7 @@ namespace KnowledgeMining.Blazor
             });
 
             builder.Services.AddScoped<ISearchService, SearchService>();
-            builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")));
+            builder.Services.AddScoped<IStorageService, StorageService>();
 
             builder.Services.AddApplicationInsightsTelemetry();
             //builder.Services.AddServiceProfiler();

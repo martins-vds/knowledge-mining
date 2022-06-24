@@ -8,6 +8,7 @@ using Azure.Search.Documents.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using KnowledgeMining.Blazor.Models;
+using KnowledgeMining.Blazor.Services.Search.Models;
 using KnowledgeMining.UI.Services.Search.Models;
 using Microsoft.Extensions.Options;
 using System.Net;
@@ -93,6 +94,27 @@ namespace KnowledgeMining.UI.Services.Search
             };
         }
 
+        public async Task<DocumentResponse> GetDocument(string documentId, CancellationToken cancellationToken)
+        {
+            var documentStoragePath = documentId;
+
+            var documentFullMetadata = await _searchClient.GetDocumentAsync<DocumentFullMetadata>(documentId, cancellationToken: cancellationToken);
+
+            if (_searchOptions.IsPathBase64Encoded)
+            {
+                documentStoragePath = Decode(documentStoragePath);
+            }
+
+            var sasToken = GetServiceSasUriForContainer(GetBlobContainerClient());
+
+            return new DocumentResponse()
+            {
+                FullMetadata = documentFullMetadata,
+                Token = sasToken,
+                FilePath = documentStoragePath
+            };
+        }
+
         private long CalculateTotalPages(long resultsTotalCount)
         {
             var pageCount = resultsTotalCount / _searchOptions.PageSize;
@@ -171,25 +193,25 @@ namespace KnowledgeMining.UI.Services.Search
             {
                 foreach (var item in request.SearchFacets)
                 {
-                    var facet = schema.Facets.Where(f => f.Name == item.Key).FirstOrDefault();
+                    var facet = schema.Facets.Where(f => f.Name == item.Name).FirstOrDefault();
 
-                    filterStr = string.Join(",", item.Value);
+                    filterStr = string.Join(",", item.Values);
 
                     // Construct Collection(string) facet query
                     if (facet.Type == typeof(string[]))
                     {
                         if (string.IsNullOrEmpty(filter))
-                            filter = $"{item.Key}/any(t: search.in(t, '{filterStr}', ','))";
+                            filter = $"{item.Name}/any(t: search.in(t, '{filterStr}', ','))";
                         else
-                            filter += $" and {item.Key}/any(t: search.in(t, '{filterStr}', ','))";
+                            filter += $" and {item.Name}/any(t: search.in(t, '{filterStr}', ','))";
                     }
                     // Construct string facet query
                     else if (facet.Type == typeof(string))
                     {
                         if (string.IsNullOrEmpty(filter))
-                            filter = $"{item.Key} eq '{filterStr}'";
+                            filter = $"{item.Name} eq '{filterStr}'";
                         else
-                            filter += $" and {item.Key} eq '{filterStr}'";
+                            filter += $" and {item.Name} eq '{filterStr}'";
                     }
                     // Construct DateTime facet query
                     else if (facet.Type == typeof(DateTime))
@@ -217,6 +239,51 @@ namespace KnowledgeMining.UI.Services.Search
             }
 
             return options;
+        }
+
+        private string Decode(string base64EncodedPath)
+        {
+            if (base64EncodedPath == null) throw new ArgumentNullException("input");
+            int inputLength = base64EncodedPath.Length;
+            if (inputLength < 1) return null;
+
+            // Get padding chars
+            int numPadChars = base64EncodedPath[inputLength - 1] - '0';
+            if (numPadChars < 0 || numPadChars > 10)
+            {
+                return null;
+            }
+
+            // replace '-' and '_'
+            char[] base64Chars = new char[inputLength - 1 + numPadChars];
+            for (int iter = 0; iter < inputLength - 1; iter++)
+            {
+                char c = base64EncodedPath[iter];
+
+                switch (c)
+                {
+                    case '-':
+                        base64Chars[iter] = '+';
+                        break;
+
+                    case '_':
+                        base64Chars[iter] = '/';
+                        break;
+
+                    default:
+                        base64Chars[iter] = c;
+                        break;
+                }
+            }
+
+            // Add padding chars
+            for (int iter = inputLength - 1; iter < base64Chars.Length; iter++)
+            {
+                base64Chars[iter] = '=';
+            }
+
+            var charArray = Convert.FromBase64CharArray(base64Chars, 0, base64Chars.Length);
+            return System.Text.Encoding.Default.GetString(charArray);
         }
 
         private BlobContainerClient GetBlobContainerClient()
