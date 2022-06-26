@@ -90,15 +90,15 @@ namespace KnowledgeMining.UI.Services.Search
                 // Not sure if I need to return page in the search result
                 TotalPages = CalculateTotalPages(searchResults.Value.TotalCount ?? 0),
                 FacetableFields = searchSchema.Facets.Select(f => f.Name), // Not sure if I need to return page in the search result
-                SearchId = GetSearchId(searchResults)
+                SearchId = ParseSearchId(searchResults)
             };
         }
 
-        public async Task<DocumentResponse> GetDocument(string documentId, CancellationToken cancellationToken)
+        public async Task<DocumentFullMetadata> GetDocumentDetails(string documentId, CancellationToken cancellationToken)
         {
             var documentStoragePath = documentId;
 
-            var documentFullMetadata = await _searchClient.GetDocumentAsync<DocumentFullMetadata>(documentId, cancellationToken: cancellationToken);
+            var response = await _searchClient.GetDocumentAsync<DocumentFullMetadata>(documentId, cancellationToken: cancellationToken);
 
             if (_searchOptions.IsPathBase64Encoded)
             {
@@ -107,12 +107,10 @@ namespace KnowledgeMining.UI.Services.Search
 
             var sasToken = GetServiceSasUriForContainer(GetBlobContainerClient());
 
-            return new DocumentResponse()
-            {
-                FullMetadata = documentFullMetadata,
-                Token = sasToken,
-                FilePath = documentStoragePath
-            };
+            var documentFullMetadata = response.Value;
+            documentFullMetadata.StoragePathUri = new Uri($"{documentStoragePath}{sasToken}");
+
+            return documentFullMetadata;
         }
 
         private long CalculateTotalPages(long resultsTotalCount)
@@ -127,7 +125,7 @@ namespace KnowledgeMining.UI.Services.Search
             return pageCount;
         }
 
-        private string GetSearchId(Response<SearchResults<DocumentMetadata>> searchResults)
+        private string ParseSearchId(Response<SearchResults<DocumentMetadata>> searchResults)
         {
             IEnumerable<string> headerValues;
             string searchId = null;

@@ -9,5 +9,7 @@ namespace KnowledgeMining.Blazor.Models
     {
         [JsonPropertyName("content")]
         public string Content { get; set; }
+
+        public Uri? StoragePathUri { get; set; }
     }
 }

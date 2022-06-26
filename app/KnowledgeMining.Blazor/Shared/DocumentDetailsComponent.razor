@@ -1,59 +1,58 @@
 ﻿@using KnowledgeMining.Blazor.Models
-<MudOverlay Visible="@IsOpen" DarkBackground="true" AutoClose="true">
-    <MudPopover Open="@IsOpen" Class="px-4 pt-4" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.TopCenter">
-        <div class="d-flex flex-column">
-            <MudGrid>
-                <MudItem xs="12" sm="8">
-                    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-                        <MudTabPanel Text="File">
-                            <MudText>@Document.Content</MudText>
-                        </MudTabPanel>
-                        <MudTabPanel Text="Transcript">
-                            <MudText>Content Two</MudText>
-                        </MudTabPanel>
-                        <MudTabPanel Text="Metadata">
-                            <MudText>Content Three</MudText>
-                        </MudTabPanel>
-                        <MudTabPanel Text="Maps" Disabled="true">
-                            <MudText>Content Disabled</MudText>
-                        </MudTabPanel>
-                    </MudTabs>
-                </MudItem>
-                <MudItem xs="12" sm="4">
-                    <div class="d-flex flex-column">
-                        <MudTextField @bind-Value="_searchText" Variant="Variant.Outlined"></MudTextField>
-                        <MudChipSet @bind-SelectedChip="_selectedKeyPhraseChip" Filter="true">
-                            <MudChip Text="Milk"></MudChip>
-                            <MudChip Text="Eggs"></MudChip>
-                            <MudChip Text="Soap"></MudChip>
-                            <MudChip Text="Cornflakes"></MudChip>
-                            <MudChip Text="Salad"></MudChip>
-                            <MudChip Text="Apples"></MudChip>
-                            <MudChip Text="Red wine"></MudChip>
-                        </MudChipSet>
-                    </div>
-                </MudItem>
-            </MudGrid>
-            <MudButton OnClick="@ClosePopover" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
-        </div>
-    </MudPopover>
+<MudOverlay Visible="@IsVisible" DarkBackground="true" AutoClose="true">
+    <MudContainer>
+        <MudPopover Open="@IsVisible" Class="px-4 pt-4" AnchorOrigin="Origin.CenterCenter" TransformOrigin="Origin.CenterCenter">
+            <div class="d-flex flex-column" style="max-height: 600px">
+                <MudGrid>
+                    <MudItem xs="12" sm="8">
+                        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+                            <MudTabPanel Text="File">
+                                <DocumentViewerComponent DocumentUri="Document?.StoragePathUri"></DocumentViewerComponent>
+                            </MudTabPanel>
+                            <MudTabPanel Text="Transcript">
+                                <MudText Align="Align.Justify" Style="max-height: 400px; overflow-y: scroll; overflow-wrap: break-word">@Document?.Content</MudText>
+                            </MudTabPanel>
+                            <MudTabPanel Text="Metadata">
+                                <MudText>Content Three</MudText>
+                            </MudTabPanel>
+                            <MudTabPanel Text="Maps" Disabled="true">
+                                <MudText>Content Disabled</MudText>
+                            </MudTabPanel>
+                        </MudTabs>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <div class="d-flex flex-column">
+                            <MudTextField @bind-Value="_searchText" Placeholder="Search" Variant="Variant.Outlined"></MudTextField>
+                            <MudChipSet @bind-SelectedChip="_selectedKeyPhraseChip" Filter="true">
+                                @foreach (var keyPhrase in Document.KeyPhrases.Take(5))
+                                {
+                                    <MudChip Text="@keyPhrase"></MudChip>
+                                }
+                            </MudChipSet>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+                <MudButton OnClick="@ClosePopover" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
+            </div>
+        </MudPopover>
+    </MudContainer>
 </MudOverlay>
 
 @code {
     [Parameter]
-    public DocumentMetadata Document{ get; set; }
+    public DocumentFullMetadata? Document { get; set; }
 
     [Parameter]
-    public bool IsOpen { get; set; }
+    public bool IsVisible { get; set; }
 
     [Parameter]
-    public EventCallback<bool> IsOpenChanged { get; set; }
+    public EventCallback<bool> IsVisibleChanged { get; set; }
 
-    private string _searchText;
-    private MudChip _selectedKeyPhraseChip;
+    private string? _searchText;
+    private MudChip? _selectedKeyPhraseChip;
 
     private Task ClosePopover()
     {
-        return IsOpenChanged.InvokeAsync(false);
+        return IsVisibleChanged.InvokeAsync(false);
     }
 }

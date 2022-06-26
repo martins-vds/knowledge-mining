@@ -1,0 +1,48 @@
+﻿@switch (documentExtention)
+{
+    case FileExtensions.PDF:
+        @RenderPDFViewer(DocumentUri);
+        break;
+    case FileExtensions.TXT:
+    case FileExtensions.JSON:
+        @RenderTextViewer(DocumentUri);
+        break;
+    default:
+        @RenderUnknowViewer(documentExtention);
+        break;
+}
+
+@code {
+    [Parameter]
+    public Uri? DocumentUri { get; set; }
+    
+    private string documentExtention = FileExtensions.UNKNOWN;
+
+    protected override void OnParametersSet()
+    {
+        documentExtention = DocumentUri.GetFileExtension();
+    }
+
+    private RenderFragment<Uri> RenderPDFViewer = documentUri => __builder =>
+    {
+        <object class="file-container" data="@documentUri" type="application/pdf">
+            <iframe class="file-container" src="documentUri" type="application/pdf">
+                This browser does not support PDFs. Please download the file to view it: <a href="@documentUri">Download PDF</a>"
+            </iframe>
+        </object>
+    };
+
+    private RenderFragment<Uri> RenderTextViewer = documentUri => __builder =>
+    {
+        <object class="file-container" data="@documentUri" type="application/pdf">
+            <iframe class="file-container" src="documentUri" type="application/text">
+                This browser does not support Text files. Please download the file to view it: <a href="@documentUri">Download File</a>"
+            </iframe>
+        </object>
+    };
+
+    private RenderFragment<string> RenderUnknowViewer = extension => __builder =>
+    {
+        <MudText>Document Viewer not available for extension '@extension'</MudText>
+    };
+}
