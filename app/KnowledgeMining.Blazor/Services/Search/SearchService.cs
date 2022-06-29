@@ -12,6 +12,8 @@ using KnowledgeMining.Blazor.Services.Search.Models;
 using KnowledgeMining.UI.Services.Search.Models;
 using Microsoft.Extensions.Options;
 using System.Net;
+using System.Text.Json;
+using static KnowledgeMining.UI.Services.Search.FacetGraphGenerator;
 
 namespace KnowledgeMining.UI.Services.Search
 {
@@ -24,6 +26,8 @@ namespace KnowledgeMining.UI.Services.Search
 
         private readonly Options.SearchOptions _searchOptions;
         private readonly Options.StorageOptions _storageOptions;
+        private readonly Options.EntityMapOptions _entityMapOptions;
+
         private readonly ILogger _logger;
 
         public SearchService(BlobServiceClient blobServiceClient,
@@ -32,6 +36,7 @@ namespace KnowledgeMining.UI.Services.Search
                              SearchIndexerClient searchIndexerClient,
                              IOptions<Options.SearchOptions> searchOptions,
                              IOptions<Options.StorageOptions> storageOptions,
+                             IOptions<Options.EntityMapOptions> entityMapOptions,
                              ILogger<SearchService> logger)
         {
             _blobServiceClient = blobServiceClient;
@@ -41,6 +46,7 @@ namespace KnowledgeMining.UI.Services.Search
 
             _searchOptions = searchOptions.Value;
             _storageOptions = storageOptions.Value;
+            _entityMapOptions = entityMapOptions.Value;
 
             _logger = logger;
         }
@@ -111,6 +117,204 @@ namespace KnowledgeMining.UI.Services.Search
             documentFullMetadata.StoragePathUri = new Uri($"{documentStoragePath}{sasToken}");
 
             return documentFullMetadata;
+        }
+
+        public async Task<EntityMapData> GetGraphData(string query, string[] fields, int maxLevels, int maxNodes, CancellationToken cancellationToken)
+        {
+            string[] facetNames = fields;
+
+            if (facetNames == null || facetNames.Length == 0)
+            {
+                string facetsList = _entityMapOptions.Facets;
+
+                facetNames = facetsList.Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+
+            if (query == null)
+            {
+                query = "*";
+            }
+
+            var graphJson = await GenerateEntityMap(query, facetNames.ToList<string>(), maxLevels, maxNodes, cancellationToken);
+
+            return null;
+        }
+
+        private async Task<SearchResults<SearchDocument>> GetFacets(string searchText, IEnumerable<string> facetNames, int maxCount, CancellationToken cancellationToken)
+        {
+            var facets = new List<string>();
+
+            foreach (var facet in facetNames)
+            {
+                facets.Add($"{facet}, count:{maxCount}");
+            }
+
+            // Execute search based on query string
+            SearchOptions options = new SearchOptions()
+            {
+                SearchMode = SearchMode.Any,
+                Size = 10,
+                QueryType = SearchQueryType.Full
+            };
+
+            foreach (string s in facetNames)
+            {
+                options.Facets.Add(s);
+            }
+
+            return await _searchClient.SearchAsync<SearchDocument>(searchText, options, cancellationToken);
+        }
+
+        public async Task<EntityMapData> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)
+        {
+            var query = "*";
+
+            // If blank search, assume they want to search everything
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = q;
+            }
+
+            var facets = new List<string>();
+
+            if(facetNames?.Any() ?? false)
+            {
+                facets.AddRange(facetNames);
+            }
+            else
+            {
+                facets.AddRange(_entityMapOptions.Facets.Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            }
+
+            var entityMap = new EntityMapData();
+
+            // Calculate nodes for N levels 
+            int CurrentNodes = 0;
+            int originalDistance = 100;
+
+            List<FDGraphEdges> FDEdgeList = new List<FDGraphEdges>();
+            // Create a node map that will map a facet to a node - nodemap[0] always equals the q term
+
+            var NodeMap = new Dictionary<string, NodeInfo>();
+
+            NodeMap[query] = new NodeInfo(CurrentNodes, "0")
+            {
+                Distance = originalDistance,
+                Layer = 0
+            };
+
+            List<string> currentLevelTerms = new List<string>();
+
+            List<string> NextLevelTerms = new List<string>();
+            NextLevelTerms.Add(query);
+
+            // Iterate through the nodes up to MaxLevels deep to build the nodes or when I hit max number of nodes
+            for (var CurrentLevel = 0; CurrentLevel < maxLevels && maxNodes > 0; ++CurrentLevel, maxNodes /= 2)
+            {
+                currentLevelTerms = NextLevelTerms.ToList();
+                NextLevelTerms.Clear();
+                var levelNodeCount = 0;
+
+                NodeInfo densestNodeThisLayer = null;
+                var density = 0;
+
+                foreach (var k in NodeMap)
+                    k.Value.Distance += originalDistance;
+
+                foreach (var t in currentLevelTerms)
+                {
+                    if (levelNodeCount >= maxNodes)
+                        break;
+
+                    int facetsToGrab = 10;
+
+                    if (maxNodes < 10)
+                    {
+                        facetsToGrab = maxNodes;
+                    }
+
+                    var response = await GetFacets(t, facets, facetsToGrab, cancellationToken);
+
+                    if (response != null)
+                    {
+                        int facetColor = 0;
+
+                        foreach (var facet in facets)
+                        {
+                            var facetVals = response.Facets[facet];
+                            facetColor++;
+
+                            foreach (var facetResult in facetVals)
+                            {
+                                var facetValue = facetResult.Value.ToString();
+
+                                NodeInfo nodeInfo = new NodeInfo(-1, String.Empty);
+                                if (NodeMap.TryGetValue(facetValue, out nodeInfo) == false)
+                                {
+                                    // This is a new node
+                                    ++levelNodeCount;
+                                    NodeMap[facetValue] = new NodeInfo(++CurrentNodes, facetColor.ToString())
+                                    {
+                                        Distance = originalDistance,
+                                        Layer = CurrentLevel + 1
+                                    };
+
+                                    if (CurrentLevel < maxLevels)
+                                    {
+                                        NextLevelTerms.Add(facetValue);
+                                    }
+                                }
+
+                                // Add this facet to the fd list
+                                var newNode = NodeMap[facetValue];
+                                var oldNode = NodeMap[t];
+                                if (oldNode != newNode)
+                                {
+                                    oldNode.ChildCount += 1;
+                                    if (densestNodeThisLayer == null || oldNode.ChildCount > density)
+                                    {
+                                        density = oldNode.ChildCount;
+                                        densestNodeThisLayer = oldNode;
+                                    }
+
+                                    FDEdgeList.Add(new FDGraphEdges
+                                    {
+                                        Source = oldNode.Index,
+                                        Target = newNode.Index,
+                                        Distance = newNode.Distance
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (densestNodeThisLayer != null)
+                    densestNodeThisLayer.LayerCornerStone = CurrentLevel;
+            }
+
+            foreach (KeyValuePair<string, NodeInfo> entry in NodeMap)
+            {
+                entityMap.Nodes.Add(new EntityMapNode()
+                {
+                    Name = entry.Key,
+                    Id = entry.Value.Index,
+                    Color = entry.Value.ColorId,
+                    Layer = entry.Value.Layer,
+                    CornerStone = entry.Value.LayerCornerStone
+                });
+            }
+
+            FDEdgeList.ForEach(e => entityMap.Links.Add(new EntityMapLink()
+            {
+                Distance = e.Distance,
+                Source = e.Source,
+                Target = e.Target
+            }));
+
+            var temp = JsonSerializer.Serialize(entityMap);
+
+            return entityMap;
         }
 
         private long CalculateTotalPages(long resultsTotalCount)

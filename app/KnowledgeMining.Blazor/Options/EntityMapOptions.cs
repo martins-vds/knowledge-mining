@@ -1,8 +1,8 @@
 ﻿namespace KnowledgeMining.UI.Options
 {
-    public class GraphOptions
+    public class EntityMapOptions
     {
-        public const string Graph = "Graph";
+        public const string EntityMap = "EntityMap";
 
         public string Facets { get; set; }
     }

@@ -12,5 +12,6 @@ namespace KnowledgeMining.UI.Services.Search
         Task<IEnumerable<string>> Autocomplete(string searchText, bool fuzzy, CancellationToken cancellationToken);
         Task<SearchResponse> SearchDocuments(SearchRequest request, CancellationToken cancellationToken);
         Task<DocumentFullMetadata> GetDocumentDetails(string documentId, CancellationToken cancellationToken);
+        Task<EntityMapData> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken);
     }
 }

@@ -31,7 +31,7 @@ namespace KnowledgeMining.Blazor
 
             builder.Services.Configure<AzureMapsOptions>(builder.Configuration.GetSection(AzureMapsOptions.AzureMaps));
             builder.Services.Configure<CustomizationsOptions>(builder.Configuration.GetSection(CustomizationsOptions.Customizations));
-            builder.Services.Configure<GraphOptions>(builder.Configuration.GetSection(GraphOptions.Graph));
+            builder.Services.Configure<EntityMapOptions>(builder.Configuration.GetSection(EntityMapOptions.EntityMap));
             builder.Services.Configure<SearchOptions>(builder.Configuration.GetSection(SearchOptions.Search));
             builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.Storage));
 

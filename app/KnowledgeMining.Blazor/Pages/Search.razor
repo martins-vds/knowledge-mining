@@ -2,7 +2,9 @@
 @using KnowledgeMining.Blazor.Models
 @using KnowledgeMining.UI.Services.Search.Models
 
+@implements IAsyncDisposable
 @inject ISearchService _searchService
+@inject IJSRuntime JS
 
 <PageTitle>Search</PageTitle>
 
@@ -31,8 +33,21 @@
                     <MudTabPanel Text="Search Results">
                         <SearchResultsComponent Documents="@_searchState.Documents" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" @bind-SelectedPage="_selectedPage"></SearchResultsComponent>
                     </MudTabPanel>
-                    <MudTabPanel Text="Entity Map">
-                        <EntityMapComponent></EntityMapComponent>
+                    <MudTabPanel Text="Entity Map" OnClick="GenerateEntityMap">
+                        <div class="d-flex flex-row">
+                            <div class="flex-grow-1">
+                                <svg id="@_entityMapContainerId"></svg>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <MudSlider Min="1" Max="3" Step="1" @bind-Value="_maxLevels" ValueLabel="true">Max Levels</MudSlider>
+                                <MudSlider Min="3" Max="30" Step="1" @bind-Value="_maxNodes" ValueLabel="true">Max Nodes</MudSlider>
+                                <MudExpansionPanels Class="mt-6">
+                                    <MudExpansionPanel Text="Select Facets">
+
+                                    </MudExpansionPanel>
+                                </MudExpansionPanels>
+                            </div>
+                        </div>
                     </MudTabPanel>
                 </div>
             </MudTabs>
@@ -52,12 +67,28 @@
 
     private bool _showDocumentDetails = false;
     private DocumentFullMetadata documentDetails;
-    double value = 10.0;
+
+    private string _entityMapContainerId = "entity-map";
+    private int _maxLevels = 10;
+    private int _maxNodes = 10;
+    private IJSObjectReference? module;
 
     protected override async Task OnInitializedAsync()
     {
         var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
         await SearchDocuments(request);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try{
+                module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/entityMapV2.js");
+            }catch(Exception e){
+
+            }
+        }
     }
 
     private async Task<IEnumerable<string>> AutoComplete(string value)
@@ -120,6 +151,12 @@
         _searchState.TotalPages = (int)response.TotalPages;
     }
 
+    private async Task GenerateEntityMap(MouseEventArgs e)
+    {
+        var entityMapData = await _searchService.GenerateEntityMap(SearchText, Enumerable.Empty<string>(), _maxLevels, _maxNodes, CancellationToken.None);
+        await module.InvokeVoidAsync("renderEntityGraph", _entityMapContainerId, entityMapData, _maxLevels);
+    }
+
     private async Task GetDocumentDetails(string documentId)
     {
         _showDocumentDetails = false;
@@ -127,5 +164,13 @@
         documentDetails = await _searchService.GetDocumentDetails(documentId, CancellationToken.None);
 
         _showDocumentDetails = true;
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
     }
 }
