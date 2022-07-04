@@ -22,7 +22,7 @@ az deployment group create -g $resource_group \
                                         servicePrincipalId=$service_principal_id
 
 storage_account_id=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_id.value -o tsv)
-storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_account_name.value -o tsv)
+storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_name.value -o tsv)
 search_endpoint=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.search_endpoint.value -o tsv)
 keyvault_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.keyvault_name.value -o tsv)
 app_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.app_name.value -o tsv)
