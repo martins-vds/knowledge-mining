@@ -19,15 +19,15 @@
   ],
   "outputFieldMappings": [
     {
-      "sourceFieldName": "/document/merged_content/organizations",
+      "sourceFieldName": "/document/merged_content/distinct_organizations",
       "targetFieldName": "organizations"
     },
     {
-      "sourceFieldName": "/document/merged_content/persons",
+      "sourceFieldName": "/document/merged_content/distinct_persons",
       "targetFieldName": "persons"
     },
     {
-      "sourceFieldName": "/document/merged_content/locations",
+      "sourceFieldName": "/document/merged_content/distinct_locations",
       "targetFieldName": "locations"
     },
     {
@@ -38,7 +38,6 @@
       "sourceFieldName": "/document/merged_content",
       "targetFieldName": "merged_content"
     },
-   
     {
       "sourceFieldName": "/document/normalized_images/*/text",
       "targetFieldName": "text"

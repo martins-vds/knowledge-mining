@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace KnowledgeMining.UI.Options
+﻿namespace KnowledgeMining.UI.Options
 {
     public class StorageOptions
     {

@@ -1,0 +1,73 @@
+﻿@using KnowledgeMining.UI.Models
+<MudGrid>
+    @foreach (var document in Documents)
+    {
+        <MudItem xs="12" sm="4">
+            <MudCard Outlined="true" @onclick="async () => await OnDocumentClicked.InvokeAsync(document.Id)">
+                <MudCardContent Class="d-flex flex-column align-content-start">
+                    <div class="d-flex flex-row flex-fill gap-2">
+                        <div>
+                            <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
+                        </div>
+                        <div class="d-flex flex-column">
+                            <div>
+                                <MudText>@document.Name</MudText>
+                            </div>
+                            <div class="d-flex flex-row flex-wrap pt-1 flex-shrink-0">
+                                @foreach (var keyPhrase in document.KeyPhrases.Take(6))
+                                {
+                                    <MudChip Color="Color.Info">@keyPhrase</MudChip>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+<div class="d-flex align-center flex-column pt-4">
+    @if (TotalCount > 0)
+    {
+        <MudPagination Color="Color.Primary" Count="@TotalPages" SelectedChanged="@HandleSelectedChange" ControlButtonClicked="@HandleControlButtonClicked"/>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<DocumentMetadata> Documents { get; set; }
+    [Parameter]
+    public long TotalCount { get; set; }
+    [Parameter]
+    public int TotalPages { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnDocumentClicked { get; set; }
+
+
+    [Parameter]
+
+    public int SelectedPage { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SelectedPageChanged { get; set; }
+
+    private Task HandleSelectedChange(int page)
+    {
+        SelectedPage = page;
+        return SelectedPageChanged.InvokeAsync(page);
+    }
+
+    private Task HandleControlButtonClicked(Page page)
+    {
+        switch (page)
+        {
+            case Page.First: SelectedPage = 1; break;
+            case Page.Next: SelectedPage++; break;
+            case Page.Previous: SelectedPage--; break;
+            case Page.Last: SelectedPage = TotalPages; break;
+        }
+
+        return SelectedPageChanged.InvokeAsync(SelectedPage);
+    }
+}

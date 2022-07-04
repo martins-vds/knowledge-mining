@@ -6,5 +6,8 @@
     },
     "container": {
         "name": "__STORAGE_CONTAINER__"
+    },
+    "dataDeletionDetectionPolicy": {
+        "@odata.type": "#Microsoft.Azure.Search.NativeBlobSoftDeleteDeletionDetectionPolicy"
     }
 }

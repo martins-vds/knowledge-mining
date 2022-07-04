@@ -226,6 +226,17 @@ resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-0
   }
 }
 
+resource azure_storage_account_blob_services 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
+  name: '${azure_storage_account_data.name}-blob-retention-policy'
+  properties: {
+    deleteRetentionPolicy:{
+      allowPermanentDelete: false
+      enabled: true
+      days: 7
+    }
+  }
+}
+
 resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
   location: location
   name: '${azure_storage_account_data.name}-blob-endpoint'
@@ -410,6 +421,10 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           value: '1'
         }
         {
+          name: 'AzureMaps__SubscriptionKey'
+          value: ''
+        }
+        {
           name: 'Search__Endpoint'
           value: 'https://${azure_search_service.name}.search.windows.net'
         }
@@ -430,6 +445,14 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           value: 'metadata_storage_path'
         }
         {
+          name: 'Search__SuggesterName'
+          value: 'sg'
+        }
+        {
+          name: 'Search__PageSize'
+          value: '10'
+        }
+        {
           name: 'Search__IsPathBase64Encoded'
           value: 'true'
         }
@@ -446,7 +469,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           value: docsContainerName
         }
         {
-          name: 'Graph__Facets'
+          name: 'EntityMap__Facets'
           value: 'keyPhrases, locations'
         }
         {

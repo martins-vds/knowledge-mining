@@ -1,231 +1,122 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
-using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
-using Azure.Storage.Blobs;
-using Azure.Storage.Sas;
-using Microsoft.Extensions.Logging;
+using KnowledgeMining.UI.Extensions;
+using KnowledgeMining.UI.Models;
+using KnowledgeMining.UI.Services.Links;
+using KnowledgeMining.UI.Services.Search.Models;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Channels;
+using static KnowledgeMining.UI.Services.Search.FacetGraphGenerator;
 
 namespace KnowledgeMining.UI.Services.Search
 {
     public class SearchService : ISearchService
     {
-        private readonly BlobServiceClient _blobServiceClient;
         private readonly SearchClient _searchClient;
         private readonly SearchIndexClient _searchIndexClient;
-        private readonly SearchIndexerClient _searchIndexerClient;
+        private readonly ILinkGenerator _linker;
+        private readonly ChannelWriter<SearchIndexerJobContext> _jobChannel;
 
         private readonly Options.SearchOptions _searchOptions;
-        private readonly Options.StorageOptions _storageOptions;
+        private readonly Options.EntityMapOptions _entityMapOptions;
+
         private readonly ILogger _logger;
 
-        public string SearchId { get; set; }
-
-        public SearchModel _searchModel;
-
-        public string ErrorMessage { get; set; }
-
-        public SearchService(BlobServiceClient blobServiceClient,
-                             SearchClient searchClient,
+        public SearchService(SearchClient searchClient,
                              SearchIndexClient searchIndexClient,
-                             SearchIndexerClient searchIndexerClient,
+                             ILinkGenerator linker,
+                             ChannelWriter<SearchIndexerJobContext> jobChannel,
                              IOptions<Options.SearchOptions> searchOptions,
-                             IOptions<Options.StorageOptions> storageOptions,
+                             IOptions<Options.EntityMapOptions> entityMapOptions,
                              ILogger<SearchService> logger)
         {
-            _blobServiceClient = blobServiceClient;
             _searchClient = searchClient;
             _searchIndexClient = searchIndexClient;
-            _searchIndexerClient = searchIndexerClient;
+            _linker = linker;
+            _jobChannel = jobChannel;
 
             _searchOptions = searchOptions.Value;
-            _storageOptions = storageOptions.Value;
+            _entityMapOptions = entityMapOptions.Value;
 
             _logger = logger;
         }
 
-        public async ValueTask<SearchModel> GetSearchModel(CancellationToken cancellationToken)
+        // TODO: Add schema to a cache
+        public async Task<SearchSchema> GenerateSearchSchema(CancellationToken cancellationToken)
         {
-            if (_searchModel == null)
-            {
-                var fields = await _searchIndexClient.GetIndexAsync(_searchOptions.IndexName, cancellationToken);
-                var schema = new SearchSchema().AddFields(fields.Value.Fields);
-                _searchModel = new SearchModel(schema);
-            }
+            var response = await _searchIndexClient.GetIndexAsync(_searchOptions.IndexName, cancellationToken);
 
-            return _searchModel;
+            return new SearchSchema(response.Value.Fields);
         }
 
-        public async Task<SearchResults<SearchDocument>> Search(
-            string searchText,
-            SearchFacet[] searchFacets,
-            string[] selectFilter,
-            int currentPage,
-            string polygonString,
-            CancellationToken cancellationToken)
-        {
-            SearchOptions options = await GenerateSearchOptions(searchFacets, selectFilter, currentPage, polygonString, cancellationToken);
-
-            //var s = GenerateSearchId(searchText, options);
-            //SearchId = s.Result;
-
-            return await _searchClient.SearchAsync<SearchDocument>(searchText, options, cancellationToken);
-        }
-
-        private async Task<SearchOptions> GenerateSearchOptions(
-            SearchFacet[] searchFacets,
-            string[] selectFilter,
-            int currentPage,
-            string polygonString,
-            CancellationToken cancellationToken)
-        {
-            var model = await GetSearchModel(cancellationToken);
-            SearchOptions options = new SearchOptions()
-            {
-                SearchMode = SearchMode.All,
-                Size = 10,
-                Skip = (currentPage - 1) * 10,
-                IncludeTotalCount = true,
-                QueryType = SearchQueryType.Full,
-                HighlightPreTag = "<b>",
-                HighlightPostTag = "</b>"
-            };
-
-            foreach (string s in selectFilter)
-            {
-                options.Select.Add(s);
-            }
-
-            var facets = model.Facets.Select(f => f.Name).ToList();
-            foreach (string f in facets)
-            {
-                options.Facets.Add(f + ",sort:count");
-            }
-
-            foreach (string h in model.SearchableFields)
-            {
-                options.HighlightFields.Add(h);
-            }
-
-
-            string filter = null;
-            var filterStr = string.Empty;
-
-            if (searchFacets != null)
-            {
-                foreach (var item in searchFacets)
-                {
-                    var facet = model.Facets.Where(f => f.Name == item.Key).FirstOrDefault();
-
-                    filterStr = string.Join(",", item.Value);
-
-                    // Construct Collection(string) facet query
-                    if (facet.Type == typeof(string[]))
-                    {
-                        if (string.IsNullOrEmpty(filter))
-                            filter = $"{item.Key}/any(t: search.in(t, '{filterStr}', ','))";
-                        else
-                            filter += $" and {item.Key}/any(t: search.in(t, '{filterStr}', ','))";
-                    }
-                    // Construct string facet query
-                    else if (facet.Type == typeof(string))
-                    {
-                        if (string.IsNullOrEmpty(filter))
-                            filter = $"{item.Key} eq '{filterStr}'";
-                        else
-                            filter += $" and {item.Key} eq '{filterStr}'";
-                    }
-                    // Construct DateTime facet query
-                    else if (facet.Type == typeof(DateTime))
-                    {
-                        // TODO: Date filters
-                    }
-                }
-            }
-
-            options.Filter = filter;
-
-            // Add Filter based on geographic polygon if it is set.
-            if (polygonString != null && polygonString.Length > 0)
-            {
-                string geoQuery = "geo.intersects(geoLocation, geography'POLYGON((" + polygonString + "))')";
-
-                if (options.Filter != null && options.Filter.Length > 0)
-                {
-                    options.Filter += " and " + geoQuery;
-                }
-                else
-                {
-                    options.Filter = geoQuery;
-                }
-            }
-
-            return options;
-        }
-
-        public async Task<SuggestResults<SearchDocument>> Suggest(string searchText, bool fuzzy, CancellationToken cancellationToken)
+        public async Task<IEnumerable<string>> Autocomplete(string searchText, bool fuzzy, CancellationToken cancellationToken)
         {
             // Execute search based on query string
-            SuggestOptions options = new SuggestOptions()
-            {
-                UseFuzzyMatching = fuzzy,
-                Size = 8
-            };
-
-            return await _searchClient.SuggestAsync<SearchDocument>(searchText, "sg", options, cancellationToken);
-        }
-
-        public async Task<AutocompleteResults> Autocomplete(string searchText, bool fuzzy, CancellationToken cancellationToken)
-        {
-            // Execute search based on query string
-            AutocompleteOptions options = new AutocompleteOptions()
+            AutocompleteOptions options = new()
             {
                 Mode = AutocompleteMode.OneTermWithContext,
                 UseFuzzyMatching = fuzzy,
-                Size = 8
+                Size = _searchOptions.PageSize
             };
 
-            return await _searchClient.AutocompleteAsync(searchText, "sg", options, cancellationToken);
+            var response = await _searchClient.AutocompleteAsync(searchText, _searchOptions.SuggesterName, options, cancellationToken);
+
+
+            return response.Value.Results.Select(r => r.Text).Distinct();
         }
 
-
-        public async Task<SearchDocument> LookUp(string id, CancellationToken cancellationToken)
+        public async Task<SearchResponse> SearchDocuments(SearchRequest request, CancellationToken cancellationToken)
         {
-            // Execute geo search based on query string
-            return await _searchClient.GetDocumentAsync<SearchDocument>(id, cancellationToken: cancellationToken);
-        }
+            var searchSchema = await GenerateSearchSchema(cancellationToken);
+            var searchOptions = await GenerateSearchOptions(request, cancellationToken);
 
+            var searchResults = await _searchClient.SearchAsync<DocumentMetadata>(request.SearchText, searchOptions, cancellationToken);
 
-        private async Task<string> GenerateSearchId(string searchText, SearchOptions options)
-        {
-            var response = await _searchClient.SearchAsync<SearchDocument>(searchText: searchText, options);
-            IEnumerable<string> headerValues;
-            string searchId = string.Empty;
-            if (response.GetRawResponse().Headers.TryGetValues("x-ms-azs-searchid", out headerValues))
+            if (searchResults == null || searchResults?.Value == null)
             {
-                searchId = headerValues.FirstOrDefault();
+                return new SearchResponse();
             }
-            return searchId;
+
+            return new SearchResponse()
+            {
+                TotalCount = searchResults.Value.TotalCount ?? 0,
+                Documents = searchResults.Value.GetResults().Select(d => d.Document),
+                Facets = AggregateFacets(searchResults.Value.Facets),
+                Tags = AggregateFacets(searchResults.Value.Facets),
+                // Not sure if I need to return page in the search result
+                TotalPages = CalculateTotalPages(searchResults.Value.TotalCount ?? 0),
+                FacetableFields = searchSchema.Facets.Select(f => f.Name), // Not sure if I need to return page in the search result
+                SearchId = ParseSearchId(searchResults)
+            };
         }
 
-        public string GetSearchId()
+        public async Task<DocumentFullMetadata> GetDocumentDetails(string documentId, CancellationToken cancellationToken)
         {
-            if (SearchId != null) { return SearchId; }
-            return string.Empty;
-        }
+            var response = await _searchClient.GetDocumentAsync<DocumentFullMetadata>(documentId, cancellationToken: cancellationToken);
 
-        public async Task<SearchResults<SearchDocument>> GetFacets(string searchText, List<string> facetNames, int maxCount, CancellationToken cancellationToken)
+            Uri documentStoragePath;
+
+            if (_searchOptions.IsPathBase64Encoded)
+            {
+                documentStoragePath = new Uri(Decode(documentId));
+            }
+            else
+            {
+                documentStoragePath = new Uri(documentId);
+            }
+
+            var documentName = documentStoragePath.GetFileName();
+            var documentFullMetadata = response.Value;
+
+            documentFullMetadata.PreviewUrl = _linker.GenerateDocumentPreviewUrl(documentName);
+            return documentFullMetadata;
+        }
+        private async Task<SearchResults<SearchDocument>> GetFacets(string searchText, IEnumerable<string> facetNames, int maxCount, CancellationToken cancellationToken)
         {
             var facets = new List<string>();
 
@@ -250,153 +141,295 @@ namespace KnowledgeMining.UI.Services.Search
             return await _searchClient.SearchAsync<SearchDocument>(searchText, options, cancellationToken);
         }
 
-        public async Task<DocumentResult> GetDocuments(string q, SearchFacet[] searchFacets, int currentPage, string polygonString, CancellationToken cancellationToken)
+        public async Task<EntityMapData> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)
         {
-            var sasToken = GetServiceSasUriForContainer(GetBlobContainerClient());
-            var model = await GetSearchModel(cancellationToken);
+            var query = "*";
 
-            var selectFilter = model.SelectFilter;
-
-            if (!string.IsNullOrEmpty(q))
+            // If blank search, assume they want to search everything
+            if (!string.IsNullOrWhiteSpace(q))
             {
-                q = q.Replace("?", "");
+                query = q;
             }
 
-            var response = await Search(q, searchFacets, selectFilter, currentPage, polygonString, cancellationToken);
-            var searchId = GetSearchId().ToString();
-            var facetResults = new List<Facet>();
-            var tagsResults = new List<object>();
+            var facets = new List<string>();
 
-            if (response != null && response.Facets != null)
+            if (facetNames?.Any() ?? false)
             {
-                // Return only the selected facets from the Search Model
-                foreach (var facetResult in response.Facets.Where(f => model.Facets.Where(x => x.Name == f.Key).Any()))
-                {
-                    var cleanValues = GetCleanFacetValues(facetResult);
-
-                    facetResults.Add(new Facet
-                    {
-                        key = facetResult.Key,
-                        value = cleanValues
-                    });
-                }
-
-                foreach (var tagResult in response.Facets.Where(t => model.Tags.Where(x => x.Name == t.Key).Any()))
-                {
-                    var cleanValues = GetCleanFacetValues(tagResult);
-
-                    tagsResults.Add(new
-                    {
-                        key = tagResult.Key,
-                        value = cleanValues
-                    });
-                }
-            }
-
-            var result = new DocumentResult
-            {
-                Results = response == null ? null : response.GetResults(),
-                Facets = facetResults,
-                Tags = tagsResults,
-                Count = response == null ? 0 : Convert.ToInt32(response.TotalCount),
-                SearchId = searchId,
-                IdField = _searchOptions.KeyField,
-                Token = sasToken,
-                IsPathBase64Encoded = _searchOptions.IsPathBase64Encoded
-            };
-
-            string json = JsonConvert.SerializeObject(facetResults);
-
-
-            return result;
-        }
-
-        /// <summary>
-        /// Initiates a run of the search indexer.
-        /// </summary>
-        public async Task RunIndexer(CancellationToken cancellationToken)
-        {
-            var indexStatus = await _searchIndexerClient.GetIndexerStatusAsync(_searchOptions.IndexerName);
-            if (indexStatus.Value.LastResult.Status != IndexerExecutionStatus.InProgress)
-            {
-                await _searchIndexerClient.RunIndexerAsync(_searchOptions.IndexerName, cancellationToken);
-            }
-        }
-
-        private Uri GetServiceSasUriForContainer(BlobContainerClient containerClient,
-                                          string storedPolicyName = null)
-        {
-            // Check whether this BlobContainerClient object has been authorized with Shared Key.
-            if (containerClient.CanGenerateSasUri)
-            {
-                BlobSasBuilder sasBuilder = new BlobSasBuilder()
-                {
-                    BlobContainerName = containerClient.Name,
-                    Resource = "c"
-                };
-
-                if (storedPolicyName == null)
-                {
-                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(1);
-                    sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
-                    sasBuilder.StartsOn = DateTimeOffset.UtcNow.AddMinutes(-10);
-                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(60);
-                    sasBuilder.IPRange = new SasIPRange(IPAddress.None, IPAddress.None);
-                }
-                else
-                {
-                    sasBuilder.Identifier = storedPolicyName;
-                }
-                sasBuilder.SetPermissions(BlobSasPermissions.Read);
-
-                return containerClient.GenerateSasUri(sasBuilder);
+                facets.AddRange(facetNames);
             }
             else
             {
-                _logger.LogWarning(@"BlobContainerClient must be authorized with Shared Key 
-                          credentials to create a service SAS.");
-                return null;
-            }
-        }
-
-        public async Task<DocumentResult> GetDocumentById(string id, CancellationToken cancellationToken)
-        {
-            var decodedPath = id;
-
-            var response = await LookUp(id, cancellationToken);
-
-            if (_searchOptions.IsPathBase64Encoded)
-            {
-                decodedPath = Base64Decode(id);
+                facets.AddRange(_entityMapOptions.Facets.Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries));
             }
 
-            var sasToken = GetServiceSasUriForContainer(GetBlobContainerClient());
+            var entityMap = new EntityMapData();
 
-            var result = new DocumentResult
+            // Calculate nodes for N levels 
+            int CurrentNodes = 0;
+            int originalDistance = 100;
+
+            List<FDGraphEdges> FDEdgeList = new List<FDGraphEdges>();
+            // Create a node map that will map a facet to a node - nodemap[0] always equals the q term
+
+            var NodeMap = new Dictionary<string, NodeInfo>();
+
+            NodeMap[query] = new NodeInfo(CurrentNodes, "0")
             {
-                Result = response,
-                Token = sasToken,
-                DecodedPath = decodedPath,
-                IdField = _searchOptions.KeyField,
-                IsPathBase64Encoded = _searchOptions.IsPathBase64Encoded
+                Distance = originalDistance,
+                Layer = 0
             };
 
-            return result;
+            List<string> currentLevelTerms = new List<string>();
+
+            List<string> NextLevelTerms = new List<string>();
+            NextLevelTerms.Add(query);
+
+            // Iterate through the nodes up to MaxLevels deep to build the nodes or when I hit max number of nodes
+            for (var CurrentLevel = 0; CurrentLevel < maxLevels && maxNodes > 0; ++CurrentLevel, maxNodes /= 2)
+            {
+                currentLevelTerms = NextLevelTerms.ToList();
+                NextLevelTerms.Clear();
+                var levelNodeCount = 0;
+
+                NodeInfo densestNodeThisLayer = null;
+                var density = 0;
+
+                foreach (var k in NodeMap)
+                    k.Value.Distance += originalDistance;
+
+                foreach (var t in currentLevelTerms)
+                {
+                    if (levelNodeCount >= maxNodes)
+                        break;
+
+                    int facetsToGrab = 10;
+
+                    if (maxNodes < 10)
+                    {
+                        facetsToGrab = maxNodes;
+                    }
+
+                    var response = await GetFacets(t, facets, facetsToGrab, cancellationToken);
+
+                    if (response != null)
+                    {
+                        int facetColor = 0;
+
+                        foreach (var facet in facets)
+                        {
+                            var facetVals = response.Facets[facet];
+                            facetColor++;
+
+                            foreach (var facetResult in facetVals)
+                            {
+                                var facetValue = facetResult.Value.ToString();
+
+                                NodeInfo nodeInfo = new NodeInfo(-1, String.Empty);
+                                if (NodeMap.TryGetValue(facetValue, out nodeInfo) == false)
+                                {
+                                    // This is a new node
+                                    ++levelNodeCount;
+                                    NodeMap[facetValue] = new NodeInfo(++CurrentNodes, facetColor.ToString())
+                                    {
+                                        Distance = originalDistance,
+                                        Layer = CurrentLevel + 1
+                                    };
+
+                                    if (CurrentLevel < maxLevels)
+                                    {
+                                        NextLevelTerms.Add(facetValue);
+                                    }
+                                }
+
+                                // Add this facet to the fd list
+                                var newNode = NodeMap[facetValue];
+                                var oldNode = NodeMap[t];
+                                if (oldNode != newNode)
+                                {
+                                    oldNode.ChildCount += 1;
+                                    if (densestNodeThisLayer == null || oldNode.ChildCount > density)
+                                    {
+                                        density = oldNode.ChildCount;
+                                        densestNodeThisLayer = oldNode;
+                                    }
+
+                                    FDEdgeList.Add(new FDGraphEdges
+                                    {
+                                        Source = oldNode.Index,
+                                        Target = newNode.Index,
+                                        Distance = newNode.Distance
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (densestNodeThisLayer != null)
+                    densestNodeThisLayer.LayerCornerStone = CurrentLevel;
+            }
+
+            foreach (KeyValuePair<string, NodeInfo> entry in NodeMap)
+            {
+                entityMap.Nodes.Add(new EntityMapNode()
+                {
+                    Name = entry.Key,
+                    Id = entry.Value.Index,
+                    Color = entry.Value.ColorId,
+                    Layer = entry.Value.Layer,
+                    CornerStone = entry.Value.LayerCornerStone
+                });
+            }
+
+            FDEdgeList.ForEach(e => entityMap.Links.Add(new EntityMapLink()
+            {
+                Distance = e.Distance,
+                Source = e.Source,
+                Target = e.Target
+            }));
+
+            return entityMap;
         }
 
-        private BlobContainerClient GetBlobContainerClient()
+        public ValueTask QueueIndexerJob(CancellationToken cancellationToken)
         {
-            return _blobServiceClient.GetBlobContainerClient(_storageOptions.ContainerName);
+            return _jobChannel.WriteAsync(new SearchIndexerJobContext(), cancellationToken);
         }
 
-        private static string Base64Decode(string input)
+        private long CalculateTotalPages(long resultsTotalCount)
         {
-            if (input == null) throw new ArgumentNullException("input");
-            int inputLength = input.Length;
+            var pageCount = resultsTotalCount / _searchOptions.PageSize;
+
+            if (resultsTotalCount % _searchOptions.PageSize > 0)
+            {
+                pageCount++;
+            }
+
+            return pageCount;
+        }
+
+        private string ParseSearchId(Response<SearchResults<DocumentMetadata>> searchResults)
+        {
+            IEnumerable<string> headerValues;
+            string searchId = null;
+            if (searchResults.GetRawResponse().Headers.TryGetValues("x-ms-azs-searchid", out headerValues))
+            {
+                searchId = headerValues.FirstOrDefault();
+            }
+            return searchId ?? string.Empty;
+        }
+
+        private IEnumerable<AggregateFacet> AggregateFacets(IDictionary<string, IList<FacetResult>> facets)
+        {
+            return facets.Where(f => f.Value.Any()).Select(f => new AggregateFacet()
+            {
+                Name = f.Key,
+                Count = f.Value.Count,
+                Values = f.Value.Select(v => new Facet()
+                {
+                    Name = f.Key,
+                    Value = v.AsValueFacetResult<string>().Value,
+                    Count = v.Count ?? 0
+                })
+            });
+        }
+
+        private async Task<SearchOptions> GenerateSearchOptions(
+            SearchRequest request,
+            CancellationToken cancellationToken)
+        {
+            var schema = await GenerateSearchSchema(cancellationToken);
+            var options = new SearchOptions()
+            {
+                SearchMode = SearchMode.All,
+                Size = _searchOptions.PageSize,
+                Skip = (request.Page - 1) * _searchOptions.PageSize,
+                IncludeTotalCount = true,
+                QueryType = SearchQueryType.Full,
+                HighlightPreTag = "<b>",
+                HighlightPostTag = "</b>"
+            };
+
+            foreach (string s in schema.SelectFilter)
+            {
+                options.Select.Add(s);
+            }
+
+            var facets = schema.Facets.Select(f => f.Name).ToList();
+            foreach (string f in facets)
+            {
+                options.Facets.Add(f + ",sort:count");
+            }
+
+            foreach (string h in schema.SearchableFields)
+            {
+                options.HighlightFields.Add(h);
+            }
+
+
+            string filter = null;
+            var filterStr = string.Empty;
+
+            if (request.SearchFacets != null)
+            {
+                foreach (var item in request.SearchFacets)
+                {
+                    var facet = schema.Facets.Where(f => f.Name == item.Name).FirstOrDefault();
+
+                    filterStr = string.Join(",", item.Values);
+
+                    // Construct Collection(string) facet query
+                    if (facet.Type == typeof(string[]))
+                    {
+                        if (string.IsNullOrEmpty(filter))
+                            filter = $"{item.Name}/any(t: search.in(t, '{filterStr}', ','))";
+                        else
+                            filter += $" and {item.Name}/any(t: search.in(t, '{filterStr}', ','))";
+                    }
+                    // Construct string facet query
+                    else if (facet.Type == typeof(string))
+                    {
+                        if (string.IsNullOrEmpty(filter))
+                            filter = $"{item.Name} eq '{filterStr}'";
+                        else
+                            filter += $" and {item.Name} eq '{filterStr}'";
+                    }
+                    // Construct DateTime facet query
+                    else if (facet.Type == typeof(DateTime))
+                    {
+                        // TODO: Date filters
+                    }
+                }
+            }
+
+            options.Filter = filter;
+
+            // Add Filter based on geographic polygon if it is set.
+            if (!string.IsNullOrWhiteSpace(request.PolygonString))
+            {
+                string geoQuery = $"geo.intersects(geoLocation, geography'POLYGON(({request.PolygonString}))')";
+
+                if (options.Filter != null && options.Filter.Length > 0)
+                {
+                    options.Filter += " and " + geoQuery;
+                }
+                else
+                {
+                    options.Filter = geoQuery;
+                }
+            }
+
+            return options;
+        }
+
+        private string Decode(string base64EncodedPath)
+        {
+            if (base64EncodedPath == null) throw new ArgumentNullException("input");
+            int inputLength = base64EncodedPath.Length;
             if (inputLength < 1) return null;
 
             // Get padding chars
-            int numPadChars = input[inputLength - 1] - '0';
+            int numPadChars = base64EncodedPath[inputLength - 1] - '0';
             if (numPadChars < 0 || numPadChars > 10)
             {
                 return null;
@@ -406,7 +439,7 @@ namespace KnowledgeMining.UI.Services.Search
             char[] base64Chars = new char[inputLength - 1 + numPadChars];
             for (int iter = 0; iter < inputLength - 1; iter++)
             {
-                char c = input[iter];
+                char c = base64EncodedPath[iter];
 
                 switch (c)
                 {
@@ -432,39 +465,6 @@ namespace KnowledgeMining.UI.Services.Search
 
             var charArray = Convert.FromBase64CharArray(base64Chars, 0, base64Chars.Length);
             return System.Text.Encoding.Default.GetString(charArray);
-        }
-
-        /// <summary>
-        /// In some situations you may want to restrict the facets that are displayed in the
-        /// UI. This allows you to add some heuristics to remove facets that you may consider unnecessary.
-        /// </summary>
-        /// <param name="facetResult"></param>
-        /// <returns></returns>
-        private static List<FacetValue> GetCleanFacetValues(KeyValuePair<string, IList<FacetResult>> facetResult)
-        {
-            List<FacetValue> cleanValues = new List<FacetValue>();
-
-            if (facetResult.Key == "persons")
-            {
-                // only add names that are long enough 
-                foreach (var element in facetResult.Value)
-                {
-                    if (element.Values.ToString().Length >= 4)
-                    {
-
-                        cleanValues.Add(new FacetValue() { value = element.Value.ToString(), count = element.Count });
-                    }
-                }
-
-                return cleanValues;
-            }
-            else
-            {
-                List<FacetValue> outputFacets = facetResult.Value
-                           .Select(x => new FacetValue() { value = x.Value.ToString(), count = x.Count })
-                           .ToList();
-                return outputFacets;
-            }
         }
     }
 }

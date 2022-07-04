@@ -6,13 +6,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace KnowledgeMining.Functions.Skills
+namespace KnowledgeMining.Functions.Skills.Distinct
 {
     public class Thesaurus
     {
-        public Thesaurus(string executingDirectoryPath)
-            : this(JsonConvert.DeserializeObject<IEnumerable<IEnumerable<string>>>(
-                File.ReadAllText($"{executingDirectoryPath}\\thesaurus.json")))
+        public Thesaurus(string blob)
+            : this(JsonConvert.DeserializeObject<IEnumerable<IEnumerable<string>>>(blob))
         { }
 
         public Thesaurus(IEnumerable<IEnumerable<string>> dataset)

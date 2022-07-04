@@ -10,7 +10,6 @@
       "analyzer": "standard.lucene",
       "synonymMaps": ["km-synmap"]
     },
-
     {
       "name": "merged_content",
       "type": "Edm.String",
@@ -116,7 +115,7 @@
     },
     {
       "name": "date",
-      "type": "Collection(Edm.String)",
+      "type": "Edm.String",
       "facetable": true,
       "filterable": true,
       "retrievable": true,
@@ -129,7 +128,7 @@
     },
     {
       "name": "mission",
-      "type": "Collection(Edm.String)",
+      "type": "Edm.String",
       "facetable": true,
       "filterable": true,
       "retrievable": true,

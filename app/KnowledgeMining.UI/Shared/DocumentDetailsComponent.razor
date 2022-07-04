@@ -1,0 +1,69 @@
+﻿@using KnowledgeMining.UI.Models
+<MudOverlay Visible="@IsVisible" DarkBackground="true" AutoClose="true">
+    <MudContainer>
+        <MudPopover Open="@IsVisible" Class="px-4 pt-4" AnchorOrigin="Origin.CenterCenter" TransformOrigin="Origin.CenterCenter">
+            <div class="d-flex flex-column" style="max-height: 600px">
+                <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3">
+                    <MudTabPanel Text="Document Preview">
+                        <DocumentViewerComponent DocumentUri="@Document?.PreviewUrl"></DocumentViewerComponent>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Transcript">
+                        <MudGrid>
+                            <MudItem xs="12" sm="8">
+                                <pre style="max-width: 90vw; max-height: 40vw; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; ">
+                                    <MudHighlighter Text="@Document?.Content" HighlightedText="@_textToHighlight"></MudHighlighter>
+                                </pre>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <div class="d-flex flex-column flex-shrink-1">
+                                    <MudTextField T="string" Immediate="true" Placeholder="Search in transcript" ValueChanged="UpdateTextToHighlight" Variant="Variant.Outlined"></MudTextField>
+                                    <MudChipSet SelectedChipChanged="UpdateTextToHighlight" Filter="true" Class="d-flex flex-wrap">
+                                        @foreach (var keyPhrase in Document.KeyPhrases.Take(5))
+                                        {
+                                            <MudChip Text="@keyPhrase"></MudChip>
+                                        }
+                                    </MudChipSet>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Metadata">
+                        <MudText>Content Three</MudText>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Maps" Disabled="true">
+                        <MudText>Content Disabled</MudText>
+                    </MudTabPanel>
+                </MudTabs>
+                <MudButton OnClick="@ClosePopover" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
+            </div>
+        </MudPopover>
+    </MudContainer>
+</MudOverlay>
+
+@code {
+    [Parameter]
+    public DocumentFullMetadata? Document { get; set; }
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    private string? _textToHighlight;
+
+    private void UpdateTextToHighlight(string searchText)
+    {
+        _textToHighlight = searchText;
+    }
+
+    private void UpdateTextToHighlight(MudChip selectedChip)
+    {
+        _textToHighlight = selectedChip.Text;
+    }
+
+    private Task ClosePopover()
+    {
+        return IsVisibleChanged.InvokeAsync(false);
+    }
+}

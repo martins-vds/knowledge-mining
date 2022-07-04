@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace KnowledgeMining.Functions.Skills.Distinct
@@ -16,9 +17,11 @@ namespace KnowledgeMining.Functions.Skills.Distinct
     public static class Distinct
     {
         [FunctionName("distinct")]
+        [StorageAccount("SynonymsStorage")]
         public static async Task<IActionResult> RunDistinct(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log,
+            [Blob("synonyms/thesaurus.json", FileAccess.Read)] string synBlob,
             ExecutionContext executionContext)
         {
             log.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
@@ -33,7 +36,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             Thesaurus thesaurus = null;
             try
             {
-                thesaurus = new Thesaurus(executionContext.FunctionAppDirectory);
+                thesaurus = new Thesaurus(synBlob);
             }
             catch (Exception e)
             {
