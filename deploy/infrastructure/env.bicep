@@ -641,7 +641,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
 resource akv_secret_function_app_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   name: '${azure_key_vault.name}/FUNCTIONADMINKEY'
   properties: {
-    value: app_services_function_app.listsyncfunctiontriggerstatus().key
+    value: listKeys('${app_services_function_app.id}/host/default', '2021-02-01').functionKeys.default
   }
 }
 
