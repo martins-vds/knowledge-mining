@@ -241,6 +241,46 @@ resource azure_storage_account_blob_services 'Microsoft.Storage/storageAccounts/
   }
 }
 
+resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
+  name: '${azure_storage_account_data.name}/default/${docsContainerName}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource azure_storage_account_container_syn 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
+  name: '${azure_storage_account_data.name}/default/${synonymsContainerName}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployscript-upload-thesaurus-${utcValue}'
+  location: location
+  kind: 'AzureCLI'
+  properties: {
+    azCliVersion: '2.37.0'
+    timeout: 'PT5M'
+    retentionInterval: 'PT1H'
+    environmentVariables: [
+      {
+        name: 'AZURE_STORAGE_ACCOUNT'
+        value: azure_storage_account_data.name
+      }
+      {
+        name: 'AZURE_STORAGE_KEY'
+        secureValue: azure_storage_account_data.listKeys().keys[0].value
+      }
+      {
+        name: 'CONTENT'
+        value: loadTextContent('../search-index/thesaurus.json')
+      }
+    ]
+    scriptContent: 'echo "$CONTENT" > thesaurus.json && az storage blob upload -f thesaurus.json -c ${synonymsContainerName} -n thesaurus.json'
+  }
+}
+
 resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
   location: location
   name: '${azure_storage_account_data.name}-blob-endpoint'
@@ -329,45 +369,7 @@ resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/priv
   }
 }
 
-resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
-  name: '${azure_storage_account_data.name}/default/${docsContainerName}'
-  properties: {
-    publicAccess: 'None'
-  }
-}
 
-resource azure_storage_account_container_syn 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
-  name: '${azure_storage_account_data.name}/default/${synonymsContainerName}'
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'deployscript-upload-thesaurus-${utcValue}'
-  location: location
-  kind: 'AzureCLI'
-  properties: {
-    azCliVersion: '2.26.1'
-    timeout: 'PT5M'
-    retentionInterval: 'PT1H'
-    environmentVariables: [
-      {
-        name: 'AZURE_STORAGE_ACCOUNT'
-        value: azure_storage_account_data.name
-      }
-      {
-        name: 'AZURE_STORAGE_KEY'
-        secureValue: azure_storage_account_data.listKeys().keys[0].value
-      }
-      {
-        name: 'CONTENT'
-        value: loadTextContent('../search-index/thesaurus.json')
-      }
-    ]
-    scriptContent: 'echo "$CONTENT" > thesaurus.json && az storage blob upload -f thesaurus.json -c ${synonymsContainerName} -n thesaurus.json'
-  }
-}
 
 // App Service
 resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
