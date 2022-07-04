@@ -257,31 +257,30 @@ resource azure_storage_account_container_syn 'Microsoft.Storage/storageAccounts/
   }
 }
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'deployscript-upload-thesaurus-${utcValue}'
-  location: location
-  kind: 'AzureCLI'
-  properties: {
-    azCliVersion: '2.37.0'
-    timeout: 'PT5M'
-    retentionInterval: 'PT1H'
-    environmentVariables: [
-      {
-        name: 'AZURE_STORAGE_ACCOUNT'
-        value: azure_storage_account_data.name
-      }
-      {
-        name: 'AZURE_STORAGE_KEY'
-        secureValue: azure_storage_account_data.listKeys().keys[0].value
-      }
-      {
-        name: 'CONTENT'
-        value: loadTextContent('../search-index/thesaurus.json')
-      }
-    ]
-    scriptContent: 'echo "$CONTENT" > thesaurus.json && az storage blob upload -f thesaurus.json -c ${synonymsContainerName} -n thesaurus.json'
-  }
-}
+// resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+//   name: 'deployscript-upload-thesaurus-${utcValue}'
+//   identity: {
+//     type: 'SystemAssigned'
+//   }
+//   location: location
+//   kind: 'AzureCLI'
+//   properties: {
+//     azCliVersion: '2.37.0'
+//     timeout: 'PT5M'
+//     retentionInterval: 'PT1H'
+//     storageAccountSettings:{
+//       storageAccountName: azure_storage_account_data.name
+//       storageAccountKey: azure_storage_account_data.listKeys().keys[0].value
+//     }
+//     environmentVariables: [
+//       {
+//         name: 'CONTENT'
+//         value: loadTextContent('../search-index/thesaurus.json')
+//       }
+//     ]
+//     scriptContent: 'echo "$CONTENT" > thesaurus.json && az storage blob upload -f thesaurus.json -c ${synonymsContainerName} -n thesaurus.json'
+//   }
+// }
 
 resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
   location: location
@@ -683,6 +682,7 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
 }
 
 output storage_data_id string = azure_storage_account_data.id
+output storage_data_name string = azure_storage_account_data.name
 output search_endpoint string = 'https://${azure_search_service.name}.search.windows.net'
 output keyvault_name string = azure_key_vault.name
 output app_name string = app_services_website.name
