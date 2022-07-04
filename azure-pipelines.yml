@@ -41,8 +41,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'scriptPath'
               scriptPath: './scripts/deploy-infra.sh'
-              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" $servicePrincipalId'
-              addSpnToEnvironment: true
+              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$(servicePrincipalId)"'
 
   - stage: app
     displayName: App

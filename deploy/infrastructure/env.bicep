@@ -204,7 +204,6 @@ resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-
   name: cognitiveAccountName
   location: location
   kind: 'CognitiveServices'
-
   sku: {
     name: 'S0'
   }
