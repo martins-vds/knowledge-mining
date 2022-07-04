@@ -4,6 +4,7 @@
 # https://aka.ms/yaml
 
 trigger:
+  batch: true
   branches:
     include:
       - main
@@ -33,25 +34,21 @@ stages:
         displayName: "Deploy Infrastructure"
         steps:
           - task: AzureCLI@2
-            displayName: Login to Azure
-            inputs:
-              azureSubscription: "azure-knowledge-mining-arm-connection"
-              scriptType: "bash"
-              scriptLocation: "inlineScript"
-              inlineScript: "az login"
-              addSpnToEnvironment: true
-          
-          - task: Bash@3
             displayName: 'Deploy Infra'
             name: deploy_infra
             inputs:
-              filePath: './scripts/deploy-infra.sh' 
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-infra.sh'
               arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$servicePrincipalId"'
+              addSpnToEnvironment: true
 
   - stage: app
     displayName: App
     jobs:
       - job: build
+        displayName: 'Build App and Skills'
         steps:
           - bash: "./scripts/publish-app.sh"
             displayName: "Publish App"
@@ -62,8 +59,9 @@ stages:
           - publish: "./dist"
             displayName: "Publish artifacts"
             artifact: Dist
-            
+
       - job: deploy
+        displayName: 'Deploy App and Skills'
         variables:
           appName: $[stageDependencies.infra.deploy.outputs['deploy_infra.app_name']]
           skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
@@ -73,24 +71,22 @@ stages:
             displayName: "Download dist binaries"
 
           - task: AzureCLI@2
-            displayName: Login to Azure
-            inputs:
-              azureSubscription: "azure-knowledge-mining-arm-connection"
-              scriptType: "bash"
-              scriptLocation: "inlineScript"
-              inlineScript: "az login"
-
-          - task: Bash@3
             displayName: "Deploy App"
             inputs:
-              filePath: "./scripts/deploy-app.sh"
-              arguments: '"$(rgName)" "$(appName)" "./dist/app/app.linux-x64.zip"'
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-app.sh'
+              arguments: '"$(rgName)" "$(appName)" "./dist/app.linux-x64.zip"'
 
-          - task: Bash@3
-            displayName: 'Deploy Skills'
+          - task: AzureCLI@2
+            displayName: "Deploy Skills"
             inputs:
-              filePath: './scripts/deploy-skills.sh'
-              arguments: '"$(rgName)" "$(skillsName)" "./dist/app/app.linux-x64.zip"'
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-skills.sh'
+              arguments: '"$(rgName)" "$(skillsName)" "./dist/skills.linux-x64.zip"'
             
   - stage: search
     displayName: 'Search'
@@ -103,14 +99,6 @@ stages:
           searchEndpoint: $[stageDependencies.infra.deploy.outputs['deploy_infra.search_endpoint']]
           skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
         steps:
-          - task: AzureCLI@2
-            displayName: Login to Azure
-            inputs:
-              azureSubscription: "azure-knowledge-mining-arm-connection"
-              scriptType: "bash"
-              scriptLocation: "inlineScript"
-              inlineScript: "az login"
-                      
           - task: AzureKeyVault@1
             displayName: 'Get Secrets'
             inputs:
@@ -118,11 +106,12 @@ stages:
               KeyVaultName: '$(keyVaultName)'
               SecretsFilter: 'SEARCHSERVICESECRET,COGNITIVESERVICESSECRET,FUNCTIONADMINKEY'
               RunAsPreJob: false
-          
-          - task: Bash@3
+
+          - task: AzureCLI@2
             displayName: 'Deploy Azure Search Configuration'
             inputs:
-              filePath: './scripts/deploy-search-config.sh' 
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-search-config.sh' 
               arguments: '"./deploy/search-index" "$(storageAccountId)" "$(docsContainerName)" "$(searchEndpoint)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)" "$(skillsName)" "$(FUNCTIONADMINKEY)"' 
-            
-  
