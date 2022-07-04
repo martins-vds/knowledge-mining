@@ -24,7 +24,7 @@ variables:
     value: 'documents'
   - name: deploymentTemplate
     value: './deploy/infrastructure/env.bicep'
-    
+
 stages:
   - stage: infra
     displayName: Infrastructure
@@ -41,9 +41,12 @@ stages:
               inlineScript: "az login"
               addSpnToEnvironment: true
           
-          - bash: './scripts/deploy-infra.sh'
+          - task: Bash@3
+            displayName: 'Deploy Infra'
             name: deploy_infra
-            arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$servicePrincipalId"'
+            inputs:
+              filePath: './scripts/deploy-infra.sh' 
+              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$servicePrincipalId"'
 
   - stage: app
     displayName: App
@@ -59,6 +62,7 @@ stages:
           - publish: "./dist"
             displayName: "Publish artifacts"
             artifact: Dist
+            
       - job: deploy
         variables:
           appName: $[stageDependencies.infra.deploy.outputs['deploy_infra.app_name']]
@@ -76,13 +80,18 @@ stages:
               scriptLocation: "inlineScript"
               inlineScript: "az login"
 
-          - bash: "./scripts/deploy-app.sh"
+          - task: Bash@3
             displayName: "Deploy App"
-            arguments: '"$(rgName)" "$(appName)" "./dist/app/app.linux-x64.zip"'
+            inputs:
+              filePath: "./scripts/deploy-app.sh"
+              arguments: '"$(rgName)" "$(appName)" "./dist/app/app.linux-x64.zip"'
 
-          - bash: "./scripts/deploy-skills.sh"
-            displayName: "Deploy Skills"
-            arguments: '"$(rgName)" "$(skillsName)" "./dist/app/app.linux-x64.zip"'
+          - task: Bash@3
+            displayName: 'Deploy Skills'
+            inputs:
+              filePath: './scripts/deploy-skills.sh'
+              arguments: '"$(rgName)" "$(skillsName)" "./dist/app/app.linux-x64.zip"'
+            
   - stage: search
     displayName: 'Search'
     jobs:
@@ -101,7 +110,7 @@ stages:
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: "az login"
-
+                      
           - task: AzureKeyVault@1
             displayName: 'Get Secrets'
             inputs:
@@ -110,7 +119,10 @@ stages:
               SecretsFilter: 'SEARCHSERVICESECRET,COGNITIVESERVICESSECRET,FUNCTIONADMINKEY'
               RunAsPreJob: false
           
-          - bash: './scripts/deploy-search-config.sh'
+          - task: Bash@3
             displayName: 'Deploy Azure Search Configuration'
-            arguments: '"./deploy/search-index" "$(storageAccountId)" "$(docsContainerName)" "$(searchEndpoint)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)" "$(skillsName)" "$(FUNCTIONADMINKEY)"'
+            inputs:
+              filePath: './scripts/deploy-search-config.sh' 
+              arguments: '"./deploy/search-index" "$(storageAccountId)" "$(docsContainerName)" "$(searchEndpoint)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)" "$(skillsName)" "$(FUNCTIONADMINKEY)"' 
+            
   
