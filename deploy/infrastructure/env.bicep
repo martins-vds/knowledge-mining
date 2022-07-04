@@ -230,9 +230,12 @@ resource azure_storage_account_data 'Microsoft.Storage/storageAccounts@2019-06-0
   }
 }
 
-resource azure_storage_account_blob_services 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
-  name: '${azure_storage_account_data.name}-blob-retention-policy'
+resource azure_storage_account_blob_retention 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
+  name: '${azure_storage_account_data.name}/default'
   properties: {
+    cors:{
+      corsRules: []
+    }
     deleteRetentionPolicy:{
       allowPermanentDelete: false
       enabled: true
