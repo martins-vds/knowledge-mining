@@ -546,7 +546,7 @@ resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01
 resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deployFunction) {
   name: functionAppName
   location: location
-  kind: 'functionapp'
+  kind: 'functionapp,linux'
   identity: {
     type: 'SystemAssigned'
   }
@@ -554,6 +554,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
       alwaysOn: true
+      linuxFxVersion: 'DOTNETCORE|6.0'
       appSettings: [
         {
           name: 'APPINSIGHTS_PROFILERFEATURE_VERSION'
