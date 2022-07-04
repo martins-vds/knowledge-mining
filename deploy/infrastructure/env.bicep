@@ -1,7 +1,9 @@
 param docsContainerName string = 'documents'
+param synonymsContainerName string = 'synonyms'
 param deployFunction bool = true
 param location string = resourceGroup().location
 param servicePrincipalId string = ''
+param utcValue string = utcNow()
 
 var uniqueness = uniqueString(resourceGroup().id)
 var keyVaultName = 'akv-${uniqueness}'
@@ -15,9 +17,11 @@ var appInsightsName = 'app-insights-${uniqueness}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
 var secretKeyStorageKey = 'STORAGEACCOUNTKEYSECRET'
+var secretKeyStorageConnectionString = 'STORAGEACCOUNTCONNECTIONSTRING'
 
 var subnetAppServiceName = 'AppService'
 var subnetPrivateEndpointsName = 'PrivateEndpoints'
+
 
 /*
   Example:
@@ -149,7 +153,7 @@ resource akv_secret_storage_account_resource_id 'Microsoft.KeyVault/vaults/secre
 }
 
 resource akv_secret_storage_account_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${azure_key_vault.name}/STORAGEACCOUNTCONNECTIONSTRING'
+  name: '${azure_key_vault.name}/${secretKeyStorageConnectionString}'
   properties: {
     value: 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_data.name};AccountKey=${listKeys(azure_storage_account_data.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
   }
@@ -329,6 +333,39 @@ resource azure_storage_account_container_docs 'Microsoft.Storage/storageAccounts
   name: '${azure_storage_account_data.name}/default/${docsContainerName}'
   properties: {
     publicAccess: 'None'
+  }
+}
+
+resource azure_storage_account_container_syn 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
+  name: '${azure_storage_account_data.name}/default/${synonymsContainerName}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployscript-upload-thesaurus-${utcValue}'
+  location: location
+  kind: 'AzureCLI'
+  properties: {
+    azCliVersion: '2.26.1'
+    timeout: 'PT5M'
+    retentionInterval: 'PT1H'
+    environmentVariables: [
+      {
+        name: 'AZURE_STORAGE_ACCOUNT'
+        value: azure_storage_account_data.name
+      }
+      {
+        name: 'AZURE_STORAGE_KEY'
+        secureValue: azure_storage_account_data.listKeys().keys[0].value
+      }
+      {
+        name: 'CONTENT'
+        value: loadTextContent('../search-index/thesaurus.json')
+      }
+    ]
+    scriptContent: 'echo "$CONTENT" > thesaurus.json && az storage blob upload -f thesaurus.json -c ${synonymsContainerName} -n thesaurus.json'
   }
 }
 
@@ -587,9 +624,20 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
           name: 'AzureWebJobsStorage'
           value: deployFunction ? 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net' : ''
         }
+        {
+          name: 'SynonymsStorage'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeyStorageConnectionString})'
+        }
       ]
     }
     httpsOnly: true
+  }
+}
+
+resource akv_secret_function_app_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${azure_key_vault.name}/FUNCTIONADMINKEY'
+  properties: {
+    value: app_services_function_app.listsyncfunctiontriggerstatus().key
   }
 }
 
@@ -631,6 +679,7 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
 }
 
 output storage_data_id string = azure_storage_account_data.id
-output search_enpoint string = 'https://${azure_search_service.name}.search.windows.net'
+output search_endpoint string = 'https://${azure_search_service.name}.search.windows.net'
+output keyvault_name string = azure_key_vault.name
 output app_name string = app_services_website.name
 output skills_name string = app_services_function_app.name

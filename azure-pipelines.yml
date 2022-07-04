@@ -1,0 +1,116 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  branches:
+    include:
+      - main
+      - convert-to-blazor
+  paths:
+    include:
+      - azure-pipelines.yml
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: rgName
+    value: 'poc-knowledge-mining'
+  - name: location
+    value: 'westus2'
+  - name: docsContainerName
+    value: 'documents'
+  - name: deploymentTemplate
+    value: './deploy/infrastructure/env.bicep'
+    
+stages:
+  - stage: infra
+    displayName: Infrastructure
+    jobs:
+      - job: deploy
+        displayName: "Deploy Infrastructure"
+        steps:
+          - task: AzureCLI@2
+            displayName: Login to Azure
+            inputs:
+              azureSubscription: "azure-knowledge-mining-arm-connection"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: "az login"
+              addSpnToEnvironment: true
+          
+          - bash: './scripts/deploy-infra.sh'
+            name: deploy_infra
+            arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$servicePrincipalId"'
+
+  - stage: app
+    displayName: App
+    jobs:
+      - job: build
+        steps:
+          - bash: "./scripts/publish-app.sh"
+            displayName: "Publish App"
+
+          - bash: "./scripts/publish-skills.sh"
+            displayName: "Publish Skills"
+
+          - publish: "./dist"
+            displayName: "Publish artifacts"
+            artifact: Dist
+      - job: deploy
+        variables:
+          appName: $[stageDependencies.infra.deploy.outputs['deploy_infra.app_name']]
+          skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
+        steps:
+          - download: current
+            artifact: Dist
+            displayName: "Download dist binaries"
+
+          - task: AzureCLI@2
+            displayName: Login to Azure
+            inputs:
+              azureSubscription: "azure-knowledge-mining-arm-connection"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: "az login"
+
+          - bash: "./scripts/deploy-app.sh"
+            displayName: "Deploy App"
+            arguments: '"$(rgName)" "$(appName)" "./dist/app/app.linux-x64.zip"'
+
+          - bash: "./scripts/deploy-skills.sh"
+            displayName: "Deploy Skills"
+            arguments: '"$(rgName)" "$(skillsName)" "./dist/app/app.linux-x64.zip"'
+  - stage: search
+    displayName: 'Search'
+    jobs:
+      - job: deploy
+        displayName: 'Configure Search'
+        variables:
+          keyVaultName: $[stageDependencies.infra.deploy.outputs['deploy_infra.keyvault_name']]
+          storageAccountId: $[stageDependencies.infra.deploy.outputs['deploy_infra.storage_data_id']]
+          searchEndpoint: $[stageDependencies.infra.deploy.outputs['deploy_infra.search_endpoint']]
+          skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
+        steps:
+          - task: AzureCLI@2
+            displayName: Login to Azure
+            inputs:
+              azureSubscription: "azure-knowledge-mining-arm-connection"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: "az login"
+
+          - task: AzureKeyVault@1
+            displayName: 'Get Secrets'
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              KeyVaultName: '$(keyVaultName)'
+              SecretsFilter: 'SEARCHSERVICESECRET,COGNITIVESERVICESSECRET,FUNCTIONADMINKEY'
+              RunAsPreJob: false
+          
+          - bash: './scripts/deploy-search-config.sh'
+            displayName: 'Deploy Azure Search Configuration'
+            arguments: '"./deploy/search-index" "$(storageAccountId)" "$(docsContainerName)" "$(searchEndpoint)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)" "$(skillsName)" "$(FUNCTIONADMINKEY)"'
+  
