@@ -18,7 +18,7 @@ pool:
 
 variables:
   - name: rgName
-    value: 'poc-knowledge-mining'
+    value: 'poc-knowledge-mining-2'
   - name: location
     value: 'westus2'
   - name: docsContainerName
