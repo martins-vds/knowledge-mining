@@ -102,7 +102,7 @@ stages:
               arguments: '"$(rgName)" "$(skillsName)" "$(Pipeline.Workspace)/dist/skills.linux-x64.zip"'
             
   - stage: search
-    dependsOn: app
+    dependsOn: [infra, app]
     displayName: 'Search'
     jobs:
       - job: deploy
