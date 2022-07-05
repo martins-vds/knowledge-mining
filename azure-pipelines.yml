@@ -45,6 +45,7 @@ stages:
           
           - task: AzureCLI@2
             displayName: 'Upload Thesaurus'
+            enabled: false
             inputs:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
               scriptType: 'bash'
