@@ -105,8 +105,8 @@ stages:
       - job: deploy
         displayName: 'Configure Search'
         variables:
-          keyVaultName: $[stageDependencies.infra.deploy.outputs['deploy_infra.keyvault_name']]
-          storageAccountId: $[stageDependencies.infra.deploy.outputs['deploy_infra.storage_data_id']]
+          keyVault: $[stageDependencies.infra.deploy.outputs['deploy_infra.keyvault_name']]
+          storageAccountId: $[stageDependencies.infra.deploy.outputs['deploy_infra.storage_account_id']]
           searchEndpoint: $[stageDependencies.infra.deploy.outputs['deploy_infra.search_endpoint']]
           skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
         steps:
@@ -114,7 +114,7 @@ stages:
             displayName: 'Get Secrets'
             inputs:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
-              KeyVaultName: '$(keyVaultName)'
+              KeyVaultName: '$(keyVault)'
               SecretsFilter: 'SEARCHSERVICESECRET,COGNITIVESERVICESSECRET,FUNCTIONADMINKEY'
               RunAsPreJob: false
 
