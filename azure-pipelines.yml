@@ -104,14 +104,14 @@ stages:
   - stage: search
     dependsOn: [infra, app]
     displayName: 'Search'
-    jobs:
-      - job: deploy
-        displayName: 'Configure Search'
-        variables:
+    variables:
           keyVault: $[stageDependencies.infra.deploy.outputs['deploy_infra.keyvault_name']]
           storageAccountId: $[stageDependencies.infra.deploy.outputs['deploy_infra.storage_account_id']]
           searchEndpoint: $[stageDependencies.infra.deploy.outputs['deploy_infra.search_endpoint']]
           skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
+    jobs:
+      - job: deploy
+        displayName: 'Configure Search'
         steps:
           - task: AzureKeyVault@1
             displayName: 'Get Secrets'
