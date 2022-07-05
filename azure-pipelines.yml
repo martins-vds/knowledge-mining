@@ -117,7 +117,7 @@ stages:
             displayName: 'Get Secrets'
             inputs:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
-              KeyVaultName: ${{ replace(variables['keyVault'], '''', '') }}
+              KeyVaultName: '$(keyVault)'
               SecretsFilter: 'SEARCHSERVICESECRET,COGNITIVESERVICESSECRET,FUNCTIONADMINKEY'
               RunAsPreJob: false
 
