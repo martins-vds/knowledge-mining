@@ -118,7 +118,7 @@ stages:
             inputs:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
               KeyVaultName: '$(keyVault)'
-              SecretsFilter: 'SEARCHSERVICESECRET,COGNITIVESERVICESSECRET,FUNCTIONADMINKEY'
+              SecretsFilter: '*'
               RunAsPreJob: false
 
           - task: AzureCLI@2
