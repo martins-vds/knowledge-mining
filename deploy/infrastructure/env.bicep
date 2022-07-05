@@ -370,8 +370,6 @@ resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/priv
   }
 }
 
-
-
 // App Service
 resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
   name: appServicePlanName
@@ -681,6 +679,18 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
     principalType: 'ServicePrincipal'
   }
 }
+
+resource roleAssignSiteToStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(resourceGroup().id, 'Storage Blob Data Contributor')
+  scope: app_services_website
+  properties: {
+    roleDefinitionId: '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    principalId: app_services_website.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+
 
 output storage_data_id string = azure_storage_account_data.id
 output storage_data_name string = azure_storage_account_data.name
