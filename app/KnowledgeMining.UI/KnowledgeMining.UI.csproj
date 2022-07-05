@@ -4,14 +4,16 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>10</LangVersion>
+		<ClientAppPath>ClientApp\</ClientAppPath>
+		<DefaultItemExcludes>$(DefaultItemExcludes);$(ClientAppPath)node_modules\**</DefaultItemExcludes>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="AzureMapsControl.Components" Version="1.11.0" />
-		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.7.4">
+		<!--<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.7.4">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
+		</PackageReference>-->
 		<PackageReference Include="MudBlazor" Version="6.0.10" />
 		<PackageReference Include="Azure.Search.Documents" Version="11.3.0" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.12.0" />
@@ -29,7 +31,29 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="ClientApp\" />
 	  <Folder Include="wwwroot\js\" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<Content Remove="$(ClientAppPath)**" />
+		<None Remove="$(ClientAppPath)**" />
+		<None Include="$(ClientAppPath)**" Exclude="$(ClientAppPath)node_modules\**" />
+	</ItemGroup>
+
+	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" !Exists('$(ClientAppPath)node_modules') ">
+		<!-- Ensure Node.js is installed -->
+		<Exec Command="node --version" ContinueOnError="true">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+		</Exec>
+		<Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+		<Message Importance="high" Text="Restoring dependencies using 'npm'. This may take several minutes..." />
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm install" />
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm run build" />
+	</Target>
+
+	<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+		<!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm install" />
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm run build" />
+	</Target>
 </Project>
