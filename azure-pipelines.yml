@@ -113,13 +113,20 @@ stages:
       - job: deploy
         displayName: 'Configure Search'
         steps:
-          - task: AzureKeyVault@1
-            displayName: 'Get Secrets'
+          - task: AzureCLI@2
+            displayName: "Get Secrets"
             inputs:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
-              KeyVaultName: '$(keyVault)'
-              SecretsFilter: '*'
-              RunAsPreJob: false
+              scriptType: 'bash'
+              scriptLocation: inlineScript
+              inlineScript: |
+                search_secret=$(./scripts/get-secret.sh "$(keyVault)" SEARCHSERVICESECRET)
+                cognitive_secret=$(./scripts/get-secret.sh "$(keyVault)" COGNITIVESERVICESSECRET)
+                function_admin_secret=$(./scripts/get-secret.sh "$(keyVault)" FUNCTIONADMINKEY)
+
+                echo "##vso[task.setvariable variable=SEARCHSERVICESECRET;issecret=true]$search_secret"
+                echo "##vso[task.setvariable variable=COGNITIVESERVICESSECRET;issecret=true]$cognitive_secret"
+                echo "##vso[task.setvariable variable=FUNCTIONADMINKEY;issecret=true]$function_admin_secret"
 
           - task: AzureCLI@2
             displayName: 'Deploy Azure Search Configuration'
