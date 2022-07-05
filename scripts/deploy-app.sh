@@ -3,7 +3,7 @@
 set -ex #echo on
 
 function trim(){
-    local string=$(echo $1 | tr -d '[[:punct:]]')
+    local string=$(echo $1 | tr -d '''')
 
     echo "$string"
 }

@@ -72,6 +72,7 @@ stages:
             artifact: dist
 
       - job: deploy
+        dependsOn: build
         displayName: 'Deploy App and Skills'
         variables:
           appName: $[stageDependencies.infra.deploy.outputs['deploy_infra.app_name']]
