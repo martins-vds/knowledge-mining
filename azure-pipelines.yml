@@ -11,6 +11,8 @@ trigger:
       - convert-to-blazor
   paths:
     include:
+      - app
+      - deploy
       - azure-pipelines.yml
 
 pool:
