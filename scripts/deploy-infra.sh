@@ -21,12 +21,12 @@ az deployment group create -g $resource_group \
                            --parameters docsContainerName=$docs_container_name \
                                         servicePrincipalId=$service_principal_id
 
-storage_account_id=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_id.value -o tsv) | tr -dc '[[:print:]]'    
-storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_name.value -o tsv) | tr -dc '[[:print:]]'
-search_endpoint=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.search_endpoint.value -o tsv) | tr -dc '[[:print:]]'
-keyvault_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.keyvault_name.value -o tsv) | tr -dc '[[:print:]]'
-app_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.app_name.value -o tsv) | tr -dc '[[:print:]]'
-skills_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.skills_name.value -o tsv) | tr -dc '[[:print:]]'
+storage_account_id=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_id.value -o tsv | tr -dc '[[:print:]]')
+storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_name.value -o tsv | tr -dc '[[:print:]]')
+search_endpoint=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.search_endpoint.value -o tsv | tr -dc '[[:print:]]')
+keyvault_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.keyvault_name.value -o tsv | tr -dc '[[:print:]]')
+app_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.app_name.value -o tsv | tr -dc '[[:print:]]')
+skills_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.skills_name.value -o tsv | tr -dc '[[:print:]]')
 
 
 echo "::set-output name=storage_account_id::$storage_account_id"
