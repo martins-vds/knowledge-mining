@@ -66,7 +66,7 @@ stages:
 
           - publish: "./dist"
             displayName: "Publish artifacts"
-            artifact: Dist
+            artifact: dist
 
       - job: deploy
         displayName: 'Deploy App and Skills'
@@ -75,8 +75,9 @@ stages:
           skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
         steps:
           - download: current
-            artifact: Dist
+            artifact: dist
             displayName: "Download dist binaries"
+            patterns: '**/*.zip'
 
           - task: AzureCLI@2
             displayName: "Deploy App"
@@ -85,7 +86,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'scriptPath'
               scriptPath: './scripts/deploy-app.sh'
-              arguments: '"$(rgName)" "$(appName)" "./dist/app.linux-x64.zip"'
+              arguments: '"$(rgName)" "$(appName)" "$(Pipeline.Workspace)/dist/app.linux-x64.zip"'
 
           - task: AzureCLI@2
             displayName: "Deploy Skills"
@@ -94,7 +95,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'scriptPath'
               scriptPath: './scripts/deploy-skills.sh'
-              arguments: '"$(rgName)" "$(skillsName)" "./dist/skills.linux-x64.zip"'
+              arguments: '"$(rgName)" "$(skillsName)" "$(Pipeline.Workspace)/dist/skills.linux-x64.zip"'
             
   - stage: search
     displayName: 'Search'
