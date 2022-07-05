@@ -1,19 +1,25 @@
 #!/bin/bash
 set -ex
 
+function trim(){
+    local string=$(echo $1 | tr -d '[[:punct:]]')
+
+    echo "$string"
+}
+
 # Constants
 SEARCH_SERVICE_APIVERSION="2021-04-30-Preview"
 
 # Define variables
-WORKING_DIRECTORY=$1
-STORAGE_RESOURCE_ID="$2"
-STORAGE_ACCOUNT_CONTAINER="$3"
+WORKING_DIRECTORY=$(trim "$1")
+STORAGE_RESOURCE_ID=$(trim "$2")
+STORAGE_ACCOUNT_CONTAINER=$(trim "$3")
 
-SEARCH_SERVICE_ENDPOINT="$4"
+SEARCH_SERVICE_ENDPOINT=$(trim "$4")
 SEARCH_SERVICE_SECRET="$5"
 
 COGNITIVE_SERVICE_SECRET="$6"
-FUNCTION_NAME="$7"
+FUNCTION_NAME=$(trim "$7")
 FUNCTION_APICODE="$8"
       
 INDEX_NAME="km"
