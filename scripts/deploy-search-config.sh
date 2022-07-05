@@ -2,7 +2,7 @@
 set -ex
 
 function trim(){
-    local string=$(echo $1 | tr -d '''')
+    local string=$(echo $1 | tr -d '[[='"'"'=]]')
 
     echo "$string"
 }
