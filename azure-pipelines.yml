@@ -53,6 +53,7 @@ stages:
               inlineScript: 'az storage blob upload --account-name $(deploy_infra.storage_account_name) -f "./deploy/search-index/thesaurus.json" -c synonyms -n thesaurus.json'
 
   - stage: app
+    dependsOn: infra
     displayName: App
     jobs:
       - job: build
@@ -98,6 +99,7 @@ stages:
               arguments: '"$(rgName)" "$(skillsName)" "$(Pipeline.Workspace)/dist/skills.linux-x64.zip"'
             
   - stage: search
+    dependsOn: app
     displayName: 'Search'
     jobs:
       - job: deploy
