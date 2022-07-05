@@ -49,7 +49,7 @@ stages:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
               scriptType: 'bash'
               scriptLocation: inlineScript
-              inlineScript: 'az storage blob upload --account-name $(deploy_infra.storage_data_name) -f "./deploy/search-index/thesaurus.json" -c synonyms -n thesaurus.json'
+              inlineScript: 'az storage blob upload --account-name $(deploy_infra.storage_account_name) -f "./deploy/search-index/thesaurus.json" -c synonyms -n thesaurus.json'
 
   - stage: app
     displayName: App
