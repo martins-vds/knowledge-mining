@@ -19,47 +19,60 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 
             Synonyms = new Dictionary<string, string>();
 
-            ParseString(blob);
+            ParseThesaurus(blob);
         }
 
-        private void ParseString(string json)
+        private void ParseThesaurus(string json)
         {
             var dataset = JsonSerializer.Deserialize<IEnumerable<IEnumerable<string>>>(json) ?? Enumerable.Empty<IEnumerable<string>>();
+            
             foreach (IEnumerable<string> lemma in dataset)
             {
                 if (!lemma.Any()) continue;
-                string canonicalForm = lemma.First();
+
+                var canonicalForm = lemma.First();
+
                 foreach (string form in lemma)
                 {
-                    string normalizedForm = Normalize(form);
+                    var normalizedForm = Normalize(form);
+
                     if (Synonyms.TryGetValue(normalizedForm, out string? existingCanonicalForm))
                     {
                         throw new InvalidDataException(
                             $"Thesaurus parsing error: the form '{form}' of the lemma '{canonicalForm}' looks the same, once normalized, as one of the forms of '{existingCanonicalForm}'. Please disambiguate or merge lemmas.");
                     }
+
                     Synonyms.Add(normalizedForm, canonicalForm);
                 }
             }
         }
 
-        public IEnumerable<string> Dedupe(IEnumerable<string> words)
+        public IEnumerable<string> Dedupe(IEnumerable<string>? words)
         {
+            if (words is null)
+            {
+                return Enumerable.Empty<string>();
+            }
+
             var normalizedToWord = new Dictionary<string, string>();
+
             foreach (string word in words)
             {
                 string normalized = Normalize(word);
                 string canonical = Synonyms.TryGetValue(normalized, out string? canonicalFromThesaurus) ?
                     canonicalFromThesaurus :
                     normalized;
+
                 if (!normalizedToWord.ContainsKey(canonical))
                 {
                     normalizedToWord.Add(canonical, canonicalFromThesaurus ?? word); // Arbitrarily consider the first occurrence as canonical
                 }
             }
+
             return normalizedToWord.Values.Distinct();
         }
 
-        public string Normalize(string word)
+        private string Normalize(string word)
             => new(word
                 .Normalize()
                 .ToLowerInvariant()
