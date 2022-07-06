@@ -40,7 +40,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
         }
 
-        private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
+        private static string ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
         {
             var response = new WebApiSkillResponse();
 
@@ -63,7 +63,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
                 response.Values.Add(outRecord);
             }
 
-            return response;
+            return response.ToString();
         }
     }
 }
