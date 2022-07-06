@@ -6,11 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace KnowledgeMining.Functions.Skills.Distinct
@@ -18,15 +17,6 @@ namespace KnowledgeMining.Functions.Skills.Distinct
     public static class Distinct
     {
         public const string FunctionName = "distinct";
-
-        private static readonly JsonSerializerSettings settings = new()
-        {
-            Formatting = Formatting.None,
-            ContractResolver = new DefaultContractResolver()
-            {
-                NamingStrategy = new CamelCaseNamingStrategy()
-            },
-        };
 
         [FunctionName(FunctionName)]
         [StorageAccount("SynonymsStorage")]
@@ -47,11 +37,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
                 return new UnprocessableEntityObjectResult($"Failed to read and parse thesaurus.json");
             }
 
-            var response = ProcessRequestRecords(request, thesaurus);
-
-            logger.LogDebug("Response", response);
-
-            return new JsonResult(response, settings);
+            return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
         }
 
         private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
@@ -62,11 +48,11 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             {
                 var outRecord = new WebApiResponseRecord() { RecordId = inRecord.RecordId };
 
-                JArray? wordsParameter = inRecord.Data.TryGetValue("words", out object? wordsParameterObject) ?
-                        wordsParameterObject as JArray : null;
-                if (wordsParameter is not null)
+                JsonElement? wordsParameter = inRecord.Data.TryGetValue("words", out object? wordsParameterObject) ?
+                        wordsParameterObject as JsonElement? : null;
+                if (wordsParameter is not null && wordsParameter.Value.ValueKind is JsonValueKind.Array)
                 {
-                    var words = wordsParameter.Values<string>();
+                    var words = wordsParameter.Value.Deserialize<string[]>();
                     outRecord.Data["distinct"] = thesaurus.Dedupe(words);
                 }
                 else
