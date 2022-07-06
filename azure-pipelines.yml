@@ -47,12 +47,12 @@ stages:
           
           - task: AzureCLI@2
             displayName: 'Upload Thesaurus'
-            enabled: false
             inputs:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
               scriptType: 'bash'
-              scriptLocation: inlineScript
-              inlineScript: 'az storage blob upload --account-name $(deploy_infra.storage_account_name) -f "./deploy/search-index/thesaurus.json" -c synonyms -n thesaurus.json'
+              scriptLocation: 'scriptPath'
+              scriptPath: './script/upload-thesaurus.sh'
+              arguments: '"$(rgName)" "$(deploy_infra.storage_account_name)" synonyms "./deploy/search-index/thesaurus.json"'
 
   - stage: app
     dependsOn: infra
