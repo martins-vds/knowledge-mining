@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace KnowledgeMining.Functions.Skills.Distinct
@@ -20,7 +23,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 
         [FunctionName(FunctionName)]
         [StorageAccount("SynonymsStorage")]
-        public static async ValueTask<IActionResult> RunDistinct(
+        public static IActionResult RunDistinct(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] WebApiSkillRequest request,
             [Blob("synonyms/thesaurus.json", FileAccess.Read)] string synBlob,
             ILogger logger)
@@ -40,7 +43,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
         }
 
-        private static string ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
+        private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
         {
             var response = new WebApiSkillResponse();
 
@@ -48,11 +51,11 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             {
                 var outRecord = new WebApiResponseRecord() { RecordId = inRecord.RecordId };
 
-                JsonElement? wordsParameter = inRecord.Data.TryGetValue("words", out object? wordsParameterObject) ?
-                        wordsParameterObject as JsonElement? : null;
-                if (wordsParameter is not null && wordsParameter.Value.ValueKind is JsonValueKind.Array)
+                if (inRecord.Data.TryGetValue("words", out object? wordsParameterObject) && wordsParameterObject is not null)
                 {
-                    var words = wordsParameter.Value.Deserialize<string[]>();
+                    var wordsArray = wordsParameterObject as JArray;
+                    var words = wordsArray!.Values<string>();
+
                     outRecord.Data["distinct"] = thesaurus.Dedupe(words);
                 }
                 else
@@ -63,7 +66,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
                 response.Values.Add(outRecord);
             }
 
-            return response.ToString();
+            return response;
         }
     }
 }
