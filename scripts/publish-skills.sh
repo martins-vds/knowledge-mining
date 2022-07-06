@@ -8,3 +8,5 @@ pushd ./dist/skills/linux-x64
 zip -r -q -9 ../../skills.linux-x64.zip *
 
 popd
+
+rm -rf ./dist/skills

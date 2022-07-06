@@ -8,3 +8,5 @@ pushd ./dist/app/linux-x64
 zip -r -q -9 ../../app.linux-x64.zip *
 
 popd
+
+rm -rf ./dist/app
