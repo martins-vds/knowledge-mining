@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft. All rights reserved.  
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.  
 
-using Microsoft.AspNetCore.Http;
+using KnowledgeMining.Functions.Skills.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -16,51 +15,54 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 {
     public static class Distinct
     {
-        [FunctionName("distinct")]
+        public const string FunctionName = "distinct";
+
+        [FunctionName(FunctionName)]
         [StorageAccount("SynonymsStorage")]
-        public static async Task<IActionResult> RunDistinct(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            ILogger log,
+        public static async ValueTask<IActionResult> RunDistinct(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] WebApiSkillRequest request,
             [Blob("synonyms/thesaurus.json", FileAccess.Read)] string synBlob,
-            ExecutionContext executionContext)
+            ILogger logger)
         {
-            log.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
+            logger.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
 
-            string skillName = executionContext.FunctionName;
-            IEnumerable<WebApiRequestRecord> requestRecords = WebApiSkillHelpers.GetRequestRecords(req);
-            if (requestRecords == null)
-            {
-                return new BadRequestObjectResult($"{skillName} - Invalid request record array.");
-            }
-
-            Thesaurus thesaurus = null;
+            Thesaurus thesaurus;
             try
             {
                 thesaurus = new Thesaurus(synBlob);
             }
-            catch (Exception e)
+            catch (ArgumentNullException)
             {
-                throw new Exception("Failed to read and parse thesaurus.json.", e);
+                return new UnprocessableEntityObjectResult($"Failed to read and parse thesaurus.json");
             }
-            WebApiSkillResponse response = WebApiSkillHelpers.ProcessRequestRecords(skillName, requestRecords,
-                (inRecord, outRecord) =>
-                {
-                    JArray wordsParameter = inRecord.Data.TryGetValue("words", out object wordsParameterObject) ?
-                        wordsParameterObject as JArray : null;
-                    if (wordsParameter is null)
-                    {
-                        throw new ArgumentException("Input data is missing a `words` array of words to de-duplicate.", "words");
-                    }
-                    var words = wordsParameter.Values<string>();
-                    outRecord.Data["distinct"] = thesaurus.Dedupe(words);
-                    return outRecord;
-                });
 
-            return new OkObjectResult(response);
+            return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
         }
 
+        private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
+        {
+            var response = new WebApiSkillResponse();
 
+            foreach (var inRecord in request.Values)
+            {
+                var outRecord = new WebApiResponseRecord() { RecordId = inRecord.RecordId };
 
+                JArray? wordsParameter = inRecord.Data.TryGetValue("words", out object? wordsParameterObject) ?
+                        wordsParameterObject as JArray : null;
+                if (wordsParameter is not null)
+                {
+                    var words = wordsParameter.Values<string>();
+                    outRecord.Data["distinct"] = thesaurus.Dedupe(words);
+                }
+                else
+                {
+                    outRecord.Errors.Add(new WebApiErrorWarning() { Message = $"{FunctionName} - Error processing the request record: Input data is missing a `words` array of words to de-duplicate." });
+                }
 
+                response.Values.Add(outRecord);
+            }
+
+            return response;
+        }
     }
 }
