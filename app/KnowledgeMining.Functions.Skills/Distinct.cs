@@ -47,7 +47,11 @@ namespace KnowledgeMining.Functions.Skills.Distinct
                 return new UnprocessableEntityObjectResult($"Failed to read and parse thesaurus.json");
             }
 
-            return new JsonResult(ProcessRequestRecords(request, thesaurus), settings);
+            var response = ProcessRequestRecords(request, thesaurus);
+
+            logger.LogDebug("Response", response);
+
+            return new JsonResult(response, settings);
         }
 
         private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
