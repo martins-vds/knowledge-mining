@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,6 +18,15 @@ namespace KnowledgeMining.Functions.Skills.Distinct
     public static class Distinct
     {
         public const string FunctionName = "distinct";
+
+        private static readonly JsonSerializerSettings settings = new()
+        {
+            Formatting = Formatting.None,
+            ContractResolver = new DefaultContractResolver()
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            },
+        };
 
         [FunctionName(FunctionName)]
         [StorageAccount("SynonymsStorage")]
@@ -36,7 +47,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
                 return new UnprocessableEntityObjectResult($"Failed to read and parse thesaurus.json");
             }
 
-            return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
+            return new JsonResult(ProcessRequestRecords(request, thesaurus), settings);
         }
 
         private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
