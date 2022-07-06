@@ -51,7 +51,7 @@ stages:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
               scriptType: 'bash'
               scriptLocation: 'scriptPath'
-              scriptPath: './script/upload-thesaurus.sh'
+              scriptPath: './scripts/upload-thesaurus.sh'
               arguments: '"$(rgName)" "$(deploy_infra.storage_account_name)" synonyms "./deploy/search-index/thesaurus.json"'
 
   - stage: app
