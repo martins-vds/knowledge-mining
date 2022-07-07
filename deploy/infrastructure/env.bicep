@@ -22,6 +22,8 @@ var secretKeyStorageConnectionString = 'STORAGEACCOUNTCONNECTIONSTRING'
 var subnetAppServiceName = 'AppService'
 var subnetPrivateEndpointsName = 'PrivateEndpoints'
 
+var blobDataContributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+var blobDataReaderRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
 
 /*
   Example:
@@ -605,15 +607,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
         {
           name: 'WEBSITE_VNET_ROUTE_ALL'
           value: '1'
-        }
-        {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet'
-        }
+        }        
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '10.14.1'
@@ -671,26 +665,22 @@ resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-
 
 // Role Assignments
 resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(resourceGroup().id, 'Storage Blob Data Reader')
+  name: guid(blobDataReaderRoleDefinitionId, azure_search_service.identity.principalId, azure_storage_account_data.name)
   scope: azure_storage_account_data
   properties: {
-    roleDefinitionId: '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+    roleDefinitionId: blobDataReaderRoleDefinitionId
     principalId: azure_search_service.identity.principalId
-    principalType: 'ServicePrincipal'
   }
 }
 
 resource roleAssignSiteToStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(resourceGroup().id, 'Storage Blob Data Contributor')
-  scope: app_services_website
+  name: guid(blobDataContributorRoleDefinitionId, app_services_website.identity.principalId, azure_storage_account_data.name)
+  scope: azure_storage_account_data
   properties: {
-    roleDefinitionId: '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    roleDefinitionId: blobDataContributorRoleDefinitionId
     principalId: app_services_website.identity.principalId
-    principalType: 'ServicePrincipal'
   }
 }
-
-
 
 output storage_data_id string = azure_storage_account_data.id
 output storage_data_name string = azure_storage_account_data.name
