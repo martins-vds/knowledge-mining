@@ -26,10 +26,12 @@ namespace KnowledgeMining.UI.Models
         [JsonPropertyName("imageTags")]
         public IEnumerable<string> ImageTags { get; set; }
         [JsonPropertyName("date")]
-        public IEnumerable<string> Date { get; set; }
+        public string Date { get; set; }
         [JsonPropertyName("mission")]
-        public IEnumerable<string> Mission { get; set; }
+        public string Mission { get; set; }
         [JsonPropertyName("documentType")]
         public string DocumentType { get; set; }
+        [JsonPropertyName("merged_content")]
+        public string MergedContent { get; set; }
     }
 }
