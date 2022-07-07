@@ -19,6 +19,8 @@ namespace KnowledgeMining.UI.Models
         public IEnumerable<string> Persons { get; set; }
         [JsonPropertyName("locations")]
         public IEnumerable<string> Locations { get; set; }
+        [JsonPropertyName("topics")]
+        public IEnumerable<string> Topics { get; set; }
         [JsonPropertyName("text")]
         public IEnumerable<string> Text { get; set; }
         [JsonPropertyName("layoutText")]
