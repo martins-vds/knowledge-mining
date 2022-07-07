@@ -405,7 +405,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|6.0'
+      linuxFxVersion: 'DOTNET|6.0'
       alwaysOn: true
       appSettings: [
         {
@@ -554,7 +554,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
       alwaysOn: true
-      linuxFxVersion: 'DOTNETCORE|6.0'
+      linuxFxVersion: 'DOTNET|6.0'
       appSettings: [
         {
           name: 'APPINSIGHTS_PROFILERFEATURE_VERSION'
@@ -617,6 +617,14 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
           value: '1'
         }
         {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'dotnet'
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
           name: 'AzureWebJobsStorage'
           value: deployFunction ? 'DefaultEndpointsProtocol=https;AccountName=${azure_storage_account_functions.name};AccountKey=${listKeys(azure_storage_account_functions.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net' : ''
         }
@@ -665,7 +673,7 @@ resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-
 
 // Role Assignments
 resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(blobDataReaderRoleDefinitionId, 'Blob Data Reader')
+  name: guid(azure_storage_account_data.id, blobDataReaderRoleDefinitionId, 'Blob Data Reader')
   scope: azure_storage_account_data
   properties: {
     roleDefinitionId: blobDataReaderRoleDefinitionId
@@ -674,7 +682,7 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
 }
 
 resource roleAssignSiteToStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(blobDataContributorRoleDefinitionId, 'Blob Data Contributor')
+  name: guid(azure_storage_account_data.id, blobDataContributorRoleDefinitionId, 'Blob Data Contributor')
   scope: azure_storage_account_data
   properties: {
     roleDefinitionId: blobDataContributorRoleDefinitionId
