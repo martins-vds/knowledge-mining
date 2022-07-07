@@ -114,6 +114,19 @@
       "fields": []
     },
     {
+      "name": "topics",
+      "type": "Collection(Edm.String)",
+      "facetable": true,
+      "filterable": false,
+      "retrievable": true,
+      "searchable": true,
+      "analyzer": "standard.lucene",
+      "indexAnalyzer": null,
+      "searchAnalyzer": null,
+      "synonymMaps": [],
+      "fields": []
+    },
+    {
       "name": "date",
       "type": "Edm.String",
       "facetable": true,
