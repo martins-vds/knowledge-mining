@@ -39,7 +39,7 @@
 		<None Include="$(ClientAppPath)**" Exclude="$(ClientAppPath)node_modules\**" />
 	</ItemGroup>
 
-	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" !Exists('$(ClientAppPath)node_modules') ">
+	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build">
 		<!-- Ensure Node.js is installed -->
 		<Exec Command="node --version" ContinueOnError="true">
 			<Output TaskParameter="ExitCode" PropertyName="ErrorCode" />

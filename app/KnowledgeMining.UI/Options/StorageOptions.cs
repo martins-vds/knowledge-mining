@@ -4,7 +4,9 @@
     {
         public const string Storage = "Storage";
 
-        public Uri ServiceUri { get; set; }
-        public string ContainerName { get; set; }
+        public Uri? ServiceUri { get; set; }
+        public string ContainerName { get; set; } = "documents";
+
+        public string[] Tags { get; set; } = Array.Empty<string>();
     }
 }
