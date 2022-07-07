@@ -5,9 +5,6 @@
         <MudImage Src="images/logo.png" Height="35" Elevation="0" onclick="@(() => NavigateToHomePage())" />
         <MudButton Variant="Variant.Text" OnClick="NavigateToSearchPage">Search</MudButton>
         <MudButton Variant="Variant.Text" OnClick="@NavigateToDocumentsPage">Documents</MudButton>
-        <MudMenu Label="Documents" AnchorOrigin="Origin.BottomLeft">
-            <MudMenuItem OnClick="NavigateToUploadDocumentsPage">Upload Document</MudMenuItem>
-        </MudMenu>
     </MudStack>
 </MudAppBar>
 
@@ -27,10 +24,5 @@
     private void NavigateToDocumentsPage()
     {
         NavigationManager.NavigateTo("/documents");
-    }
-
-    private void NavigateToUploadDocumentsPage()
-    {
-        NavigationManager.NavigateTo("/upload-documents");
     }
 }

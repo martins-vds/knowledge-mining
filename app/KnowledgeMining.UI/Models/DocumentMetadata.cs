@@ -29,5 +29,7 @@ namespace KnowledgeMining.UI.Models
         public IEnumerable<string> Date { get; set; }
         [JsonPropertyName("mission")]
         public IEnumerable<string> Mission { get; set; }
+        [JsonPropertyName("documentType")]
+        public string DocumentType { get; set; }
     }
 }

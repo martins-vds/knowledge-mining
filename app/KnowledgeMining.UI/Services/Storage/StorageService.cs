@@ -72,7 +72,15 @@ namespace KnowledgeMining.UI.Services.Storage
                             {
                                 ContentType = file.ContentType
                             };
+
                             await blob.UploadAsync(file.Content, httpHeaders: blobHttpHeader, cancellationToken: cancellationToken).ConfigureAwait(false);
+                            
+                            if (file.Tags?.Any() ?? false)
+                            {
+                                var nonEmptyTags = RemoveEmptyTags(file.Tags);
+                                await blob.SetTagsAsync(nonEmptyTags, cancellationToken: cancellationToken);
+                                await blob.SetMetadataAsync(nonEmptyTags, cancellationToken: cancellationToken);
+                            }
                         }
                         finally
                         {
@@ -84,6 +92,11 @@ namespace KnowledgeMining.UI.Services.Storage
                     }
                 }
             }
+        }
+
+        private IDictionary<string, string> RemoveEmptyTags(IDictionary<string, string> tags)
+        {
+            return tags.Where(t => !string.IsNullOrWhiteSpace(t.Key) && !string.IsNullOrWhiteSpace(t.Value)).ToDictionary(t => t.Key, t => t.Value);
         }
 
         public async ValueTask<byte[]> DownloadDocument(string fileName, CancellationToken cancellationToken)

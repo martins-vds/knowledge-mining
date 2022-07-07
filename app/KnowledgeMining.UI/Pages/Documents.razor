@@ -1,19 +1,22 @@
 ﻿@page "/documents"
+@using Microsoft.Extensions.Options
 
 @inject ISnackbar Snackbar;
 @inject IStorageService StorageService;
 @inject ISearchService SearchService;
-@inject IDialogService DialogService
+@inject IDialogService DialogService;
 
 <PageTitle>Documents</PageTitle>
+
+<MudButton StartIcon="@Icons.Filled.CloudUpload" Variant="Variant.Filled" OnClick="OpenUploadComponent">Upload Documents</MudButton>
+
+<UploadDocumentsComponent @bind-Visible="_isUploadComponentVisible"></UploadDocumentsComponent>
 
 <MudDataGrid T="Document" Items="@_documents" Hover="true" Loading="@_isLoading"
              ReadOnly="false"
              StartedEditingItem="@BackupDocument" CancelledEditingItem="@RestoreDocument" CommittedItemChanges="@SaveDocument"
              Bordered="true" EditMode="DataGridEditMode.Form" EditTrigger="DataGridEditTrigger.Manual" RowsPerPage="@_pageSize" Virtualize="true">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Documents</MudText>
-        <MudSpacer />
         <MudTextField T="string" ValueChanged="OnSearch" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
@@ -59,6 +62,14 @@
     private IEnumerable<Document> _documents = new List<Document>();
     private Stack<string?> _pageHistory = new Stack<string?>();
 
+    // Upload Document
+    private bool _isUploadComponentVisible;
+
+    public void OpenUploadComponent()
+    {
+        _isUploadComponentVisible = true;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await Search(_searchText);
@@ -101,7 +112,9 @@
             StateHasChanged();
 
             Snackbar.Add("Document deleted", Severity.Success);
-        }catch{
+        }
+        catch
+        {
             Snackbar.Add("Failed to deleted Document", Severity.Error);
         }
     }
@@ -137,7 +150,7 @@
 
         _isLoading = false;
 
-        if (string.IsNullOrWhiteSpace(nextPage)){ CleanPageHistory(); }
+        if (string.IsNullOrWhiteSpace(nextPage)) { CleanPageHistory(); }
 
         UpdateTable(response.Documents);
         SetCurrentPage(nextPage);
