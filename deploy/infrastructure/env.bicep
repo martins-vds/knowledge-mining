@@ -665,7 +665,7 @@ resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-
 
 // Role Assignments
 resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(blobDataReaderRoleDefinitionId, azure_search_service.identity.principalId, azure_storage_account_data.name)
+  name: guid(blobDataReaderRoleDefinitionId, 'Blob Data Reader')
   scope: azure_storage_account_data
   properties: {
     roleDefinitionId: blobDataReaderRoleDefinitionId
@@ -674,7 +674,7 @@ resource roleAssignSearchToStorageBlobReader 'Microsoft.Authorization/roleAssign
 }
 
 resource roleAssignSiteToStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(blobDataContributorRoleDefinitionId, app_services_website.identity.principalId, azure_storage_account_data.name)
+  name: guid(blobDataContributorRoleDefinitionId, 'Blob Data Contributor')
   scope: azure_storage_account_data
   properties: {
     roleDefinitionId: blobDataContributorRoleDefinitionId
