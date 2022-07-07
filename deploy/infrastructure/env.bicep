@@ -405,7 +405,7 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: azure_app_service_plan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNET|6.0'
+      linuxFxVersion: 'DOTNETCORE|6.0'
       alwaysOn: true
       appSettings: [
         {
