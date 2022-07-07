@@ -31,7 +31,7 @@
             <MudTabs Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
                     <MudTabPanel Text="Search Results">
-                        <SearchResultsComponent Documents="@_searchState.Documents" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" @bind-SelectedPage="_selectedPage"></SearchResultsComponent>
+                        <SearchResultsComponent Documents="@_searchState.Documents" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageClicked="@SearchPageSelected"></SearchResultsComponent>
                     </MudTabPanel>
                     <MudTabPanel Text="Entity Map" OnClick="GenerateEntityMap">
                         <div class="d-flex flex-row">
@@ -126,6 +126,11 @@
         if (searchFacet.Values.Any(fv => fv == facet.Value))
         {
             searchFacet.Values.Remove(facet.Value);
+
+            if (!searchFacet.Values.Any())
+            {
+                _selectedFacets.Remove(searchFacet);
+            }
         }
         else
         {
@@ -134,6 +139,13 @@
 
         var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
 
+        await SearchDocuments(request);
+    }
+
+    private async Task SearchPageSelected(int page)
+    {
+        _selectedPage = page;
+        var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
         await SearchDocuments(request);
     }
 

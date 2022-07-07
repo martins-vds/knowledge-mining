@@ -29,7 +29,7 @@
 <div class="d-flex align-center flex-column pt-4">
     @if (TotalCount > 0)
     {
-        <MudPagination Color="Color.Primary" Count="@TotalPages" SelectedChanged="@HandleSelectedChange" ControlButtonClicked="@HandleControlButtonClicked"/>
+        <MudPagination Color="Color.Primary" Count="@TotalPages" SelectedChanged="@HandleSelectedChange"/>
     }
 </div>
 
@@ -44,30 +44,12 @@
     [Parameter]
     public EventCallback<string> OnDocumentClicked { get; set; }
 
-
     [Parameter]
+    public EventCallback<int> OnPageClicked { get; set; }
 
-    public int SelectedPage { get; set; }
-
-    [Parameter]
-    public EventCallback<int> SelectedPageChanged { get; set; }
 
     private Task HandleSelectedChange(int page)
     {
-        SelectedPage = page;
-        return SelectedPageChanged.InvokeAsync(page);
-    }
-
-    private Task HandleControlButtonClicked(Page page)
-    {
-        switch (page)
-        {
-            case Page.First: SelectedPage = 1; break;
-            case Page.Next: SelectedPage++; break;
-            case Page.Previous: SelectedPage--; break;
-            case Page.Last: SelectedPage = TotalPages; break;
-        }
-
-        return SelectedPageChanged.InvokeAsync(SelectedPage);
+        return OnPageClicked.InvokeAsync(page);
     }
 }
