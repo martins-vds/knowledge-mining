@@ -2,7 +2,7 @@
 <MudGrid>
     @foreach (var document in Documents)
     {
-        <MudItem xs="12" sm="4">
+        <MudItem xs="12" sm="5">
             <MudCard Outlined="true" @onclick="() => OnDocumentClicked.InvokeAsync(document.Id)">
                 <MudCardContent Class="d-flex flex-column align-content-start">
                     <div class="d-flex flex-row flex-fill gap-2">
@@ -16,7 +16,7 @@
                             <div class="d-flex flex-row flex-wrap pt-1 flex-shrink-0">
                                 @foreach (var keyPhrase in document.KeyPhrases.Take(4))
                                 {
-                                    <MudChip Color="Color.Info">@keyPhrase</MudChip>
+                                    <MudChip Color="Color.Info"><MudText Typo="Typo.body2">@keyPhrase</MudText></MudChip>
                                 }
                             </div>
                         </div>

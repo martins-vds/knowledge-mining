@@ -165,8 +165,6 @@ function newSimulation(data: EntityMapData): d3.Simulation<d3.SimulationNodeDatu
             .strength(nodeChargeStrength)
             .theta(nodeChargeAccuracy))
         .force('center', forceCenter)
-        // .force('centerX', d3.forceX(config.width / 2))
-        // .force('centerY', d3.forceX(config.height / 2))
         .force('collide', d3.forceCollide(nodeRadius))
         .on('tick', ticked)
 }

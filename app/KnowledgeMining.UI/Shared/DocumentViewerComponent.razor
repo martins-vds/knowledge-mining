@@ -1,15 +1,17 @@
-﻿
-@switch (documentExtention)
+﻿@switch (documentExtention)
 {
     case FileExtensions.PDF:
-        @RenderPDFViewer((DocumentUri, contentType));
+        @RenderPDFViewer((DocumentUri, contentType))
+        ;
         break;
     case FileExtensions.TXT:
     case FileExtensions.JSON:
-        @RenderTextViewer((DocumentUri, contentType));
+        @RenderTextViewer((DocumentUri, contentType))
+        ;
         break;
     default:
-        @RenderUnknowViewer(documentExtention);
+        @RenderUnknowViewer(documentExtention)
+        ;
         break;
 }
 
@@ -28,20 +30,16 @@
 
     private RenderFragment<(Uri?, string)> RenderPDFViewer = ((Uri? DocumentUri, string ContentType) data) => __builder =>
     {
-        <object class="file-container" data="@data.DocumentUri" type="@data.ContentType">
-            <iframe class="file-container" src="@data.ContentType" type="@data.ContentType">
-                This browser does not support PDFs. Please download the file to view it: <a href="@data.ContentType">Download PDF</a>"
-            </iframe>
-        </object>
+        <iframe class="file-container" src="@data.ContentType" type="@data.ContentType">
+            This browser does not support PDFs. Please download the file to view it: <a href="@data.ContentType">Download PDF</a>"
+        </iframe>
     };
 
     private RenderFragment<(Uri?, string)> RenderTextViewer = ((Uri? DocumentUri, string ContentType) data) => __builder =>
     {
-        <object class="file-container" data="@data.DocumentUri" type="@data.ContentType">
-            <iframe class="file-container" src="@data.DocumentUri" type="@data.ContentType">
-                This browser does not support Text files. Please download the file to view it: <a href="@data.DocumentUri">Download File</a>"
-            </iframe>
-        </object>
+        <iframe class="file-container" src="@data.DocumentUri" type="@data.ContentType">
+            This browser does not support Text files. Please download the file to view it: <a href="@data.DocumentUri">Download File</a>"
+        </iframe>
     };
 
     private RenderFragment<string> RenderUnknowViewer = extension => __builder =>

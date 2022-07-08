@@ -1,5 +1,9 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
+:root{
+    color-scheme: normal;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -35,22 +39,17 @@ a, .btn-link {
 }
 
 .file-container {
-    max-width: 100%;
-    height: 100%;
-    width: 100%;
-    background-color: transparent;
+    max-width: 95.6vw;
+    max-height: 51vh;
+    width: 95.6vw;
+    height: 51vh;
+    background-color: white !important;
+    color: black;
+    border: none;
 }
 
-#file-view-header {
-    position: absolute;
-    left: 10px;
-}
-
-#file-viewer {
-    height: 100%;
-    overflow-y: scroll;
-    margin: 10px;
-    border: 1px solid #ccc;
+.file-container > *{
+    background-color: wheat;
 }
 
 #blazor-error-ui {

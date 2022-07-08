@@ -2,16 +2,16 @@
 <MudOverlay Visible="@IsVisible" DarkBackground="true" AutoClose="true">
     <MudContainer>
         <MudPopover Open="@IsVisible" Class="px-4 pt-4" AnchorOrigin="Origin.CenterCenter" TransformOrigin="Origin.CenterCenter">
-            <div class="d-flex flex-column" style="max-height: 600px">
-                <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3">
+            <div class="d-flex flex-column">
+                <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3" Style="max-width: 97vw; width: 97vw; min-height: 60vh;">
                     <MudTabPanel Text="Document Preview">
                         <DocumentViewerComponent DocumentUri="@Document?.PreviewUrl"></DocumentViewerComponent>
                     </MudTabPanel>
                     <MudTabPanel Text="Transcript">
                         <MudGrid>
                             <MudItem xs="12" sm="8">
-                                <pre style="max-width: 90vw; max-height: 40vw; overflow-x: auto; overflow-y: scroll; white-space: pre-wrap; word-wrap: break-word; ">
-                                    <MudHighlighter Text="@Document?.Content" HighlightedText="@_textToHighlight"></MudHighlighter>
+                                <pre style="max-width: 60vw; max-height: 50vh; width: 60vw; height: 50vh; overflow-x: auto; overflow-y: scroll; white-space: pre-wrap; word-wrap: break-word; ">
+                                    <MudHighlighter Text="@Document?.Content" HighlightedText="@_textToHighlight" Style="background-color: darkblue; font-weight:bold; color: white" ></MudHighlighter>
                                 </pre>
                             </MudItem>
                             <MudItem xs="12" sm="4">
