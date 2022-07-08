@@ -10,6 +10,8 @@ using KnowledgeMining.UI.Models;
 using KnowledgeMining.UI.Services.Links;
 using KnowledgeMining.UI.Services.Search.Models;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using static KnowledgeMining.UI.Services.Search.FacetGraphGenerator;
 
@@ -138,7 +140,12 @@ namespace KnowledgeMining.UI.Services.Search
                 options.Facets.Add(s);
             }
 
-            return await _searchClient.SearchAsync<SearchDocument>(searchText, options, cancellationToken);
+            return await _searchClient.SearchAsync<SearchDocument>(EscapeSpecialCharacters(searchText), options, cancellationToken);
+        }
+
+        private string EscapeSpecialCharacters(string searchText)
+        {
+            return Regex.Replace(searchText, @"([-+&|!(){}\[\]^""~*?:/\\])", @"\$1", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
 
         public async Task<EntityMapData> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)

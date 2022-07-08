@@ -20,6 +20,7 @@
                              CoerceText="true"
                              CoerceValue="true"
                              OnKeyPress="@SearchIfEnterPressed"
+                             Immediate="true"
                              AdornmentIcon="@Icons.Material.Filled.Search"
                              AdornmentColor="Color.Primary"
                              OnAdornmentClick="@(() => SearchDocuments(new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets)))"

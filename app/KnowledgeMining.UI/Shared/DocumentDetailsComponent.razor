@@ -10,7 +10,7 @@
                     <MudTabPanel Text="Transcript">
                         <MudGrid>
                             <MudItem xs="12" sm="8">
-                                <pre style="max-width: 90vw; max-height: 40vw; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; ">
+                                <pre style="max-width: 90vw; max-height: 40vw; overflow-x: auto; overflow-y: scroll; white-space: pre-wrap; word-wrap: break-word; ">
                                     <MudHighlighter Text="@Document?.Content" HighlightedText="@_textToHighlight"></MudHighlighter>
                                 </pre>
                             </MudItem>
