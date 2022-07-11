@@ -2,6 +2,6 @@
 {
     public interface ILinkGenerator
     {
-        Uri GenerateDocumentPreviewUrl(string documentName);
+        string GenerateDocumentPreviewUrl(string documentName);
     }
 }

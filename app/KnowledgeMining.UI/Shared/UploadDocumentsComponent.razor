@@ -17,22 +17,34 @@
                 <MudTh>Document Name</MudTh>
                 @foreach (var tag in StorageOptions.Value.Tags)
                 {
-                    <MudTh>@tag.SplitCamelCase().ToTitleCase()</MudTh>
+                    <MudTh>@tag.Name.SplitCamelCase().ToTitleCase()</MudTh>
                 }
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Document Name">@context.Name</MudTd>
                 @foreach (var tag in StorageOptions.Value.Tags)
                 {
-                    <MudTd DataLabel="@tag.SplitCamelCase().ToTitleCase()">@GetFileTag(context.Name, tag)</MudTd>
+                    <MudTd DataLabel="@tag.Name.SplitCamelCase().ToTitleCase()">@GetFileTag(context.Name, tag.Name)</MudTd>
                 }
             </RowTemplate>
             <RowEditingTemplate>
                 <MudTd DataLabel="Document Name">@context.Name</MudTd>
                 @foreach (var tag in StorageOptions.Value.Tags)
                 {
-                    <MudTd DataLabel="@tag.SplitCamelCase().ToTitleCase()">
-                        <MudTextField T="string" Value="@GetFileTag(context.Name, tag)" ValueChanged="(tagValue) => SetFileTag(context.Name, tag, tagValue)" />
+                    <MudTd DataLabel="@tag.Name.SplitCamelCase().ToTitleCase()">
+                        @if (tag.AllowedValues?.Any() ?? false)
+                        {
+                            <MudSelect T="string" Placeholder="Select document type" ValueChanged="(tagValue) => SetFileTag(context.Name, tag.Name, tagValue)">
+                                @foreach (var allowedValue in tag.AllowedValues!)
+                                {
+                                    <MudSelectItem Value="@allowedValue" />
+                                }
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            <MudTextField T="string" Value="@GetFileTag(context.Name, tag.Name)" ValueChanged="(tagValue) => SetFileTag(context.Name, tag.Name, tagValue)" />
+                        }
                     </MudTd>
                 }
             </RowEditingTemplate>
@@ -68,7 +80,7 @@
         return VisibleChanged.InvokeAsync(!Visible);
     }
 
-    private IDictionary<string,string>? GetFileTags(string fileName)
+    private IDictionary<string, string>? GetFileTags(string fileName)
     {
         _fileTags.TryGetValue(fileName, out var tags);
 
@@ -102,7 +114,7 @@
         }
         else
         {
-            _fileTags.Add(fileName, new Dictionary<string,string>());
+            _fileTags.Add(fileName, new Dictionary<string, string>());
         }
     }
 

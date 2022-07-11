@@ -1,4 +1,7 @@
 ﻿using KnowledgeMining.UI.Api;
+using KnowledgeMining.UI.Options;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 
 namespace KnowledgeMining.UI.Services.Links
 {
@@ -6,19 +9,32 @@ namespace KnowledgeMining.UI.Services.Links
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly LinkGenerator _linker;
+        private readonly AzureSignalROptions _azureSignalROptions;
 
         public DocumentPreviewLinkGenerator(
             LinkGenerator linker,
+            IOptions<AzureSignalROptions> azureSignalROptions,
             IHttpContextAccessor httpContextAccessor)
         {
             _linker = linker;
             _httpContextAccessor = httpContextAccessor;
+            _azureSignalROptions = azureSignalROptions.Value;
         }
 
-        public Uri GenerateDocumentPreviewUrl(string documentName)
+        public string GenerateDocumentPreviewUrl(string documentName)
         {
             var relativePath = _linker.GetPathByName(PreviewFileEndpoint.EndpointName, values: new { fileName = documentName });
-            return new Uri($"{_httpContextAccessor.HttpContext.Request.Scheme}{Uri.SchemeDelimiter}{_httpContextAccessor.HttpContext.Request.Host}{relativePath}");
+
+            if (_azureSignalROptions.Enabled)
+            {
+                return relativePath!;
+            }
+            else
+            {
+                var link = new Uri($"{_httpContextAccessor.HttpContext.Request.Scheme}{Uri.SchemeDelimiter}{_httpContextAccessor.HttpContext.Request.Host}{relativePath}");
+
+                return link.AbsoluteUri;
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ using KnowledgeMining.UI.Services.Links;
 using KnowledgeMining.UI.Services.Search;
 using KnowledgeMining.UI.Services.Search.Models;
 using KnowledgeMining.UI.Services.Storage;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Azure;
 using MudBlazor.Services;
 using System.Threading.Channels;
@@ -25,6 +26,17 @@ namespace KnowledgeMining.UI
             builder.Services.AddServerSideBlazor();
             builder.Services.AddMudServices();
 
+            builder.Services.AddSignalR().AddAzureSignalR(options =>
+            {
+                options.ServerStickyMode = Microsoft.Azure.SignalR.ServerStickyMode.Required;
+            });
+
+            builder.Services.AddResponseCompression(options =>
+            {
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    new[] { "application/octet-stream" });
+            });
+
             builder.Services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -37,6 +49,7 @@ namespace KnowledgeMining.UI
             builder.Services.Configure<EntityMapOptions>(builder.Configuration.GetSection(EntityMapOptions.EntityMap));
             builder.Services.Configure<SearchOptions>(builder.Configuration.GetSection(SearchOptions.Search));
             builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.Storage));
+            builder.Services.Configure<AzureSignalROptions>(builder.Configuration.GetSection(AzureSignalROptions.SignalR));
 
             builder.Services.AddAzureClients(clientBuilder =>
             {

@@ -7,6 +7,12 @@
         public Uri? ServiceUri { get; set; }
         public string ContainerName { get; set; } = "documents";
 
-        public string[] Tags { get; set; } = Array.Empty<string>();
+        public StorageTag[] Tags { get; set; } = Array.Empty<StorageTag>();
+    }
+
+    public class StorageTag
+    {
+        public string Name { get; set; }
+        public string[] AllowedValues { get; set; } = Array.Empty<string>();
     }
 }

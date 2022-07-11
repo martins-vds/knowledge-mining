@@ -43,8 +43,8 @@
                                 <MudSlider Min="1" Max="3" Step="1" Value="_maxLevels" T="int" ValueChanged="UpdateEntityMapLevel" ValueLabel="true">Max Levels: @_maxLevels</MudSlider>
                                 <MudSlider Min="3" Max="30" Step="1" Value="_maxNodes" T="int" ValueChanged="UpdateEntityMapNodes" ValueLabel="true">Max Nodes: @_maxNodes</MudSlider>
                                 <MudExpansionPanels Class="mt-6">
-                                    <MudExpansionPanel Text="Select Facets">
-                                        <MudSelect T="string" MultiSelection="true" SelectedValuesChanged="UpdateEntityMapFacets">
+                                    <MudExpansionPanel Text="Facets">
+                                        <MudSelect T="string" Placeholder="Select facets" MultiSelection="true" SelectedValuesChanged="UpdateEntityMapFacets">
                                             @foreach (var facet in _searchState.FacetableFields)
                                             {
                                                 <MudSelectItem T="string" Value="@facet">@facet</MudSelectItem>

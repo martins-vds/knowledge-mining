@@ -9,6 +9,7 @@ var uniqueness = uniqueString(resourceGroup().id)
 var keyVaultName = 'akv-${uniqueness}'
 var searchName = 'search-${uniqueness}'
 var cognitiveAccountName = 'cognitive-account-${uniqueness}'
+var signalRAccountName = 'signalr-${uniqueness}'
 var storageAccountNameData = 'stg${uniqueness}'
 var appServicePlanName = 'app-plan-${uniqueness}'
 var webAppName = 'site-${uniqueness}'
@@ -16,6 +17,8 @@ var functionAppName = 'function-app-${uniqueness}'
 var appInsightsName = 'app-insights-${uniqueness}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
+var secretKeySignalR = 'SIGNALRCONNECTIONSTRING'
+var secretKeyCognitive = 'COGNITIVESERVICESSECRET'
 var secretKeyStorageKey = 'STORAGEACCOUNTKEYSECRET'
 var secretKeyStorageConnectionString = 'STORAGEACCOUNTCONNECTIONSTRING'
 
@@ -183,9 +186,16 @@ resource akv_secret_search_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01'
 }
 
 resource akv_secret_cognitive_services_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${azure_key_vault.name}/COGNITIVESERVICESSECRET'
+  name: '${azure_key_vault.name}/${secretKeyCognitive}'
   properties: {
     value: listKeys(azure_congnitive_account.id, '2017-04-18').key1
+  }
+}
+
+resource akv_secret_signalr_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${azure_key_vault.name}/${secretKeySignalR}'
+  properties:{
+    value: azure_signal_r.listKeys().primaryConnectionString
   }
 }
 
@@ -208,6 +218,25 @@ resource azure_congnitive_account 'Microsoft.CognitiveServices/accounts@2017-04-
   kind: 'CognitiveServices'
   sku: {
     name: 'S0'
+  }
+}
+
+resource azure_signal_r 'Microsoft.SignalRService/signalR@2022-02-01' = {
+  name: signalRAccountName
+  location: location
+  sku:{
+    name: 'Standard_S1'
+    tier: 'Standard'
+    capacity: 1
+  }
+  properties:{
+    cors: {
+      allowedOrigins: [
+        '*'
+      ]
+    }
+    features: []
+    publicNetworkAccess: 'Enabled'
   }
 }
 
@@ -378,8 +407,11 @@ resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
   location: location
   kind: 'Linux'
   sku: {
-    tier: 'Standard'
-    name: 'S1'
+    tier: 'PremiumV3'
+    name: 'P1v3'
+    family: 'Pv3'
+    capacity: 1
+    size: 'P1v3'
   }
   properties: {
     reserved: true
@@ -431,6 +463,10 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: app_insights.properties.ConnectionString
+        }
+        {
+          name: 'ASPNETCORE_HOSTINGSTARTUPASSEMBLIES'
+          value: 'Microsoft.Azure.SignalR'
         }
         {
           name: 'DiagnosticServices_EXTENSION_VERSION'
@@ -495,6 +531,10 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'Search__IsPathBase64Encoded'
           value: 'true'
+        }
+        {
+          name: 'Azure__SignalR__ConnectionString'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeySignalR})'
         }
         {
           name: 'Storage__ServiceUri'
@@ -579,7 +619,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' = if (deploy
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: app_insights.properties.ConnectionString
-        }
+        }        
         {
           name: 'DiagnosticServices_EXTENSION_VERSION'
           value: '~3'

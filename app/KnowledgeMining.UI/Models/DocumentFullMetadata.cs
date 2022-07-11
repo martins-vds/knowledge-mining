@@ -10,6 +10,6 @@ namespace KnowledgeMining.UI.Models
         [JsonPropertyName("content")]
         public string Content { get; set; }
 
-        public Uri? PreviewUrl { get; set; }
+        public string? PreviewUrl { get; set; }
     }
 }

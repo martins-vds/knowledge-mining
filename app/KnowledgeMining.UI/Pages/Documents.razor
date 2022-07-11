@@ -8,10 +8,10 @@
 
 <PageTitle>Documents</PageTitle>
 
-<MudButton StartIcon="@Icons.Filled.CloudUpload" Variant="Variant.Filled" OnClick="OpenUploadComponent">Upload Documents</MudButton>
-
-<UploadDocumentsComponent @bind-Visible="_isUploadComponentVisible"></UploadDocumentsComponent>
-
+<div class="d-flex flex-row-reverse mt-5 mb-5 mr-5">
+    <MudButton StartIcon="@Icons.Filled.CloudUpload" Variant="Variant.Filled" Color="Color.Info" OnClick="OpenUploadComponent">Upload Documents</MudButton>    
+</div>
+<UploadDocumentsComponent @bind-Visible="_isUploadComponentVisible"></UploadDocumentsComponent> 
 <MudDataGrid T="Document" Items="@_documents" Hover="true" Loading="@_isLoading"
              ReadOnly="false"
              StartedEditingItem="@BackupDocument" CancelledEditingItem="@RestoreDocument" CommittedItemChanges="@SaveDocument"
