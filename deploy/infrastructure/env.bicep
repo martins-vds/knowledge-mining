@@ -533,6 +533,10 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
           value: 'true'
         }
         {
+          name: 'Azure__SignalR__Enabled'
+          value: 'true'
+        }
+        {
           name: 'Azure__SignalR__ConnectionString'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${secretKeySignalR})'
         }
