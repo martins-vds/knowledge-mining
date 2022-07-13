@@ -1,0 +1,9 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "AzureWebJobsSecretStorageType": "files",
+    "SynonymsStorage": "DefaultEndpointsProtocol=https;AccountName=stg2d32xhx6aiois;AccountKey=PieDLPJED5XjvvvxqgLAtW+10gGWz2dwLiIUSYl8+G9L8ZsBIAMbAHAkVv17bgs4u9olpvKo2q0v+AStS9FLAw==;EndpointSuffix=core.windows.net"
+  }
+}

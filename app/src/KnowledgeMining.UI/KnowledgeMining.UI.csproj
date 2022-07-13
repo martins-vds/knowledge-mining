@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>10</LangVersion>
+		<ClientAppPath>ClientApp\</ClientAppPath>
+		<DefaultItemExcludes>$(DefaultItemExcludes);$(ClientAppPath)node_modules\**</DefaultItemExcludes>
+		<UserSecretsId>bfba3760-b0d7-47ba-a392-c9e428babbe4</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AzureMapsControl.Components" Version="1.11.0" />
+		<PackageReference Include="Microsoft.Azure.SignalR" Version="1.4.0" />
+		<PackageReference Include="MudBlazor" Version="6.0.10" />
+		<PackageReference Include="Azure.Search.Documents" Version="11.3.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.12.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.20.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights.Profiler.AspNetCore" Version="2.4.0" />
+		<PackageReference Include="Microsoft.AspNetCore.ApplicationInsights.HostingStartup" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.2.0" />
+		<PackageReference Include="Microsoft.Spatial" Version="7.12.0" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />		
+		<PackageReference Include="System.Text.Json" Version="6.0.5" />
+		<PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.3.330701">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="wwwroot\js\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Remove="$(ClientAppPath)**" />
+		<None Remove="$(ClientAppPath)**" />
+		<None Include="$(ClientAppPath)**" Exclude="$(ClientAppPath)node_modules\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="C:\Users\vinima\.nuget\packages\microsoft.applicationinsights.profiler.aspnetcore\2.4.0\contentFiles\any\netstandard2.1\ServiceProfiler\TraceUpload.zip" />
+	</ItemGroup>
+
+	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build">
+		<!-- Ensure Node.js is installed -->
+		<Exec Command="node --version" ContinueOnError="true">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+		</Exec>
+		<Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+		<Message Importance="high" Text="Restoring dependencies using 'npm'. This may take several minutes..." />
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm install" />
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm run build" />
+	</Target>
+
+	<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+		<!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm install" />
+		<Exec WorkingDirectory="$(ClientAppPath)" Command="npm run build" />
+	</Target>
+</Project>
