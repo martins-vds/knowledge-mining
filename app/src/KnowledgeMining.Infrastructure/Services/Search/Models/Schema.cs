@@ -3,16 +3,16 @@ using Microsoft.Spatial;
 
 namespace KnowledgeMining.UI.Services.Search.Models
 {
-    public class SearchSchema
+    public class Schema
     {
-        public IReadOnlyCollection<SearchField> Facets { get; set; }
-        public IReadOnlyCollection<SearchField> Tags { get; set; }
+        public IReadOnlyCollection<SchemaField> Facets { get; set; }
+        public IReadOnlyCollection<SchemaField> Tags { get; set; }
 
         public IReadOnlyCollection<string> SelectFilter { get; set; }
 
         public IReadOnlyCollection<string> SearchableFields { get; set; }
 
-        public SearchSchema(IList<Azure.Search.Documents.Indexes.Models.SearchField> fields)
+        public Schema(IList<Azure.Search.Documents.Indexes.Models.SearchField> fields)
         {
             SelectFilter = fields.Select(f => f.Name).ToList().AsReadOnly();
             Facets = fields.Where(f => f.IsFacetable ?? false).Select(f => ToSearchField(f)).ToList().AsReadOnly();
@@ -20,9 +20,9 @@ namespace KnowledgeMining.UI.Services.Search.Models
             SearchableFields = fields.Where(f => f.IsSearchable ?? false).Select(f => f.Name).ToList().AsReadOnly();
         }
 
-        private SearchField ToSearchField(Azure.Search.Documents.Indexes.Models.SearchField field)
+        private SchemaField ToSearchField(Azure.Search.Documents.Indexes.Models.SearchField field)
         {
-            return new SearchField()
+            return new SchemaField()
             {
                 Name = field.Name,
                 Type = ConvertTypeToCrlType(field.Type),

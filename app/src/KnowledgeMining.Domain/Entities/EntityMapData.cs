@@ -3,16 +3,16 @@
 
 using System.Text.Json.Serialization;
 
-namespace KnowledgeMining.UI.Services.Search.Models
+namespace KnowledgeMining.Domain.Entities
 {
-    public class EntityMapData
+    public class EntityMap
     {
         [JsonPropertyName("nodes")]
         public IList<EntityMapNode> Nodes { get; set; }
         [JsonPropertyName("links")]
         public IList<EntityMapLink> Links { get; set; }
 
-        public EntityMapData()
+        public EntityMap()
         {
             this.Nodes = new List<EntityMapNode>();
             this.Links = new List<EntityMapLink>();

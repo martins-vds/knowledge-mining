@@ -1,5 +1,4 @@
-﻿using KnowledgeMining.Application.Documents.Commands.UploadDocument;
-using KnowledgeMining.Application.Documents.Queries.GetDocuments;
+﻿using KnowledgeMining.Application.Documents.Queries.GetDocuments;
 using UploadDocument = KnowledgeMining.Application.Documents.Commands.UploadDocument.Document;
 
 namespace KnowledgeMining.Application.Common.Interfaces

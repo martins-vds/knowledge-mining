@@ -1,7 +1,9 @@
 ﻿@page "/"
 
 @inject NavigationManager NavigationManager
-@inject ISearchService _searchService
+@inject IMediator Mediator
+
+@using KnowledgeMining.Application.Documents.Queries.GetAutocompleteSuggestions
 
 <PageTitle>Home</PageTitle>
 
@@ -37,8 +39,7 @@
 
     private async Task<IEnumerable<string>> AutoComplete(string value)
     {
-        var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-        return await _searchService.Autocomplete(value, true, cancellationTokenSource.Token).ConfigureAwait(false);
+        return await Mediator.Send(new GetAutocompleteSuggestionsQuery(value));
     }
 
     private Task GoToSearchPageWhenEnterPressed(KeyboardEventArgs e)

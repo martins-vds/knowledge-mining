@@ -17,7 +17,7 @@
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
-    [Parameter] public Document Document { get; set; } = new Document();
+    [Parameter] public Application.Documents.Queries.GetDocuments.Document Document { get; set; } = new Application.Documents.Queries.GetDocuments.Document();
 
     private void Cancel()
     {

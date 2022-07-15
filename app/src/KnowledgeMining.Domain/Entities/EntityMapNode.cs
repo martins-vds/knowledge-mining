@@ -3,7 +3,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace KnowledgeMining.UI.Services.Search.Models
+namespace KnowledgeMining.Domain.Entities
 {
     public class EntityMapNode
     {

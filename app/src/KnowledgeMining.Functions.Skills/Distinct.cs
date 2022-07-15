@@ -44,9 +44,9 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 
             foreach (var inRecord in request.Values)
             {
-                var outRecord = new WebApiResponseRecord() { RecordId = inRecord.RecordId };
+                var outRecord = new WebApiResponseRecord() { RecordId = inRecord!.RecordId ?? string.Empty };
 
-                if (inRecord.Data.TryGetValue("words", out object? wordsParameterObject) && wordsParameterObject is not null)
+                if (inRecord!.Data.TryGetValue("words", out object? wordsParameterObject) && wordsParameterObject is not null)
                 {
                     var wordsArray = wordsParameterObject as JArray;
                     var words = wordsArray!.Values<string>();

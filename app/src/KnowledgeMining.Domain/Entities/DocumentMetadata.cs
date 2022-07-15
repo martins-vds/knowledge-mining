@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace KnowledgeMining.Domain.Entities
 {
@@ -14,7 +9,7 @@ namespace KnowledgeMining.Domain.Entities
         [JsonPropertyName("metadata_storage_name")]
         public string? Name { get; set; }
         [JsonPropertyName("content")]
-        public string Content { get; set; }
+        public string? Content { get; set; }
         [JsonPropertyName("keyPhrases")]
         public IEnumerable<string>? KeyPhrases { get; set; }
         [JsonPropertyName("organizations")]

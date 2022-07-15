@@ -5,6 +5,6 @@ namespace KnowledgeMining.Functions.Skills.Models
 {
     public class WebApiErrorWarning
     {
-        public string Message { get; set; }
+        public string? Message { get; set; }
     }
 }

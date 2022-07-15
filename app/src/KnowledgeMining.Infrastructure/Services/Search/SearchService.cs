@@ -13,10 +13,11 @@ using KnowledgeMining.Domain.Entities;
 using KnowledgeMining.UI.Services.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 
-namespace KnowledgeMining.UI.Services.Search
+namespace KnowledgeMining.Infrastructure.Services.Search
 {
     public class SearchService : ISearchService
     {
@@ -47,11 +48,11 @@ namespace KnowledgeMining.UI.Services.Search
         }
 
         // TODO: Add schema to a cache
-        public async Task<SearchSchema> GenerateSearchSchema(CancellationToken cancellationToken)
+        public async Task<Schema> GenerateSearchSchema(CancellationToken cancellationToken)
         {
             var response = await _searchIndexClient.GetIndexAsync(_searchOptions.IndexName, cancellationToken);
 
-            return new SearchSchema(response.Value.Fields);
+            return new Schema(response.Value.Fields);
         }
 
         public async Task<IEnumerable<string>> Autocomplete(string searchText, bool fuzzy, CancellationToken cancellationToken)
@@ -70,7 +71,7 @@ namespace KnowledgeMining.UI.Services.Search
             return response.Value.Results.Select(r => r.Text).Distinct();
         }
 
-        public async Task<SearchResponse> SearchDocuments(SearchDocumentsQuery request, CancellationToken cancellationToken)
+        public async Task<SearchDocumentsResponse> SearchDocuments(SearchDocumentsQuery request, CancellationToken cancellationToken)
         {
             var searchSchema = await GenerateSearchSchema(cancellationToken);
             var searchOptions = GenerateSearchOptions(request, searchSchema);
@@ -79,15 +80,14 @@ namespace KnowledgeMining.UI.Services.Search
 
             if (searchResults == null || searchResults?.Value == null)
             {
-                return new SearchResponse();
+                return new SearchDocumentsResponse();
             }
 
-            return new SearchResponse()
+            return new SearchDocumentsResponse()
             {
                 TotalCount = searchResults.Value.TotalCount ?? 0,
                 Documents = searchResults.Value.GetResults().Select(d => d.Document),
-                Facets = AggregateFacets(searchResults.Value.Facets),
-                Tags = AggregateFacets(searchResults.Value.Facets),
+                Facets = SummarizeFacets(searchResults.Value.Facets),
                 // Not sure if I need to return page in the search result
                 TotalPages = CalculateTotalPages(searchResults.Value.TotalCount ?? 0),
                 FacetableFields = searchSchema.Facets.Select(f => f.Name), // Not sure if I need to return page in the search result
@@ -144,7 +144,7 @@ namespace KnowledgeMining.UI.Services.Search
             return Regex.Replace(searchText, @"([-+&|!(){}\[\]^""~?:/\\])", @"\$1", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
 
-        public async Task<EntityMapData> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)
+        public async Task<EntityMap> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)
         {
             var query = "*";
 
@@ -170,7 +170,7 @@ namespace KnowledgeMining.UI.Services.Search
                 }
             }
 
-            var entityMap = new EntityMapData();
+            var entityMap = new EntityMap();
 
             // Calculate nodes for N levels 
             int CurrentNodes = 0;
@@ -199,7 +199,7 @@ namespace KnowledgeMining.UI.Services.Search
                 NextLevelTerms.Clear();
                 var levelNodeCount = 0;
 
-                NodeInfo densestNodeThisLayer = null;
+                NodeInfo? densestNodeThisLayer = default;
                 var density = 0;
 
                 foreach (var k in NodeMap)
@@ -230,10 +230,9 @@ namespace KnowledgeMining.UI.Services.Search
 
                             foreach (var facetResult in facetVals)
                             {
-                                var facetValue = facetResult.Value.ToString();
+                                var facetValue = facetResult!.Value.ToString() ?? string.Empty;
 
-                                NodeInfo nodeInfo = new NodeInfo(-1, String.Empty);
-                                if (NodeMap.TryGetValue(facetValue, out nodeInfo) == false)
+                                if (!NodeMap.TryGetValue(facetValue, out NodeInfo? nodeInfo))
                                 {
                                     // This is a new node
                                     ++levelNodeCount;
@@ -318,18 +317,18 @@ namespace KnowledgeMining.UI.Services.Search
 
         private string ParseSearchId(Response<SearchResults<DocumentMetadata>> searchResults)
         {
-            IEnumerable<string> headerValues;
-            string searchId = null;
-            if (searchResults.GetRawResponse().Headers.TryGetValues("x-ms-azs-searchid", out headerValues))
+            string? searchId = default;
+
+            if (searchResults.GetRawResponse().Headers.TryGetValues("x-ms-azs-searchid", out IEnumerable<string>? headerValues))
             {
-                searchId = headerValues.FirstOrDefault();
+                searchId = headerValues?.FirstOrDefault();
             }
             return searchId ?? string.Empty;
         }
 
-        private IEnumerable<AggregateFacet> AggregateFacets(IDictionary<string, IList<FacetResult>> facets)
+        private IEnumerable<SummarizedFacet> SummarizeFacets(IDictionary<string, IList<FacetResult>> facets)
         {
-            return facets.Where(f => f.Value.Any()).Select(f => new AggregateFacet()
+            return facets.Where(f => f.Value.Any()).Select(f => new SummarizedFacet()
             {
                 Name = f.Key,
                 Count = f.Value.Count,
@@ -344,7 +343,7 @@ namespace KnowledgeMining.UI.Services.Search
 
         private Azure.Search.Documents.SearchOptions GenerateSearchOptions(
             SearchDocumentsQuery request,
-            SearchSchema schema)
+            Schema schema)
         {
             var options = new Azure.Search.Documents.SearchOptions()
             {
@@ -363,9 +362,12 @@ namespace KnowledgeMining.UI.Services.Search
             }
 
             var facets = schema.Facets.Select(f => f.Name).ToList();
-            foreach (string f in facets)
+            foreach (string? f in facets)
             {
-                options.Facets.Add(f + ",sort:count");
+                if(f is not null)
+                {
+                    options.Facets.Add($"{f},sort:count");
+                }
             }
 
             foreach (string h in schema.SearchableFields)
@@ -373,50 +375,57 @@ namespace KnowledgeMining.UI.Services.Search
                 options.HighlightFields.Add(h);
             }
 
+            var filterBuilder = new StringBuilder();
+            var filterInitialized = false;
 
-            string filter = null;
-            var filterStr = string.Empty;
-
-            if (request.SearchFacets != null)
+            if (request.FacetFilters != null)
             {
-                foreach (var item in request.SearchFacets)
+                foreach (var facetFilter in request.FacetFilters)
                 {
-                    var facet = schema.Facets.Where(f => f.Name == item.Name).FirstOrDefault();
+                    var facet = schema.Facets.FirstOrDefault(f => f.Name == facetFilter.Name);
+                    var facetValues = string.Join(",", facetFilter.Values);
 
-                    filterStr = string.Join(",", item.Values);
+                    string? clause = default;
 
-                    // Construct Collection(string) facet query
-                    if (facet.Type == typeof(string[]))
+                    if (facet?.Type == typeof(string[]))
                     {
-                        if (string.IsNullOrEmpty(filter))
-                            filter = $"{item.Name}/any(t: search.in(t, '{filterStr}', ','))";
+                        if (filterInitialized is not true)
+                            clause = $"{facetFilter.Name}/any(t: search.in(t, '{facetValues}', ','))";
                         else
-                            filter += $" and {item.Name}/any(t: search.in(t, '{filterStr}', ','))";
+                        {
+                            clause = $" and {facetFilter.Name}/any(t: search.in(t, '{facetValues}', ','))";
+                            filterInitialized = true;
+                        }
                     }
-                    // Construct string facet query
-                    else if (facet.Type == typeof(string))
+                    else if (facet?.Type == typeof(string))
                     {
-                        if (string.IsNullOrEmpty(filter))
-                            filter = $"{item.Name} eq '{filterStr}'";
+                        if(filterInitialized is not true)
+                        {
+                            clause = $"{facetFilter.Name} eq '{facetValues}'";
+                        }
                         else
-                            filter += $" and {item.Name} eq '{filterStr}'";
+                        {
+                            clause = $" and {facetFilter.Name} eq '{facetValues}'";
+                            filterInitialized = true;
+                        }
                     }
-                    // Construct DateTime facet query
-                    else if (facet.Type == typeof(DateTime))
+                    else if (facet?.Type == typeof(DateTime))
                     {
-                        // TODO: Date filters
+                        // TODO: Construct DateTime facet query
                     }
+
+                    filterBuilder.Append(clause);
                 }
             }
 
-            options.Filter = filter;
+            options.Filter = filterBuilder.ToString();
 
             // Add Filter based on geographic polygon if it is set.
             if (!string.IsNullOrWhiteSpace(request.PolygonString))
             {
                 string geoQuery = $"geo.intersects(geoLocation, geography'POLYGON(({request.PolygonString}))')";
 
-                if (options.Filter != null && options.Filter.Length > 0)
+                if (options.Filter is not null && options.Filter.Length > 0)
                 {
                     options.Filter += " and " + geoQuery;
                 }

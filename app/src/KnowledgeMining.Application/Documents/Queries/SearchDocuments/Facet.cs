@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace KnowledgeMining.UI.Services.Search.Models
+namespace KnowledgeMining.Application.Documents.Queries.SearchDocuments
 {
     public class Facet
     {

@@ -4,6 +4,6 @@
     {
         public const string AzureMaps = "AzureMaps";
 
-        public string SubscriptionKey { get; set; }
+        public string? SubscriptionKey { get; set; }
     }
 }

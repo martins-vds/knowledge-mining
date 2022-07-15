@@ -2,7 +2,6 @@
 using Azure.Storage.Blobs.Models;
 using KnowledgeMining.Application.Common.Interfaces;
 using KnowledgeMining.Application.Common.Options;
-using KnowledgeMining.Application.Documents.Commands.UploadDocument;
 using KnowledgeMining.Application.Documents.Queries.GetDocuments;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,7 +9,7 @@ using System.Net;
 using SearchDocument = KnowledgeMining.Application.Documents.Queries.GetDocuments.Document;
 using UploadDocument = KnowledgeMining.Application.Documents.Commands.UploadDocument.Document;
 
-namespace KnowledgeMining.UI.Services.Storage
+namespace KnowledgeMining.Infrastructure.Services.Storage
 {
     public class StorageService : IStorageService
     {
@@ -31,13 +30,13 @@ namespace KnowledgeMining.UI.Services.Storage
             _logger = logger;
         }
 
-        public async Task<GetDocumentsResponse> GetDocuments(string? searchText, int pageSize, string? continuationToken, CancellationToken cancellationToken)
+        public async Task<GetDocumentsResponse> GetDocuments(string? searchPrefix, int pageSize, string? continuationToken, CancellationToken cancellationToken)
         {
-            searchText ??= string.Empty;
+            searchPrefix ??= string.Empty;
             pageSize = pageSize is > 0 and <= MAX_ITEMS_PER_REQUEST ? pageSize : DEFAULT_PAGE_SIZE;
 
             var pages = GetBlobContainerClient()
-                            .GetBlobsAsync(prefix: searchText, cancellationToken: cancellationToken)
+                            .GetBlobsAsync(prefix: searchPrefix, cancellationToken: cancellationToken)
                             .AsPages(continuationToken, pageSize);
 
             var iterator = pages.GetAsyncEnumerator(cancellationToken);
@@ -60,13 +59,13 @@ namespace KnowledgeMining.UI.Services.Storage
             }
         }
 
-        public async Task UploadDocuments(IEnumerable<UploadDocument> files, CancellationToken cancellationToken)
+        public async Task UploadDocuments(IEnumerable<UploadDocument> documents, CancellationToken cancellationToken)
         {
-            if (files.Any())
+            if (documents.Any())
             {
                 var container = GetBlobContainerClient();
 
-                foreach (var file in files)
+                foreach (var file in documents)
                 {
                     if (file.Content.Length > 0)
                     {
@@ -105,14 +104,14 @@ namespace KnowledgeMining.UI.Services.Storage
             return tags.Where(t => !string.IsNullOrWhiteSpace(t.Key) && !string.IsNullOrWhiteSpace(t.Value)).ToDictionary(t => t.Key, t => t.Value);
         }
 
-        public async ValueTask<byte[]> DownloadDocument(string fileName, CancellationToken cancellationToken)
+        public async ValueTask<byte[]> DownloadDocument(string documentName, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(documentName))
             {
                 return Array.Empty<byte>();
             }
 
-            var decodedFilename = WebUtility.UrlDecode(fileName);
+            var decodedFilename = WebUtility.UrlDecode(documentName);
 
             var container = GetBlobContainerClient();
             var blob = container.GetBlobClient(decodedFilename);
@@ -131,11 +130,11 @@ namespace KnowledgeMining.UI.Services.Storage
             return ms.ToArray();
         }
 
-        public async ValueTask DeleteDocument(string fileName, CancellationToken cancellationToken)
+        public async ValueTask DeleteDocument(string documentName, CancellationToken cancellationToken)
         {
             var blobContainer = GetBlobContainerClient();
 
-            await blobContainer.DeleteBlobIfExistsAsync(fileName, cancellationToken: cancellationToken);
+            await blobContainer.DeleteBlobIfExistsAsync(documentName, cancellationToken: cancellationToken);
         }
 
         private BlobContainerClient GetBlobContainerClient()

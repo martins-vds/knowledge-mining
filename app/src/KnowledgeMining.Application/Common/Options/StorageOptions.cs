@@ -1,4 +1,6 @@
-﻿namespace KnowledgeMining.Application.Common.Options
+﻿using KnowledgeMining.Domain.Entities;
+
+namespace KnowledgeMining.Application.Common.Options
 {
     public class StorageOptions
     {
@@ -7,12 +9,6 @@
         public Uri? ServiceUri { get; set; }
         public string ContainerName { get; set; } = "documents";
 
-        public StorageTag[] Tags { get; set; } = Array.Empty<StorageTag>();
-    }
-
-    public class StorageTag
-    {
-        public string Name { get; set; }
-        public string[] AllowedValues { get; set; } = Array.Empty<string>();
+        public DocumentTag[] Tags { get; set; } = Array.Empty<DocumentTag>();
     }
 }

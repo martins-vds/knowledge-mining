@@ -1,6 +1,6 @@
 ﻿namespace KnowledgeMining.UI.Services.Search.Models
 {
-    public class SearchField
+    public class SchemaField
     {
         // Fields from Azure Search
         public string? Name { get; set; }

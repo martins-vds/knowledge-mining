@@ -2,7 +2,7 @@
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 
-namespace KnowledgeMining.UI.Extensions
+namespace KnowledgeMining.Infrastructure.Extensions
 {
     public static class SearchClientBuilderExtensions
     {

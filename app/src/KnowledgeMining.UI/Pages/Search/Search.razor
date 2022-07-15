@@ -1,10 +1,15 @@
 ﻿@page "/search"
 
-
+@using KnowledgeMining.Application.Documents.Queries.SearchDocuments
+@using KnowledgeMining.Application.Documents.Queries.GenerateEntityMap
+@using KnowledgeMining.Application.Documents.Queries.GetAutocompleteSuggestions
+@using KnowledgeMining.Application.Documents.Queries.GetDocumentMetadata
+@using KnowledgeMining.Domain.Entities
+@using KnowledgeMining.UI.Pages.Search.ViewModels
 
 @implements IAsyncDisposable
-@inject ISearchService _searchService
 @inject IJSRuntime JS
+@inject IMediator Mediator
 
 <PageTitle>Search</PageTitle>
 
@@ -23,7 +28,7 @@
                              Immediate="true"
                              AdornmentIcon="@Icons.Material.Filled.Search"
                              AdornmentColor="Color.Primary"
-                             OnAdornmentClick="@(() => SearchDocuments(new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets)))"
+                             OnAdornmentClick="@(() => SearchDocuments(new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets)))"
                              Variant="Variant.Outlined"
                              Margin="Margin.None" />
             <FacetsFilterComponent Facets="@_searchState.Facets" OnFacetSelectedChanged="UpdateSearchFacetsAndSearch"></FacetsFilterComponent>
@@ -59,7 +64,7 @@
             </MudTabs>
         </MudItem>
     </MudGrid>
-    <DocumentDetailsComponent @bind-IsVisible="_showDocumentDetails" Document="documentDetails"></DocumentDetailsComponent>
+    <DocumentDetailsComponent @bind-IsVisible="_showDocumentDetails" Document="_documentMetadata"></DocumentDetailsComponent>
 </MudContainer>
 
 @code {
@@ -68,11 +73,11 @@
     private SearchState _searchState = new();
 
     private int _selectedPage;
-    private List<SearchFacet> _selectedFacets = new();
+    private List<FacetFilter> _selectedFacets = new();
     private string poligonString = string.Empty;
 
     private bool _showDocumentDetails = false;
-    private DocumentFullMetadata documentDetails;
+    private DocumentMetadata _documentMetadata;
 
     private string _entityMapContainerId = "entity-map";
     private int _maxLevels = 10;
@@ -82,7 +87,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
+        var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
         await SearchDocuments(request);
     }
 
@@ -96,26 +101,25 @@
 
     private async Task<IEnumerable<string>> AutoComplete(string value)
     {
-        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-        return await _searchService.Autocomplete(value, true, cancellationTokenSource.Token).ConfigureAwait(false);
+        return await Mediator.Send(new GetAutocompleteSuggestionsQuery(value));
     }
 
     private async Task SearchIfEnterPressed(KeyboardEventArgs e)
     {
         if (e.Code == "Enter" || e.Code == "NumpadEnter")
         {
-            var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
+            var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
             await SearchDocuments(request);
         }
     }
 
     private async Task UpdateSearchFacetsAndSearch(Facet facet)
     {
-        SearchFacet searchFacet;
+        FacetFilter searchFacet;
 
         if (!_selectedFacets.Any(f => f.Name == facet.Name))
         {
-            searchFacet = new SearchFacet()
+            searchFacet = new FacetFilter()
                 {
                     Name = facet.Name
                 };
@@ -140,7 +144,7 @@
             searchFacet.Values.Add(facet.Value);
         }
 
-        var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
+        var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
 
         await SearchDocuments(request);
     }
@@ -148,25 +152,22 @@
     private async Task SearchPageSelected(int page)
     {
         _selectedPage = page;
-        var request = new SearchRequest(SearchText, _selectedPage, poligonString, _selectedFacets);
+        var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
         await SearchDocuments(request);
     }
 
-    private async Task SearchDocuments(SearchRequest request)
+    private async Task SearchDocuments(SearchDocumentsQuery request)
     {
         using var cancellationTokenSource = new CancellationTokenSource();
 
-        var response = await _searchService.SearchDocuments(request, cancellationTokenSource.Token).ConfigureAwait(false);
+        var response = await Mediator.Send(request);
 
         _searchState.Documents = response.Documents;
         _searchState.FacetableFields = response.FacetableFields;
         _searchState.Facets = response.Facets;
-        _searchState.Tags = response.Tags;
         _searchState.TotalCount = response.TotalCount;
         _searchState.TotalPages = (int)response.TotalPages;
     }
-
-
 
     private Task UpdateEntityMapLevel(int levels)
     {
@@ -188,7 +189,7 @@
 
     private async Task GenerateEntityMap()
     {
-        var entityMapData = await _searchService.GenerateEntityMap(SearchText, _selectedEntityMapFacets, _maxLevels, _maxNodes, CancellationToken.None);
+        var entityMapData = await Mediator.Send(new GenerateEntityMapQuery(SearchText, _selectedEntityMapFacets, _maxLevels, _maxNodes));
         await module.InvokeVoidAsync("renderEntityGraph", _entityMapContainerId, entityMapData, _maxLevels);
     }
 
@@ -196,7 +197,7 @@
     {
         _showDocumentDetails = false;
 
-        documentDetails = await _searchService.GetDocumentDetails(documentId, CancellationToken.None);
+        _documentMetadata = await Mediator.Send(new GetDocumentMetadataQuery(documentId));
 
         _showDocumentDetails = true;
     }

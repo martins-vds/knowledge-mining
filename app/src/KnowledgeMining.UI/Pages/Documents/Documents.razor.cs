@@ -1,33 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
-using System.Net.Http;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.Extensions.Options;
-using Microsoft.JSInterop;
-using KnowledgeMining.UI;
-using KnowledgeMining.UI.Shared;
-using MudBlazor;
-using KnowledgeMining.UI.Services.Search;
-using KnowledgeMining.UI.Services.Storage;
-using KnowledgeMining.UI.Extensions;
+using KnowledgeMining.Application.Documents.Commands.DeleteDocument;
+using KnowledgeMining.Application.Documents.Queries.GetDocuments;
 using KnowledgeMining.UI.Pages.Documents.Componenents;
+using MediatR;
+using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace KnowledgeMining.UI.Pages.Documents
 {
     public partial class Documents
     {
         [Inject] public ISnackbar Snackbar { get; set; }
-        [Inject] public IStorageService StorageService { get; set; }
-        [Inject] public ISearchService SearchService { get; set; }
         [Inject] public IDialogService DialogService { get; set; }
+
+        [Inject] public IMediator Mediator { get; set; }
 
         private bool _isLoading;
         private string? _searchText;
@@ -61,12 +46,12 @@ namespace KnowledgeMining.UI.Pages.Documents
 
         private void SaveDocument(Document item)
         {
-        // TODO: Save changes
+            // TODO: Save changes
         }
 
         private async ValueTask DeleteDocument(Document document)
         {
-            var parameters = new DialogParameters{["document"] = document};
+            var parameters = new DialogParameters { ["document"] = document };
             var dialog = DialogService.Show<DeleteDocumentDialogComponent>("Delete Document", parameters);
             var result = await dialog.Result;
             if (result.Cancelled)
@@ -76,10 +61,9 @@ namespace KnowledgeMining.UI.Pages.Documents
 
             try
             {
-                await StorageService.DeleteDocument(document.Name, CancellationToken.None);
-                await SearchService.QueueIndexerJob(CancellationToken.None);
+                await Mediator.Send(new DeleteDocumentCommand(document.Name));                
                 await Search(_searchText);
-                StateHasChanged();
+
                 Snackbar.Add("Document deleted", Severity.Success);
             }
             catch
@@ -108,10 +92,12 @@ namespace KnowledgeMining.UI.Pages.Documents
 
         private async Task Search(string? searchText, string? nextPage = default)
         {
-            SearchDocumentsResponse? response;
+            GetDocumentsResponse response;
+
             _isLoading = true;
-            response = await StorageService.SearchDocuments(searchText, _pageSize, nextPage, CancellationToken.None);
+            response = await Mediator.Send(new GetDocumentsQuery(searchText, _pageSize, nextPage));
             _isLoading = false;
+            
             if (string.IsNullOrWhiteSpace(nextPage))
             {
                 CleanPageHistory();

@@ -1,6 +1,5 @@
 ﻿@inject ISnackbar Snackbar
-@inject IStorageService StorageService
-@inject IOptions<StorageOptions> StorageOptions
+@inject IMediator Mediator
 
 <MudPopover Open="@Visible" Fixed="true" Class="px-4 pt-4" AnchorOrigin="Origin.CenterCenter" TransformOrigin="Origin.CenterCenter">
     <div class="d-flex flex-column">
@@ -15,21 +14,21 @@
         <MudTable Items="_files" ReadOnly="false">
             <HeaderContent>
                 <MudTh>Document Name</MudTh>
-                @foreach (var tag in StorageOptions.Value.Tags)
+                @foreach (var tag in DocumentTags!)
                 {
                     <MudTh>@tag.Name.SplitCamelCase().ToTitleCase()</MudTh>
                 }
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Document Name">@context.Name</MudTd>
-                @foreach (var tag in StorageOptions.Value.Tags)
+                @foreach (var tag in DocumentTags!)
                 {
                     <MudTd DataLabel="@tag.Name.SplitCamelCase().ToTitleCase()">@GetFileTag(context.Name, tag.Name)</MudTd>
                 }
             </RowTemplate>
             <RowEditingTemplate>
                 <MudTd DataLabel="Document Name">@context.Name</MudTd>
-                @foreach (var tag in StorageOptions.Value.Tags)
+                @foreach (var tag in DocumentTags!)
                 {
                     <MudTd DataLabel="@tag.Name.SplitCamelCase().ToTitleCase()">
                         @if (tag.AllowedValues?.Any() ?? false)
@@ -71,9 +70,16 @@
     [Parameter]
     public EventCallback<bool> VisibleChanged { get; set; }
 
-    private bool Clearing = false;
-    IList<IBrowserFile> _files = new List<IBrowserFile>();
-    IDictionary<string, IDictionary<string, string>> _fileTags = new Dictionary<string, IDictionary<string, string>>();
+    public DocumentTag[]? DocumentTags { get; set; }
+
+    private bool _clearing = false;
+    private IList<IBrowserFile> _files = new List<IBrowserFile>();
+    private IDictionary<string, IDictionary<string, string>> _fileTags = new Dictionary<string, IDictionary<string, string>>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        DocumentTags = await Mediator.Send(new GetTagsQuery()) ?? Array.Empty<DocumentTag>();
+    }
 
     public Task Close()
     {
@@ -128,10 +134,10 @@
 
     private async Task Clear()
     {
-        Clearing = true;
+        _clearing = true;
         _files.Clear();
         await Task.Delay(100);
-        Clearing = false;
+        _clearing = false;
     }
 
     private async Task Upload()
@@ -140,9 +146,10 @@
 
         try
         {
-            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(6));
-            await StorageService.UploadDocuments(_files.Select(f => new UploadDocument(f.Name, f.ContentType, GetFileTags(f.Name), f.OpenReadStream(maxAllowedSize: 10485760))), CancellationToken.None);
+            var documentToUpload = _files.Select(f => new Application.Documents.Commands.UploadDocument.Document(f.Name, f.ContentType, GetFileTags(f.Name), f.OpenReadStream(maxAllowedSize: 10485760)));
+            await Mediator.Send(new UploadDocumentCommand(documentToUpload));
             Snackbar.Add("Files uploaded successfully!", Severity.Success);
+            await Clear();
         }
         catch (Exception ex)
         {

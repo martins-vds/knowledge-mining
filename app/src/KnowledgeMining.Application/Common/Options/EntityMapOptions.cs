@@ -4,6 +4,6 @@
     {
         public const string EntityMap = "EntityMap";
 
-        public string Facets { get; set; }
+        public string? Facets { get; set; }
     }
 }

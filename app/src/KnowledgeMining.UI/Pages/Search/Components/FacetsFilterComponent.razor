@@ -1,4 +1,5 @@
-﻿@foreach (var aggregateFacet in Facets)
+﻿@using KnowledgeMining.Application.Documents.Queries.SearchDocuments
+@foreach (var aggregateFacet in Facets)
 {
     <MudExpansionPanels Class="mt-6">
         <MudExpansionPanel Text="@aggregateFacet.Name.SplitCamelCase().ToTitleCase()">
@@ -12,7 +13,7 @@
 
 @code {
     [Parameter]
-    public IEnumerable<AggregateFacet> Facets { get; set; }
+    public IEnumerable<SummarizedFacet> Facets { get; set; }
 
     [Parameter]
     public EventCallback<Facet> OnFacetSelectedChanged { get; set; }
