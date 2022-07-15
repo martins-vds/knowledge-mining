@@ -1,13 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\KnowledgeMining.Application\KnowledgeMining.Application.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\KnowledgeMining.Application\KnowledgeMining.Application.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Search.Documents" Version="11.3.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.12.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+	</ItemGroup>
 
 </Project>

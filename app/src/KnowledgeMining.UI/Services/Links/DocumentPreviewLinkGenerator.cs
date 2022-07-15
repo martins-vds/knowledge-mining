@@ -1,5 +1,5 @@
-﻿using KnowledgeMining.UI.Api;
-using KnowledgeMining.UI.Options;
+﻿using KnowledgeMining.Application.Common.Options;
+using KnowledgeMining.UI.Api;
 using Microsoft.Extensions.Options;
 
 namespace KnowledgeMining.UI.Services.Links

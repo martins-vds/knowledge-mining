@@ -41,6 +41,11 @@
 	  <None Remove="C:\Users\vinima\.nuget\packages\microsoft.applicationinsights.profiler.aspnetcore\2.4.0\contentFiles\any\netstandard2.1\ServiceProfiler\TraceUpload.zip" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\KnowledgeMining.Application\KnowledgeMining.Application.csproj" />
+	  <ProjectReference Include="..\KnowledgeMining.Infrastructure\KnowledgeMining.Infrastructure.csproj" />
+	</ItemGroup>
+
 	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build">
 		<!-- Ensure Node.js is installed -->
 		<Exec Command="node --version" ContinueOnError="true">

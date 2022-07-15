@@ -1,5 +1,5 @@
-﻿using KnowledgeMining.UI.Extensions;
-using KnowledgeMining.UI.Services.Storage;
+﻿using KnowledgeMining.Application.Common.Interfaces;
+using KnowledgeMining.UI.Extensions;
 
 namespace KnowledgeMining.UI.Api
 {

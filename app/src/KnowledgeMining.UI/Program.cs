@@ -1,7 +1,9 @@
 using Azure.Identity;
+using KnowledgeMining.Application.Common.Interfaces;
+using KnowledgeMining.Application.Common.Options;
+using KnowledgeMining.Infrastructure.Jobs;
 using KnowledgeMining.UI.Api;
 using KnowledgeMining.UI.Extensions;
-using KnowledgeMining.UI.Options;
 using KnowledgeMining.UI.Services.Links;
 using KnowledgeMining.UI.Services.Search;
 using KnowledgeMining.UI.Services.Search.Models;
