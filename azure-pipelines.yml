@@ -20,9 +20,9 @@ pool:
 
 variables:
   - name: rgName
-    value: 'poc-knowledge-mining-2'
+    value: 'poc-knowledge-mining'
   - name: location
-    value: 'westus2'
+    value: 'westus3'
   - name: docsContainerName
     value: 'documents'
   - name: deploymentTemplate
