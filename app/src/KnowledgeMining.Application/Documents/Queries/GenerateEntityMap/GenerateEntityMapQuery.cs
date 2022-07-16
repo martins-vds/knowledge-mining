@@ -32,7 +32,7 @@ namespace KnowledgeMining.Application.Documents.Queries.GenerateEntityMap
 
         public Task<EntityMap> Handle(GenerateEntityMapQuery request, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return _searchService.GenerateEntityMap(request.SearchText, request.Facets, request.MaxLevels, request.MaxNodes, cancellationToken);
         }
     }
 }

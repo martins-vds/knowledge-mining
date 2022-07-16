@@ -7,8 +7,6 @@
 @using KnowledgeMining.Domain.Entities
 @using KnowledgeMining.UI.Pages.Search.ViewModels
 
-@implements IAsyncDisposable
-@inject IJSRuntime JS
 @inject IMediator Mediator
 
 <PageTitle>Search</PageTitle>
@@ -24,7 +22,7 @@
                              ResetValueOnEmptyText="true"
                              CoerceText="true"
                              CoerceValue="true"
-                             OnKeyPress="@SearchIfEnterPressed"
+                             OnKeyUp="@SearchIfEnterPressed"
                              Immediate="true"
                              AdornmentIcon="@Icons.Material.Filled.Search"
                              AdornmentColor="Color.Primary"
@@ -34,31 +32,13 @@
             <FacetsFilterComponent Facets="@_searchState.Facets" OnFacetSelectedChanged="UpdateSearchFacetsAndSearch"></FacetsFilterComponent>
         </MudItem>
         <MudItem xs="12" md="9">
-            <MudTabs Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
+            <MudTabs @ref="_mainBodyTabs" Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
-                    <MudTabPanel Text="Search Results">
+                    <MudTabPanel @ref="_searchResultsPanel" Text="Search Results">
                         <SearchResultsComponent Documents="@_searchState.Documents" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageClicked="@SearchPageSelected"></SearchResultsComponent>
                     </MudTabPanel>
-                    <MudTabPanel Text="Entity Map" OnClick="@(() => GenerateEntityMap())">
-                        <div class="d-flex flex-row">
-                            <div class="flex-grow-1">
-                                <svg id="@_entityMapContainerId"></svg>
-                            </div>
-                            <div class="d-flex flex-column">
-                                <MudSlider Min="1" Max="3" Step="1" Value="_maxLevels" T="int" ValueChanged="UpdateEntityMapLevel" ValueLabel="true">Max Levels: @_maxLevels</MudSlider>
-                                <MudSlider Min="3" Max="30" Step="1" Value="_maxNodes" T="int" ValueChanged="UpdateEntityMapNodes" ValueLabel="true">Max Nodes: @_maxNodes</MudSlider>
-                                <MudExpansionPanels Class="mt-6">
-                                    <MudExpansionPanel Text="Facets">
-                                        <MudSelect T="string" Placeholder="Select facets" MultiSelection="true" SelectedValuesChanged="UpdateEntityMapFacets">
-                                            @foreach (var facet in _searchState.FacetableFields)
-                                            {
-                                                <MudSelectItem T="string" Value="@facet">@facet</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudExpansionPanel>
-                                </MudExpansionPanels>
-                            </div>
-                        </div>
+                    <MudTabPanel Text="Entity Map">
+                        <EntityMapComponent FacetableFields="@_searchState.FacetableFields" SearchText="@SearchText" />
                     </MudTabPanel>
                 </div>
             </MudTabs>
@@ -77,26 +57,15 @@
     private string poligonString = string.Empty;
 
     private bool _showDocumentDetails = false;
-    private DocumentMetadata _documentMetadata;
+    private DocumentMetadata? _documentMetadata;
 
-    private string _entityMapContainerId = "entity-map";
-    private int _maxLevels = 10;
-    private int _maxNodes = 10;
-    private IEnumerable<string> _selectedEntityMapFacets = new HashSet<string>();
-    private IJSObjectReference? module;
+    private MudTabs? _mainBodyTabs;
+    private MudTabPanel? _searchResultsPanel;
 
     protected override async Task OnInitializedAsync()
     {
         var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
         await SearchDocuments(request);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/entityMapV2.js");
-        }
     }
 
     private async Task<IEnumerable<string>> AutoComplete(string value)
@@ -158,7 +127,7 @@
 
     private async Task SearchDocuments(SearchDocumentsQuery request)
     {
-        using var cancellationTokenSource = new CancellationTokenSource();
+        SwitchToSearchResultsTab();
 
         var response = await Mediator.Send(request);
 
@@ -167,30 +136,6 @@
         _searchState.Facets = response.Facets;
         _searchState.TotalCount = response.TotalCount;
         _searchState.TotalPages = (int)response.TotalPages;
-    }
-
-    private Task UpdateEntityMapLevel(int levels)
-    {
-        _maxLevels = levels;
-        return GenerateEntityMap();
-    }
-
-    private Task UpdateEntityMapNodes(int nodes)
-    {
-        _maxNodes = nodes;
-        return GenerateEntityMap();
-    }
-
-    private Task UpdateEntityMapFacets(IEnumerable<string> facets)
-    {
-        _selectedEntityMapFacets = facets;
-        return GenerateEntityMap();
-    }
-
-    private async Task GenerateEntityMap()
-    {
-        var entityMapData = await Mediator.Send(new GenerateEntityMapQuery(SearchText, _selectedEntityMapFacets, _maxLevels, _maxNodes));
-        await module.InvokeVoidAsync("renderEntityGraph", _entityMapContainerId, entityMapData, _maxLevels);
     }
 
     private async Task GetDocumentDetails(string documentId)
@@ -202,11 +147,11 @@
         _showDocumentDetails = true;
     }
 
-    async ValueTask IAsyncDisposable.DisposeAsync()
+    private void SwitchToSearchResultsTab()
     {
-        if (module is not null)
+        if(_mainBodyTabs?.ActivePanel != _searchResultsPanel && _searchResultsPanel is not null)
         {
-            await module.DisposeAsync();
+            _mainBodyTabs?.ActivatePanel(_searchResultsPanel);
         }
     }
 }

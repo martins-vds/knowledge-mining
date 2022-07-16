@@ -144,7 +144,7 @@ namespace KnowledgeMining.Infrastructure.Services.Search
             return Regex.Replace(searchText, @"([-+&|!(){}\[\]^""~?:/\\])", @"\$1", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
 
-        public async Task<EntityMap> GenerateEntityMap(string q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)
+        public async Task<EntityMap> GenerateEntityMap(string? q, IEnumerable<string> facetNames, int maxLevels, int maxNodes, CancellationToken cancellationToken)
         {
             var query = "*";
 
