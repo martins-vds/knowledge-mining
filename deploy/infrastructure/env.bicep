@@ -399,7 +399,7 @@ resource app_insights_workspace 'Microsoft.OperationalInsights/workspaces@2021-0
   location: location
   properties:{
     sku: {
-      name: 'Standard'
+      name: 'PerGB2018'
     }
     retentionInDays: 30
   }
