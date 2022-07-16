@@ -3,7 +3,6 @@ param synonymsContainerName string = 'synonyms'
 param deployFunction bool = true
 param location string = resourceGroup().location
 param servicePrincipalId string = ''
-param utcValue string = utcNow()
 
 var uniqueness = uniqueString(resourceGroup().id)
 var keyVaultName = 'akv-${uniqueness}'
@@ -15,6 +14,7 @@ var appServicePlanName = 'app-plan-${uniqueness}'
 var webAppName = 'site-${uniqueness}'
 var functionAppName = 'function-app-${uniqueness}'
 var appInsightsName = 'app-insights-${uniqueness}'
+var appInsightsWorkspaceName = 'workspace-${uniqueness}'
 
 var secretKeySearch = 'SEARCHSERVICESECRET'
 var secretKeySignalR = 'SIGNALRCONNECTIONSTRING'
@@ -24,6 +24,7 @@ var secretKeyStorageConnectionString = 'STORAGEACCOUNTCONNECTIONSTRING'
 
 var subnetAppServiceName = 'AppService'
 var subnetPrivateEndpointsName = 'PrivateEndpoints'
+var privateDnsZone = 'privatelink.blob.core.windows.net'
 
 var blobDataContributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
 var blobDataReaderRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
@@ -81,7 +82,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
 }
 
 resource storageBlobPrivateZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: 'privatelink.blob.core.windows.net'
+  name: privateDnsZone
   location: 'global'
 }
 
@@ -288,31 +289,6 @@ resource azure_storage_account_container_syn 'Microsoft.Storage/storageAccounts/
   }
 }
 
-// resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//   name: 'deployscript-upload-thesaurus-${utcValue}'
-//   identity: {
-//     type: 'SystemAssigned'
-//   }
-//   location: location
-//   kind: 'AzureCLI'
-//   properties: {
-//     azCliVersion: '2.37.0'
-//     timeout: 'PT5M'
-//     retentionInterval: 'PT1H'
-//     storageAccountSettings:{
-//       storageAccountName: azure_storage_account_data.name
-//       storageAccountKey: azure_storage_account_data.listKeys().keys[0].value
-//     }
-//     environmentVariables: [
-//       {
-//         name: 'CONTENT'
-//         value: loadTextContent('../search-index/thesaurus.json')
-//       }
-//     ]
-//     scriptContent: 'echo "$CONTENT" > thesaurus.json && az storage blob upload -f thesaurus.json -c ${synonymsContainerName} -n thesaurus.json'
-//   }
-// }
-
 resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@2020-06-01' = {
   location: location
   name: '${azure_storage_account_data.name}-blob-endpoint'
@@ -418,12 +394,24 @@ resource azure_app_service_plan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource app_insights 'Microsoft.Insights/components@2015-05-01' = {
+resource app_insights_workspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+  name: appInsightsWorkspaceName
+  location: location
+  properties:{
+    sku: {
+      name: 'Standard'
+    }
+    retentionInDays: 30
+  }
+}
+
+resource app_insights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
+    WorkspaceResourceId: app_insights_workspace.id
   }
 }
 
