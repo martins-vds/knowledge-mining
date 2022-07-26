@@ -150,32 +150,45 @@ Could be done fully in an Azure Cloud Shell (Bash)
  az group create -l "Canada Central" -n <RG NAME>
   ```
  
+ -- Get correct branch and dist files
+ ```
+	cd knowledge-mining
+	git checkout convert-to-blazor
+ ```
+ 
+ ```
+ Go to this link and download the two zipped files app and skills linux x64 zip files: https://github.com/martins-vds/knowledge-mining/releases/tag/v0.2.0
+ 
+make a directory inside the repo and upload the two zip files to cloud shell and move them to the dist folder
+•	mkdir dist
+•	mv ~/app.linux-x64.zip dist
+•	mv ~/skills.linux-x64.zip dist
+ ```
+ 
   -- Run Bicep Deployment to provision Infrastructure
 
 ```
-cd ~/knowledge-mining/arm
-az deployment group create -g <RG NAME> --template-file env-vnet-integration.bicep --parameters docsContainerName=documents spnObjectId=<objectID-of-you-or-appregistration>
+# due to role assignment that makes a few moments, you may need to re-run this code
+scripts/deploy-infra.sh canadacentral <resource-group-name> 'deploy/infrastructure/env.bicep' documents <user-account-object-id>
+
 ```
 
 - Build and Deploy Custom Email Filtering Skill
 
 ```
-cd ~/knowledge-mining/skills
-chmod +x builddeploy.sh
-./builddeploy.sh <RG NAME> <FUNCTION NAME>
-
+# if you run into a read timed out error, just try again
+scripts/deploy-skills.sh <resource-group-name> <functiona-app-name> dist/skills.linux-x64.zip
 ```
 
 - build Search Configuration (index, indexer, skillset)
 ```
-cd ~/knowledge-mining/search-index
-chmod +x deploy.sh
-./deploy.sh ~/knowledge-mining/search-index <STORAGE RESID>  documents <SEARCH ENDPOINT> <SEARCH KEY> <COG SERVICE KEY> <FUNCTION APPNAME> <FUNCTION CODE>
+scripts/deploy-search-config.sh deploy/search-index <storage-account-resource-id> documents <search-endpoint> <search-api-key> <cognitive-services-key> <function-app-name> <function-app-key> <knowledge store storage account conn string>
+ 
 ```
 
 Example:
 ```
-./deploy.sh ~/knowledge-mining/search-index /subscriptions/xxxxx/resourceGroups/gackm/providers/Microsoft.Storage/storageAccounts/storageaccount  documents https://search-xxxxx.search.windows.net DDXXXXX b97a864ccc3a4xxxx  function-app-zzzz Axxxxx==
+./deploy.sh ~/knowledge-mining/search-index /subscriptions/xxxxx/resourceGroups/gackm/providers/Microsoft.Storage/storageAccounts/storageaccount  documents https://search-xxxxx.search.windows.net DDXXXXX b97a864ccc3a4xxxx  function-app-zzzz Axxxxx== "DefaultConnString=XXXX"
 ```
 
 Note: parameters could be copied from deployment output and keyvault secrets and Funcion itself
@@ -183,8 +196,6 @@ Note: parameters could be copied from deployment output and keyvault secrets and
 
 - Build and Deploy Search Application to App Service
 ```
-cd ~/knowledge-mining/app
-chmod +x builddeploy.sh
-./builddeploy.sh <RG NAME> <APPSVC NAME>
+scripts/deploy-app.sh <resource-group-name> <app-service-name> dist/app.linux-x64.zip
 
 ```

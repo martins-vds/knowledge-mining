@@ -159,9 +159,173 @@
             "targetName": "imageTags"
           }
         ]
+      },
+      {
+      "@odata.type": "#Microsoft.Skills.Util.ShaperSkill",
+      "name": "#10",
+      "description": null,
+      "context": "/document",
+      "inputs": [
+        {
+          "name": "metadata_storage_content_type",
+          "source": "/document/metadata_storage_content_type"
+        },
+        {
+          "name": "metadata_storage_size",
+          "source": "/document/metadata_storage_size"
+        },
+        {
+          "name": "metadata_storage_last_modified",
+          "source": "/document/metadata_storage_last_modified"
+        },
+        {
+          "name": "metadata_storage_content_md5",
+          "source": "/document/metadata_storage_content_md5"
+        },
+        {
+          "name": "metadata_storage_name",
+          "source": "/document/metadata_storage_name"
+        },
+        {
+          "name": "metadata_storage_path",
+          "source": "/document/metadata_storage_path"
+        },
+        {
+          "name": "metadata_storage_file_extension",
+          "source": "/document/metadata_storage_file_extension"
+        },
+        {
+          "name": "metadata_content_type",
+          "source": "/document/metadata_content_type"
+        },
+        {
+          "name": "metadata_author",
+          "source": "/document/metadata_author"
+        },
+        {
+          "name": "metadata_character_count",
+          "source": "/document/metadata_character_count"
+        },
+        {
+          "name": "metadata_creation_date",
+          "source": "/document/metadata_creation_date"
+        },
+        {
+          "name": "metadata_last_modified",
+          "source": "/document/metadata_last_modified"
+        },
+        {
+          "name": "mission",
+          "source": "/document/mission"
+        },
+        {
+          "name": "date",
+          "source": "/document/date"
+        },
+        {
+          "name": "metadata_page_count",
+          "source": "/document/metadata_page_count"
+        },
+        {
+          "name": "metadata_word_count",
+          "source": "/document/metadata_word_count"
+        },
+        {
+          "name": "merged_content",
+          "source": "/document/merged_content"
+        },
+        {
+          "name": "keyPhrases",
+          "source": "/document/merged_content/keyphrases/*"
+        },
+        {
+          "name": "organizations",
+          "source": "/document/merged_content/organizations/*"
+        },
+        {
+          "name": "locations",
+          "source": "/document/merged_content/locations/*"
+        },
+        {
+          "name": "persons",
+          "source": "/document/merged_content/persons/*"
+        },
+        {
+          "name": "languageCode",
+          "source": "/document/language"
+        },
+        {
+          "name": "translatedText",
+          "source": "/document/merged_content/translated_text"
+        },
+        {
+          "name": "Entities",
+          "sourceContext": "/document/merged_content/entities/*",
+          "inputs": [
+            {
+              "name": "Entity",
+              "source": "/document/merged_content/entities/*/name"
+            },
+            {
+              "name": "EntityType",
+              "source": "/document/merged_content/entities/*/type"
+            },
+            {
+              "name": "EntitySubType",
+              "source": "/document/merged_content/entities/*/subType"
+            },
+            {
+              "name": "Url",
+              "source": "/document/merged_content/entities/*/wikipediaUrl"
+            }
+          ]
+        },
+        {
+          "name": "Images",
+          "sourceContext": "/document/normalized_images/*",
+          "inputs": [
+            {
+              "name": "Images",
+              "source": "/document/normalized_images/*/imageprojection/image"
+            },
+            {
+              "name": "layoutText",
+              "source": "/document/normalized_images/*/layoutText"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "targetName": "objectprojection"
+        }
+      ]
+    }  
+   ],
+   
+    "knowledgeStore": {
+    "storageConnectionString": "__STORAGE_CONN_STRING__",
+    "identity": null,
+    "projections": [
+      {
+        "tables": [],
+        "objects": [
+          {
+            "storageContainer": "knowledge-store",
+            "referenceKeyName": null,
+            "generatedKeyName": "knowledge-storeKey",
+            "source": "/document/objectprojection",
+            "sourceContext": null,
+            "inputs": []
+          }
+        ],
+        "files": []
       }
     ],
-   
-    "knowledgeStore": null,
+    "parameters": {
+      "synthesizeGeneratedKeyName": true
+    }
+  },
     "encryptionKey": null
   }
