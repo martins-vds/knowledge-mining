@@ -183,6 +183,20 @@ resource akv_secret_cognitive_services_secret 'Microsoft.KeyVault/vaults/secrets
   }
 }
 
+resource akv_secret_funcname 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${azure_key_vault.name}/FUNCAPPNAME'
+  properties: {
+    value: '${app_services_function_app.name}'
+  }
+}
+
+resource akv_secret_funckey 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${azure_key_vault.name}/FUNCAPPKEY'
+  properties: {
+    value: listKeys('${app_services_function_app.id}/host/default', '2017-04-18').functionKeys.default
+  }
+}
+
 // Search
 resource azure_search_service 'Microsoft.Search/searchServices@2020-08-01' = {
   name: searchName
