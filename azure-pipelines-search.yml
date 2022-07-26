@@ -27,4 +27,4 @@ steps:
   displayName: 'Configure Azure Search'
   inputs:
     filePath: 'search-index/deploy.sh'
-    arguments: '"$(System.DefaultWorkingDirectory)/search-index" "$(STORAGEACCOUNTRESOURCEID)" "$(docsContianerName)" "$(SEARCHSERVICEENDPOINT)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)"'
+    arguments: '"$(System.DefaultWorkingDirectory)/search-index" "$(STORAGEACCOUNTRESOURCEID)" "$(docsContianerName)" "$(SEARCHSERVICEENDPOINT)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)" "$(FUNCAPPNAME)" "$(FUNCAPPKEY)" "$(STORAGEACCOUNTCONNECTIONSTRING)"'
