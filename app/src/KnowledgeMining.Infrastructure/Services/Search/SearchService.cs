@@ -328,7 +328,7 @@ namespace KnowledgeMining.Infrastructure.Services.Search
 
         private IEnumerable<SummarizedFacet> SummarizeFacets(IDictionary<string, IList<FacetResult>> facets)
         {
-            return facets.Where(f => f.Value.Any()).Select(f => new SummarizedFacet()
+            return facets.Select(f => new SummarizedFacet()
             {
                 Name = f.Key,
                 Count = f.Value.Count,
@@ -389,24 +389,26 @@ namespace KnowledgeMining.Infrastructure.Services.Search
 
                     if (facet?.Type == typeof(string[]))
                     {
-                        if (filterInitialized is not true)
+                        if (filterInitialized is false)
+                        {
                             clause = $"{facetFilter.Name}/any(t: search.in(t, '{facetValues}', ','))";
+                            filterInitialized = true;
+                        }
                         else
                         {
                             clause = $" and {facetFilter.Name}/any(t: search.in(t, '{facetValues}', ','))";
-                            filterInitialized = true;
                         }
                     }
                     else if (facet?.Type == typeof(string))
                     {
-                        if(filterInitialized is not true)
+                        if(filterInitialized is false)
                         {
                             clause = $"{facetFilter.Name} eq '{facetValues}'";
+                            filterInitialized = true;
                         }
                         else
                         {
                             clause = $" and {facetFilter.Name} eq '{facetValues}'";
-                            filterInitialized = true;
                         }
                     }
                     else if (facet?.Type == typeof(DateTime))

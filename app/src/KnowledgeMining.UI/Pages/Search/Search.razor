@@ -35,7 +35,7 @@
             <MudTabs @ref="_mainBodyTabs" Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
                     <MudTabPanel @ref="_searchResultsPanel" Text="Search Results">
-                        <SearchResultsComponent Documents="@_searchState.Documents" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageClicked="@SearchPageSelected"></SearchResultsComponent>
+                        <SearchResultsComponent Documents="@_searchState.Documents" IsLoading="@_isSearching" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageClicked="@SearchPageSelected"></SearchResultsComponent>
                     </MudTabPanel>
                     <MudTabPanel Text="Entity Map">
                         <EntityMapComponent FacetableFields="@_searchState.FacetableFields" SearchText="@SearchText" />
@@ -56,6 +56,7 @@
     private List<FacetFilter> _selectedFacets = new();
     private string poligonString = string.Empty;
 
+    private bool _isSearching = true;
     private bool _showDocumentDetails = false;
     private DocumentMetadata? _documentMetadata;
 
@@ -129,6 +130,8 @@
     {
         SwitchToSearchResultsTab();
 
+        _isSearching = true;
+
         var response = await Mediator.Send(request);
 
         _searchState.Documents = response.Documents;
@@ -136,6 +139,8 @@
         _searchState.Facets = response.Facets;
         _searchState.TotalCount = response.TotalCount;
         _searchState.TotalPages = (int)response.TotalPages;
+
+        _isSearching = false;
     }
 
     private async Task GetDocumentDetails(string documentId)

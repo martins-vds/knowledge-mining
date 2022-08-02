@@ -19,6 +19,7 @@ interface EntityMapData {
 }
 
 interface EntityMap {
+    container: d3.Selection<d3.BaseType, unknown, HTMLElement, any>
     nodes: d3.Selection<d3.BaseType | SVGGElement, EntityNode, d3.BaseType, unknown>
     links: d3.Selection<d3.BaseType | SVGPathElement, EntityLink, d3.BaseType, unknown>
 }
@@ -79,8 +80,10 @@ export function renderEntityGraph(containerId: string, data: EntityMapData, maxL
                     .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
                     .attr('fill', '#999')
                     .style('stroke', 'none')
+    
+    let g = svg.append('g');
 
-    let links = svg.selectAll('.link')
+    let links = g.selectAll('.link')
         .data(data.links)
         .join("line")
             .attr("class", "link")
@@ -88,15 +91,15 @@ export function renderEntityGraph(containerId: string, data: EntityMapData, maxL
             .attr('marker-end','url(#arrowhead)')
             .style("pointer-events", "none")
 
-    let nodes = svg.selectAll('.node')
+    let nodes = g.selectAll('.node')
         .data(data.nodes)
         .join('g')
             .attr('class', 'node')
 
-    drag(simulation)(svg.selectAll('.node'))
+    drag(simulation)(g.selectAll('.node'))
     
     nodes
-        .append('circle')
+        .append('circle')    
         .attr('r', function (d : EntityNode) {
             // Determine an initial position
             if (d.cornerStone > -1) {
@@ -137,14 +140,16 @@ export function renderEntityGraph(containerId: string, data: EntityMapData, maxL
             .attr("fill", function (d : EntityNode) {
                 return d.layer > 1 ? "#808080" : "#000000";
             })
-            .text(d => d.name)
+            .text(d => d.name);
 
     entityMap = {
+        container: svg,
         links: links,
         nodes: nodes
-    }
+    };    
 
     settleSimulation(simulation)
+    setupZoom(g)
 }
 
 function resetEntityMap(): void {
@@ -197,8 +202,6 @@ function settleSimulation(simulation: d3.Simulation<d3.SimulationNodeDatum, unde
 function ticked() {
     entityMap.nodes
                     .attr("transform", function (d : EntityNode) { return `translate(${d.x as number},${d.y as number})` })
-                    // .attr('cx', d => d.x as number)
-                    // .attr('cy', d => d.y as number)
 
     entityMap.links
                     .attr("x1", function (d : EntityLink) { return (d.source as EntityNode).x as number })
@@ -285,4 +288,16 @@ function applySaturationToHexColor(hex: string, saturationPercent: number): stri
     var newHex = rgb2hex(newRgbIntensityFloat);
 
     return newHex;
+}
+
+function setupZoom(container: any){
+    container.call(d3.zoom()
+                        .scaleExtent([0.1, 2])
+                        //.translateExtent([[-config.width / 2, 0], [config.width - config.width / 2, config.height]])
+                        .on('zoom', function(event) {
+                            container
+                                .attr('transform', event.transform);
+                            }
+                        )
+                    )
 }

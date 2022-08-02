@@ -39,18 +39,19 @@ export function renderEntityGraph(containerId, data, maxLevels) {
         .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
         .attr('fill', '#999')
         .style('stroke', 'none');
-    let links = svg.selectAll('.link')
+    let g = svg.append('g');
+    let links = g.selectAll('.link')
         .data(data.links)
         .join("line")
         .attr("class", "link")
         .attr('stroke', "#ccc")
         .attr('marker-end', 'url(#arrowhead)')
         .style("pointer-events", "none");
-    let nodes = svg.selectAll('.node')
+    let nodes = g.selectAll('.node')
         .data(data.nodes)
         .join('g')
         .attr('class', 'node');
-    drag(simulation)(svg.selectAll('.node'));
+    drag(simulation)(g.selectAll('.node'));
     nodes
         .append('circle')
         .attr('r', function (d) {
@@ -84,10 +85,12 @@ export function renderEntityGraph(containerId, data, maxLevels) {
     })
         .text(d => d.name);
     entityMap = {
+        container: svg,
         links: links,
         nodes: nodes
     };
     settleSimulation(simulation);
+    setupZoom(g);
 }
 function resetEntityMap() {
     if (entityMap !== undefined) {
@@ -188,4 +191,12 @@ function applySaturationToHexColor(hex, saturationPercent) {
     var floatToHex = function (val) { return ('0' + Math.round(val * 255).toString(16)).substr(-2); }, rgb2hex = function (rgb) { return '#' + floatToHex(rgb[0]) + floatToHex(rgb[1]) + floatToHex(rgb[2]); };
     var newHex = rgb2hex(newRgbIntensityFloat);
     return newHex;
+}
+function setupZoom(container) {
+    container.call(d3.zoom()
+        .scaleExtent([0.1, 2])
+        .on('zoom', function (event) {
+        container
+            .attr('transform', event.transform);
+    }));
 }
