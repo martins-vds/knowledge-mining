@@ -35,7 +35,7 @@
             <MudTabs @ref="_mainBodyTabs" Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
                     <MudTabPanel @ref="_searchResultsPanel" Text="Search Results">
-                        <SearchResultsComponent Documents="@_searchState.Documents" IsLoading="@_isSearching" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageClicked="@SearchPageSelected"></SearchResultsComponent>
+                        <SearchResultsComponent Documents="@_searchState.Documents" IsLoading="@_isSearching" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageSelectedChanged="@SearchPageSelected" PageSelected="@_selectedPage"></SearchResultsComponent>
                     </MudTabPanel>
                     <MudTabPanel Text="Entity Map">
                         <EntityMapComponent FacetableFields="@_searchState.FacetableFields" SearchText="@SearchText" />

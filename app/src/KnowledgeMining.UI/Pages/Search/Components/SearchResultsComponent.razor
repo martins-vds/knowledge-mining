@@ -57,7 +57,7 @@ else
             }
         </MudGrid>
         <div class="d-flex align-center flex-column pt-4">
-            <MudPagination Color="Color.Primary" Count="@(TotalPages ?? 0)" SelectedChanged="@HandleSelectedChange" />
+            <MudPagination Color="Color.Primary" Count="@(TotalPages ?? 0)" SelectedChanged="@HandlePageSelected" Selected="@(GetSelectedPage())" />
             <MudText Typo="Typo.body1">@($"Documents found: {TotalCount}")</MudText>
         </div>
     }
@@ -71,7 +71,7 @@ else
 
 @code {
     [Parameter]
-    public IEnumerable<DocumentMetadata> Documents { get; set; }
+    public IEnumerable<DocumentMetadata>? Documents { get; set; }
     [Parameter]
     public long? TotalCount { get; set; }
     [Parameter]
@@ -81,13 +81,32 @@ else
     public EventCallback<string> OnDocumentClicked { get; set; }
 
     [Parameter]
-    public EventCallback<int> OnPageClicked { get; set; }
+    public int? PageSelected { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageSelectedChanged { get; set; }
 
     [Parameter]
     public bool IsLoading { get; set; }
 
-    private Task HandleSelectedChange(int page)
+    private int GetSelectedPage()
     {
-        return OnPageClicked.InvokeAsync(page);
+        if(PageSelected.HasValue && PageSelected.Value > 0)
+        {
+            return PageSelected.Value;
+        }
+        return 1;
+    }
+
+    private Task HandlePageSelected(int page)
+    {
+        if(GetSelectedPage() != page)
+        {
+            return OnPageSelectedChanged.InvokeAsync(page);
+        }
+        else
+        {
+            return Task.CompletedTask;
+        }
     }
 }
