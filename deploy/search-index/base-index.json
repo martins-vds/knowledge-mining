@@ -117,7 +117,7 @@
       "name": "topics",
       "type": "Collection(Edm.String)",
       "facetable": true,
-      "filterable": false,
+      "filterable": true,
       "retrievable": true,
       "searchable": true,
       "analyzer": "standard.lucene",
