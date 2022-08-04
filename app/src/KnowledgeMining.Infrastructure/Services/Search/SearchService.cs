@@ -99,19 +99,6 @@ namespace KnowledgeMining.Infrastructure.Services.Search
         {
             var response = await _searchClient.GetDocumentAsync<DocumentMetadata>(documentId, cancellationToken: cancellationToken);
 
-            //Uri documentStoragePath;
-
-            //if (_searchOptions.IsPathBase64Encoded)
-            //{
-            //    documentStoragePath = new Uri(Decode(documentId));
-            //}
-            //else
-            //{
-            //    documentStoragePath = new Uri(documentId);
-            //}
-
-            //var documentName = documentStoragePath.GetFileName();
-
             return response.Value;
         }
         private async Task<SearchResults<SearchDocument>> GetFacets(string searchText, IEnumerable<string> facetNames, int maxCount, CancellationToken cancellationToken)
@@ -438,51 +425,6 @@ namespace KnowledgeMining.Infrastructure.Services.Search
             }
 
             return options;
-        }
-
-        private string Decode(string base64EncodedPath)
-        {
-            if (base64EncodedPath == null) throw new ArgumentNullException(nameof(base64EncodedPath));
-            int inputLength = base64EncodedPath.Length;
-            if (inputLength < 1) return string.Empty;
-
-            // Get padding chars
-            int numPadChars = base64EncodedPath[inputLength - 1] - '0';
-            if (numPadChars < 0 || numPadChars > 10)
-            {
-                return string.Empty;
-            }
-
-            // replace '-' and '_'
-            char[] base64Chars = new char[inputLength - 1 + numPadChars];
-            for (int iter = 0; iter < inputLength - 1; iter++)
-            {
-                char c = base64EncodedPath[iter];
-
-                switch (c)
-                {
-                    case '-':
-                        base64Chars[iter] = '+';
-                        break;
-
-                    case '_':
-                        base64Chars[iter] = '/';
-                        break;
-
-                    default:
-                        base64Chars[iter] = c;
-                        break;
-                }
-            }
-
-            // Add padding chars
-            for (int iter = inputLength - 1; iter < base64Chars.Length; iter++)
-            {
-                base64Chars[iter] = '=';
-            }
-
-            var charArray = Convert.FromBase64CharArray(base64Chars, 0, base64Chars.Length);
-            return System.Text.Encoding.Default.GetString(charArray);
         }
     }
 }

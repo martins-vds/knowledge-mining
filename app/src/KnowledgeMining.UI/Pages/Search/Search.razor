@@ -34,7 +34,7 @@
         <MudItem xs="12" md="9">
             <MudTabs @ref="_mainBodyTabs" Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
                 <div class="d-flex flex-column">
-                    <MudTabPanel @ref="_searchResultsPanel" Text="Search Results">
+                    <MudTabPanel @ref="_searchResultsPanel" Text="@_searchResultsLabel">
                         <SearchResultsComponent Documents="@_searchState.Documents" IsLoading="@_isSearching" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageSelectedChanged="@SearchPageSelected" PageSelected="@_selectedPage"></SearchResultsComponent>
                     </MudTabPanel>
                     <MudTabPanel Text="Entity Map">
@@ -56,6 +56,7 @@
     private List<FacetFilter> _selectedFacets = new();
     private string poligonString = string.Empty;
 
+    private string _searchResultsLabel = "Search Results";
     private bool _isSearching = true;
     private bool _showDocumentDetails = false;
     private DocumentMetadata? _documentMetadata;
@@ -132,6 +133,8 @@
 
         _isSearching = true;
 
+        UpdateSearchResultsLabelWithDocumentCount(default);
+
         var response = await Mediator.Send(request);
 
         _searchState.Documents = response.Documents;
@@ -140,16 +143,9 @@
         _searchState.TotalCount = response.TotalCount;
         _searchState.TotalPages = (int)response.TotalPages;
 
+        UpdateSearchResultsLabelWithDocumentCount(_searchState.TotalCount);
+
         _isSearching = false;
-    }
-
-    private async Task GetDocumentDetails(string documentId)
-    {
-        _showDocumentDetails = false;
-
-        _documentMetadata = await Mediator.Send(new GetDocumentMetadataQuery(documentId));
-
-        _showDocumentDetails = true;
     }
 
     private void SwitchToSearchResultsTab()
@@ -159,4 +155,25 @@
             _mainBodyTabs?.ActivatePanel(_searchResultsPanel);
         }
     }
+
+    private void UpdateSearchResultsLabelWithDocumentCount(long? documentsCount)
+    {
+        if(documentsCount is null || documentsCount <= 0)
+        {
+            _searchResultsLabel = "Search Results";
+        }
+        else
+        {
+            _searchResultsLabel = $"Search Results ({documentsCount})";
+        }
+    }
+
+    private async Task GetDocumentDetails(string documentId)
+    {
+        _showDocumentDetails = false;
+
+        _documentMetadata = await Mediator.Send(new GetDocumentMetadataQuery(documentId));
+
+        _showDocumentDetails = true;
+    }       
 }

@@ -57,8 +57,7 @@ else
             }
         </MudGrid>
         <div class="d-flex align-center flex-column pt-4">
-            <MudPagination Color="Color.Primary" Count="@(TotalPages ?? 0)" SelectedChanged="@HandlePageSelected" Selected="@(GetSelectedPage())" />
-            <MudText Typo="Typo.body1">@($"Documents found: {TotalCount}")</MudText>
+            <MudPagination Color="Color.Primary" Count="@(TotalPages ?? 0)" SelectedChanged="@HandlePageSelected" Selected="@(GetSelectedPage())" />            
         </div>
     }
     else
