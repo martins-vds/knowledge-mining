@@ -3,25 +3,25 @@
 <PageTitle>Documents</PageTitle>
 
 <div class="d-flex flex-row-reverse mt-5 mb-5 mr-5">
-    <MudButton StartIcon="@Icons.Filled.CloudUpload" Variant="Variant.Filled" Color="Color.Info" OnClick="OpenUploadComponent">Upload Documents</MudButton>    
+    <MudButton StartIcon="@Icons.Material.Filled.CloudUpload" Variant="Variant.Filled" Color="Color.Info" OnClick="OpenUploadComponent">Upload Documents</MudButton>    
 </div>
 <UploadDocumentsComponent @bind-Visible="_isUploadComponentVisible"></UploadDocumentsComponent> 
 <MudDataGrid T="Document" Items="@_documents" Hover="true" Loading="@_isLoading"
              ReadOnly="false"
-             StartedEditingItem="@BackupDocument" CancelledEditingItem="@RestoreDocument" CommittedItemChanges="@SaveDocument"
+             StartedEditingItem="@BackupDocument" CanceledEditingItem="@RestoreDocument" CommittedItemChanges="@SaveDocument"
              Bordered="true" EditMode="DataGridEditMode.Form" EditTrigger="DataGridEditTrigger.Manual" RowsPerPage="@_pageSize" Virtualize="true">
     <ToolBarContent>
         <MudTextField T="string" ValueChanged="OnSearch" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
-        <Column T="Document" Field="Name" Title="Name" IsEditable="false"></Column>
-        <Column T="Document" Field="Tags" Title="Tags"></Column>
-        <Column T="Document" Title="Actions" CellClass="d-flex justify-end">
+        <PropertyColumn Property="d => d.Name" Title="Name" IsEditable="false"></PropertyColumn>
+        <PropertyColumn Property="d => d.Tags" Title="Tags"></PropertyColumn>
+        <TemplateColumn T="Document" Title="Actions" CellClass="d-flex justify-end">
             <CellTemplate>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Outlined.DeleteForever" OnClick="@(async (e) => await DeleteDocument(context.Item))" />
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Outlined.Edit" OnClick="@context.Actions.StartEditingItem" />
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.DeleteForever" OnClick="@(async (e) => await DeleteDocument(context.Item))" />
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
             </CellTemplate>
-        </Column>
+        </TemplateColumn>
     </Columns>
     <NoRecordsContent>
         <MudText>No documents found</MudText>
@@ -32,11 +32,11 @@
     <PagerContent>
         @if (_pageHistory.Any())
         {
-            <MudIconButton Icon="@Icons.Filled.NavigateBefore" OnClick="LoadPreviousPage"></MudIconButton>
+            <MudIconButton Icon="@Icons.Material.Filled.NavigateBefore" OnClick="LoadPreviousPage"></MudIconButton>
         }
         @if (!string.IsNullOrWhiteSpace(_nextPage))
         {
-            <MudIconButton Icon="@Icons.Filled.NavigateNext" OnClick="LoadNextPage"></MudIconButton>
+            <MudIconButton Icon="@Icons.Material.Filled.NavigateNext" OnClick="LoadNextPage"></MudIconButton>
         }
     </PagerContent>
 </MudDataGrid>

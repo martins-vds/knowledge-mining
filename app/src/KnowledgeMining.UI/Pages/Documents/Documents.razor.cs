@@ -54,7 +54,7 @@ namespace KnowledgeMining.UI.Pages.Documents
             var parameters = new DialogParameters { ["document"] = document };
             var dialog = DialogService.Show<DeleteDocumentDialogComponent>("Delete Document", parameters);
             var result = await dialog.Result;
-            if (result.Cancelled)
+            if (result.Canceled)
             {
                 return;
             }
