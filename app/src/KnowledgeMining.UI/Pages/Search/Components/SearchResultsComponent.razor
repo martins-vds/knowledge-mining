@@ -1,0 +1,111 @@
+﻿@if (IsLoading)
+{
+    <MudGrid>
+        <MudItem xs="12" sm="5">
+            <MudCard Outlined="true">
+                <MudCardContent Class="d-flex flex-column align-content-start">
+                    <div class="d-flex flex-row flex-fill gap-2">
+                        <div>
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="40px" Width="40px"/>
+                        </div>
+                        <div class="d-flex flex-column">
+                            <div>
+                                <MudSkeleton Width="100px" Animation="Animation.Wave" />
+                            </div>
+                            <div class="d-flex flex-row flex-wrap pt-1 flex-shrink-0">
+                                @foreach (var keyPhrase in Enumerable.Range(1, 4))
+                                {
+                                    <MudSkeleton Width="150px" Style="pa-5" Animation="Animation.Wave" SkeletonType="SkeletonType.Text" />
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}
+else
+{
+    @if (TotalCount > 0)
+    {
+        <MudGrid>
+            @foreach (var document in Documents)
+            {
+                <MudItem xs="12" sm="5">
+                    <MudCard Outlined="true" @onclick="() => OnDocumentClicked.InvokeAsync(document.Id)">
+                        <MudCardContent Class="d-flex flex-column align-content-start">
+                            <div class="d-flex flex-row flex-fill gap-2">
+                                <div>
+                                    <MudIcon Icon="@Icons.Custom.FileFormats.FileDocument"></MudIcon>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <div>
+                                        <MudText>@document.Name</MudText>
+                                    </div>
+                                    <div class="d-flex flex-row flex-wrap pt-1 flex-shrink-0">
+                                        @foreach (var keyPhrase in document.KeyPhrases.Take(4))
+                                        {
+                                            <MudChip Color="Color.Info"><MudText Typo="Typo.body2">@keyPhrase</MudText></MudChip>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+        <div class="d-flex align-center flex-column pt-4">
+            <MudPagination Color="Color.Primary" Count="@(TotalPages ?? 0)" SelectedChanged="@HandlePageSelected" Selected="@(GetSelectedPage())" />            
+        </div>
+    }
+    else
+    {
+        <MudContainer Fixed="true" Class="d-flex align-center flex-column">
+            <MudText>No documents found</MudText>
+        </MudContainer>
+    }
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<DocumentMetadata>? Documents { get; set; }
+    [Parameter]
+    public long? TotalCount { get; set; }
+    [Parameter]
+    public int? TotalPages { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnDocumentClicked { get; set; }
+
+    [Parameter]
+    public int? PageSelected { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageSelectedChanged { get; set; }
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    private int GetSelectedPage()
+    {
+        if(PageSelected.HasValue && PageSelected.Value > 0)
+        {
+            return PageSelected.Value;
+        }
+        return 1;
+    }
+
+    private Task HandlePageSelected(int page)
+    {
+        if(GetSelectedPage() != page)
+        {
+            return OnPageSelectedChanged.InvokeAsync(page);
+        }
+        else
+        {
+            return Task.CompletedTask;
+        }
+    }
+}

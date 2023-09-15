@@ -1,0 +1,179 @@
+﻿@page "/search"
+
+@using KnowledgeMining.Application.Documents.Queries.SearchDocuments
+@using KnowledgeMining.Application.Documents.Queries.GenerateEntityMap
+@using KnowledgeMining.Application.Documents.Queries.GetAutocompleteSuggestions
+@using KnowledgeMining.Application.Documents.Queries.GetDocumentMetadata
+@using KnowledgeMining.Domain.Entities
+@using KnowledgeMining.UI.Pages.Search.ViewModels
+
+@inject IMediator Mediator
+
+<PageTitle>Search</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudGrid>
+        <MudItem xs="0" md="1">
+
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudAutocomplete T="string" @bind-Value="SearchText"
+                             SearchFunc="@AutoComplete"
+                             ResetValueOnEmptyText="true"
+                             CoerceText="true"
+                             CoerceValue="true"
+                             OnKeyUp="@SearchIfEnterPressed"
+                             Immediate="true"
+                             AdornmentIcon="@Icons.Material.Filled.Search"
+                             AdornmentColor="Color.Primary"
+                             OnAdornmentClick="@(() => SearchDocuments(new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets)))"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.None" />
+            <FacetsFilterComponent Facets="@_searchState.Facets" OnFacetSelectedChanged="UpdateSearchFacetsAndSearch"></FacetsFilterComponent>
+        </MudItem>
+        <MudItem xs="12" md="9">
+            <MudTabs @ref="_mainBodyTabs" Elevation="0" Outlined="true" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-1">
+                <div class="d-flex flex-column">
+                    <MudTabPanel @ref="_searchResultsPanel" Text="@_searchResultsLabel">
+                        <SearchResultsComponent Documents="@_searchState.Documents" IsLoading="@_isSearching" TotalCount="@_searchState.TotalCount" TotalPages="@_searchState.TotalPages" OnDocumentClicked="@GetDocumentDetails" OnPageSelectedChanged="@SearchPageSelected" PageSelected="@_selectedPage"></SearchResultsComponent>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Entity Map">
+                        <EntityMapComponent FacetableFields="@_searchState.FacetableFields" SearchText="@SearchText" />
+                    </MudTabPanel>
+                </div>
+            </MudTabs>
+        </MudItem>
+    </MudGrid>
+    <DocumentDetailsComponent @bind-IsVisible="_showDocumentDetails" Document="_documentMetadata"></DocumentDetailsComponent>
+</MudContainer>
+
+@code {
+    [Parameter, SupplyParameterFromQuery(Name = "q")] public string? SearchText { get; set; }
+
+    private SearchState _searchState = new();
+
+    private int _selectedPage;
+    private List<FacetFilter> _selectedFacets = new();
+    private string poligonString = string.Empty;
+
+    private string _searchResultsLabel = "Search Results";
+    private bool _isSearching = true;
+    private bool _showDocumentDetails = false;
+    private DocumentMetadata? _documentMetadata;
+
+    private MudTabs? _mainBodyTabs;
+    private MudTabPanel? _searchResultsPanel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
+        await SearchDocuments(request);
+    }
+
+    private async Task<IEnumerable<string>> AutoComplete(string value)
+    {
+        return await Mediator.Send(new GetAutocompleteSuggestionsQuery(value));
+    }
+
+    private async Task SearchIfEnterPressed(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
+            await SearchDocuments(request);
+        }
+    }
+
+    private async Task UpdateSearchFacetsAndSearch(Facet facet)
+    {
+        FacetFilter searchFacet;
+
+        if (!_selectedFacets.Any(f => f.Name == facet.Name))
+        {
+            searchFacet = new FacetFilter()
+                {
+                    Name = facet.Name
+                };
+            _selectedFacets.Add(searchFacet);
+        }
+        else
+        {
+            searchFacet = _selectedFacets.First(f => f.Name == facet.Name);
+        }
+
+        if (searchFacet.Values.Any(fv => fv == facet.Value))
+        {
+            searchFacet.Values.Remove(facet.Value);
+
+            if (!searchFacet.Values.Any())
+            {
+                _selectedFacets.Remove(searchFacet);
+            }
+        }
+        else
+        {
+            searchFacet.Values.Add(facet.Value);
+        }
+
+        var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
+
+        await SearchDocuments(request);
+    }
+
+    private async Task SearchPageSelected(int page)
+    {
+        _selectedPage = page;
+        var request = new SearchDocumentsQuery(SearchText, _selectedPage, poligonString, _selectedFacets);
+        await SearchDocuments(request);
+    }
+
+    private async Task SearchDocuments(SearchDocumentsQuery request)
+    {
+        SwitchToSearchResultsTab();
+
+        _isSearching = true;
+
+        UpdateSearchResultsLabelWithDocumentCount(default);
+
+        var response = await Mediator.Send(request);
+
+        _searchState.Documents = response.Documents;
+        _searchState.FacetableFields = response.FacetableFields;
+        _searchState.Facets = response.Facets;
+        _searchState.TotalCount = response.TotalCount;
+        _searchState.TotalPages = (int)response.TotalPages;
+
+        UpdateSearchResultsLabelWithDocumentCount(_searchState.TotalCount);
+
+        _isSearching = false;
+    }
+
+    private void SwitchToSearchResultsTab()
+    {
+        if(_mainBodyTabs?.ActivePanel != _searchResultsPanel && _searchResultsPanel is not null)
+        {
+            _mainBodyTabs?.ActivatePanel(_searchResultsPanel);
+        }
+    }
+
+    private void UpdateSearchResultsLabelWithDocumentCount(long? documentsCount)
+    {
+        if(documentsCount is null || documentsCount <= 0)
+        {
+            _searchResultsLabel = "Search Results";
+        }
+        else
+        {
+            _searchResultsLabel = $"Search Results ({documentsCount})";
+        }
+    }
+
+    private async Task GetDocumentDetails(string documentId)
+    {
+        _showDocumentDetails = false;
+
+        _documentMetadata = await Mediator.Send(new GetDocumentMetadataQuery(documentId));
+
+        _showDocumentDetails = true;
+    }       
+}

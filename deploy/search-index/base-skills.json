@@ -1,167 +1,208 @@
 {
-    "description": "Extract entities, detect language and extract key-phrases",
-    "cognitiveServices": {
-        "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
-        "description": "mycogsvcs",
-        "key": "__COG_SERVICES_KEY__"
+  "description": "Extract entities, detect language and extract key-phrases",
+  "cognitiveServices": {
+      "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+      "description": "mycogsvcs",
+      "key": "__COG_SERVICES_KEY__"
+  },
+  "skills": [
+    {
+      "@odata.type": "#Microsoft.Skills.Text.V3.EntityRecognitionSkill",
+      "name": "#1",
+      "description": null,
+      "context": "/document/merged_content",
+      "categories": [
+        "Person",
+        "Organization",
+        "Location"
+       
+      ],
+      "defaultLanguageCode": "en",
+      "minimumPrecision": 0.5,
+      "modelVersion": null,
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/merged_content"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "locations",
+          "targetName": "all_locations"
+        },
+        {
+          "name": "organizations",
+          "targetName": "all_organizations"
+        },
+        {
+          "name": "persons",
+          "targetName": "all_persons"
+        }
+      ]
     },
-    "skills": [
-      {
-        "@odata.type": "#Microsoft.Skills.Text.V3.EntityRecognitionSkill",
-        "name": "#1",
-        "description": null,
-        "context": "/document/merged_content",
-        "categories": [
-          "Person",
-          "Organization",
-          "Location"
-         
-        ],
-        "defaultLanguageCode": "en",
-        "minimumPrecision": 0.5,
-        "modelVersion": null,
-        "inputs": [
-          {
-            "name": "text",
-            "source": "/document/merged_content"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "locations",
-            "targetName": "locations"
-          },
-          {
-            "name": "organizations",
-            "targetName": "organizations"
-          },
-          {
-            "name": "persons",
-            "targetName": "persons"
-          }
-        ]
-      },
-      {
-        "@odata.type": "#Microsoft.Skills.Text.KeyPhraseExtractionSkill",
-        "name": "#2",
-        "description": null,
-        "context": "/document/merged_content",
-        "defaultLanguageCode": "en",
-        "maxKeyPhraseCount": null,
-        "modelVersion": null,
-        "inputs": [
-          {
-            "name": "text",
-            "source": "/document/merged_content"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "keyPhrases",
-            "targetName": "keyPhrases"
-          }
-        ]
-      },
-      {
-        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
-        "name": "emailfilter",
-        "description": null,
-        "context": "/document",
-        "uri": "https://__FUNCTION_NAME__.azurewebsites.net/api/emailfilter?code=__FUNCTION_APICODE__",
-        "batchSize": 1,
-        "timeout" : "PT3M50S",
-        "inputs": [
-          {
-            "name": "text",
-            "source": "/document/content"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "filtered",
-            "targetName": "content_filtered"
-          }
-        ]
-      },
-      {
-        "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
-        "name": "#3",
-        "description": null,
-        "context": "/document",
-        "insertPreTag": " ",
-        "insertPostTag": " ",
-        "inputs": [
-          {
-            "name": "text",
-            "source": "/document/content_filtered"
-          },
-          {
-            "name": "itemsToInsert",
-            "source": "/document/normalized_images/*/text"
-          },
-          {
-            "name": "offsets",
-            "source": "/document/normalized_images/*/contentOffset"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "mergedText",
-            "targetName": "merged_content"
-          }
-        ]
-      },
-      {
-        "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
-        "name": "#4",
-        "description": null,
-        "context": "/document/normalized_images/*",
-        "textExtractionAlgorithm": null,
-        "lineEnding": "Space",
-        "defaultLanguageCode": "en",
-        "detectOrientation": true,
-        "inputs": [
-          {
-            "name": "image",
-            "source": "/document/normalized_images/*"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "text",
-            "targetName": "text"
-          },
-          {
-            "name": "layoutText",
-            "targetName": "layoutText"
-          }
-        ]
-      },
-      {
-        "@odata.type": "#Microsoft.Skills.Vision.ImageAnalysisSkill",
-        "name": "#5",
-        "description": null,
-        "context": "/document/normalized_images/*",
-        "defaultLanguageCode": "en",
-        "visualFeatures": [
-          "tags"
-        ],
-        "details": [],
-        "inputs": [
-          {
-            "name": "image",
-            "source": "/document/normalized_images/*"
-          }
-        ],
-        "outputs": [
-          {
-            "name": "tags",
-            "targetName": "imageTags"
-          }
-        ]
-      }
-    ],
-   
-    "knowledgeStore": null,
-    "encryptionKey": null
-  }
+    {
+      "@odata.type": "#Microsoft.Skills.Text.KeyPhraseExtractionSkill",
+      "name": "#2",
+      "description": null,
+      "context": "/document/merged_content",
+      "defaultLanguageCode": "en",
+      "maxKeyPhraseCount": null,
+      "modelVersion": null,
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/merged_content"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "keyPhrases",
+          "targetName": "keyPhrases"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+      "name": "distinctmappersons",
+      "description": null,
+      "context": "/document/merged_content",
+      "uri": "https://__FUNCTION_NAME__.azurewebsites.net/api/distinct?code=__FUNCTION_APICODE__",
+      "batchSize": 1,
+      "timeout" : "PT3M50S",
+      "inputs": [
+        {
+          "name": "words",
+          "source": "/document/merged_content/all_persons"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distinct",
+          "targetName": "distinct_persons"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+      "name": "distinctmaploc",
+      "description": null,
+      "context": "/document/merged_content",
+      "uri": "https://__FUNCTION_NAME__.azurewebsites.net/api/distinct?code=__FUNCTION_APICODE__",
+      "batchSize": 1,
+      "timeout" : "PT3M50S",
+      "inputs": [
+        {
+          "name": "words",
+          "source": "/document/merged_content/all_locations"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distinct",
+          "targetName": "distinct_locations"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+      "name": "distinctmaporgs",
+      "description": null,
+      "context": "/document/merged_content",
+      "uri": "https://__FUNCTION_NAME__.azurewebsites.net/api/distinct?code=__FUNCTION_APICODE__",
+      "batchSize": 1,
+      "timeout" : "PT3M50S",
+      "inputs": [
+        {
+          "name": "words",
+          "source": "/document/merged_content/all_organizations"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distinct",
+          "targetName": "distinct_organizations"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
+      "name": "#3",
+      "description": null,
+      "context": "/document",
+      "insertPreTag": " ",
+      "insertPostTag": " ",
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        },
+        {
+          "name": "itemsToInsert",
+          "source": "/document/normalized_images/*/text"
+        },
+        {
+          "name": "offsets",
+          "source": "/document/normalized_images/*/contentOffset"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mergedText",
+          "targetName": "merged_content"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
+      "name": "#4",
+      "description": null,
+      "context": "/document/normalized_images/*",
+      "textExtractionAlgorithm": null,
+      "lineEnding": "Space",
+      "defaultLanguageCode": "en",
+      "detectOrientation": true,
+      "inputs": [
+        {
+          "name": "image",
+          "source": "/document/normalized_images/*"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "targetName": "text"
+        },
+        {
+          "name": "layoutText",
+          "targetName": "layoutText"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Vision.ImageAnalysisSkill",
+      "name": "#5",
+      "description": null,
+      "context": "/document/normalized_images/*",
+      "defaultLanguageCode": "en",
+      "visualFeatures": [
+        "tags"
+      ],
+      "details": [],
+      "inputs": [
+        {
+          "name": "image",
+          "source": "/document/normalized_images/*"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tags",
+          "targetName": "imageTags"
+        }
+      ]
+    }
+  ],
+  "knowledgeStore": null,
+  "encryptionKey": null
+}

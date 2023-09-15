@@ -1,0 +1,31 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-3 mb-n1"/>
+            Delete document?
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Value="@Document.Name" Label="Document Name" ReadOnly="true"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="DeleteDocument">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Application.Documents.Queries.GetDocuments.Document Document { get; set; } = new Application.Documents.Queries.GetDocuments.Document();
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void DeleteDocument()
+    {
+        MudDialog.Close(DialogResult.Ok(Document.Name));
+    }
+}

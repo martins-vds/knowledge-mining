@@ -1,0 +1,138 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+      - convert-to-blazor
+  paths:
+    include:
+      - app
+      - deploy
+      - azure-pipelines.yml
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: rgName
+    value: 'poc-knowledge-mining'
+  - name: location
+    value: 'westus3'
+  - name: docsContainerName
+    value: 'documents'
+  - name: deploymentTemplate
+    value: './deploy/infrastructure/env.bicep'
+
+stages:
+  - stage: infra
+    displayName: Infrastructure
+    jobs:
+      - job: deploy
+        displayName: "Deploy Infrastructure"
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Deploy Infra'
+            name: deploy_infra
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-infra.sh'
+              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$(servicePrincipalId)"'
+          
+          - task: AzureCLI@2
+            displayName: 'Upload Thesaurus'
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/upload-thesaurus.sh'
+              arguments: '"$(rgName)" "$(deploy_infra.storage_account_name)" synonyms "./deploy/search-index/thesaurus.json"'
+
+  - stage: app
+    dependsOn: infra
+    displayName: App
+    jobs:
+      - job: build
+        displayName: 'Build App and Skills'
+        steps:
+          - bash: "./scripts/publish-app.sh"
+            displayName: "Publish App"
+
+          - bash: "./scripts/publish-skills.sh"
+            displayName: "Publish Skills"
+
+          - publish: "./dist"
+            displayName: "Publish artifacts"
+            artifact: dist
+
+      - job: deploy
+        dependsOn: build
+        displayName: 'Deploy App and Skills'
+        variables:
+          appName: $[stageDependencies.infra.deploy.outputs['deploy_infra.app_name']]
+          skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
+        steps:
+          - download: current
+            artifact: dist
+            displayName: "Download dist binaries"
+            patterns: '**/*.zip'
+
+          - task: AzureCLI@2
+            displayName: "Deploy App"
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-app.sh'
+              arguments: '"$(rgName)" "$(appName)" "$(Pipeline.Workspace)/dist/app.linux-x64.zip"'
+
+          - task: AzureCLI@2
+            displayName: "Deploy Skills"
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-skills.sh'
+              arguments: '"$(rgName)" "$(skillsName)" "$(Pipeline.Workspace)/dist/skills.linux-x64.zip"'
+            
+  - stage: search
+    dependsOn: [infra, app]
+    displayName: 'Search'
+    variables:
+          keyVault: $[stageDependencies.infra.deploy.outputs['deploy_infra.keyvault_name']]
+          storageAccountId: $[stageDependencies.infra.deploy.outputs['deploy_infra.storage_account_id']]
+          searchEndpoint: $[stageDependencies.infra.deploy.outputs['deploy_infra.search_endpoint']]
+          skillsName: $[stageDependencies.infra.deploy.outputs['deploy_infra.skills_name']]
+    jobs:
+      - job: deploy
+        displayName: 'Configure Search'
+        steps:
+          - task: AzureCLI@2
+            displayName: "Get Secrets"
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: inlineScript
+              inlineScript: |
+                search_secret=$(./scripts/get-secret.sh "$(keyVault)" SEARCHSERVICESECRET)
+                cognitive_secret=$(./scripts/get-secret.sh "$(keyVault)" COGNITIVESERVICESSECRET)
+                function_admin_secret=$(./scripts/get-secret.sh "$(keyVault)" FUNCTIONADMINKEY)
+
+                echo "##vso[task.setvariable variable=SEARCHSERVICESECRET;issecret=true]$search_secret"
+                echo "##vso[task.setvariable variable=COGNITIVESERVICESSECRET;issecret=true]$cognitive_secret"
+                echo "##vso[task.setvariable variable=FUNCTIONADMINKEY;issecret=true]$function_admin_secret"
+
+          - task: AzureCLI@2
+            displayName: 'Deploy Azure Search Configuration'
+            inputs:
+              azureSubscription: 'azure-knowledge-mining-arm-connection'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: './scripts/deploy-search-config.sh' 
+              arguments: '"./deploy/search-index" "$(storageAccountId)" "$(docsContainerName)" "$(searchEndpoint)" "$(SEARCHSERVICESECRET)" "$(COGNITIVESERVICESSECRET)" "$(skillsName)" "$(FUNCTIONADMINKEY)"' 

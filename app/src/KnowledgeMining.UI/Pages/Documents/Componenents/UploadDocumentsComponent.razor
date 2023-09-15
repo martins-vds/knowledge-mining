@@ -1,0 +1,159 @@
+﻿@inject ISnackbar Snackbar
+@inject IMediator Mediator
+
+<MudPopover Open="@Visible" Fixed="true" Class="px-4 pt-4" AnchorOrigin="Origin.CenterCenter" TransformOrigin="Origin.CenterCenter">
+    <div class="d-flex flex-column">
+        <InputFile id="fileInput" OnChange="OnInputFileChanged" hidden multiple />
+        <MudButton HtmlTag="label"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Filled.CloudUpload"
+                   for="fileInput">
+            Add your documents
+        </MudButton>
+        <MudTable Items="_files" ReadOnly="false">
+            <HeaderContent>
+                <MudTh>Document Name</MudTh>
+                @foreach (var tag in DocumentTags!)
+                {
+                    <MudTh>@tag.Name.SplitCamelCase().ToTitleCase()</MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Document Name">@context.Name</MudTd>
+                @foreach (var tag in DocumentTags!)
+                {
+                    <MudTd DataLabel="@tag.Name.SplitCamelCase().ToTitleCase()">@GetFileTag(context.Name, tag.Name)</MudTd>
+                }
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd DataLabel="Document Name">@context.Name</MudTd>
+                @foreach (var tag in DocumentTags!)
+                {
+                    <MudTd DataLabel="@tag.Name.SplitCamelCase().ToTitleCase()">
+                        @if (tag.AllowedValues?.Any() ?? false)
+                        {
+                            <MudSelect T="string" Placeholder="Select document type" ValueChanged="(tagValue) => SetFileTag(context.Name, tag.Name, tagValue)">
+                                @foreach (var allowedValue in tag.AllowedValues!)
+                                {
+                                    <MudSelectItem Value="@allowedValue" />
+                                }
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            <MudTextField T="string" Value="@GetFileTag(context.Name, tag.Name)" ValueChanged="(tagValue) => SetFileTag(context.Name, tag.Name, tagValue)" />
+                        }
+                    </MudTd>
+                }
+            </RowEditingTemplate>
+        </MudTable>
+        <MudToolBar DisableGutters="true" Class="d-flex flex-row flex-grow-1 justify-content-center gap-4">
+            <MudButton OnClick="Upload"
+                       Disabled="@(!_files.Any())"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Filled.CloudUpload">
+                Upload
+            </MudButton>
+            <MudButton OnClick="Clear" Disabled="@(!_files.Any())" Color="Color.Error" Variant="Variant.Filled">Clear</MudButton>
+            <MudButton OnClick="@Close" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
+        </MudToolBar>
+
+    </div>
+</MudPopover>
+
+@code {
+
+    [Parameter]
+    public bool Visible { get; set; }
+    [Parameter]
+    public EventCallback<bool> VisibleChanged { get; set; }
+
+    public DocumentTag[]? DocumentTags { get; set; }
+
+    private bool _clearing = false;
+    private IList<IBrowserFile> _files = new List<IBrowserFile>();
+    private IDictionary<string, IDictionary<string, string>> _fileTags = new Dictionary<string, IDictionary<string, string>>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        DocumentTags = await Mediator.Send(new GetTagsQuery()) ?? Array.Empty<DocumentTag>();
+    }
+
+    public Task Close()
+    {
+        return VisibleChanged.InvokeAsync(!Visible);
+    }
+
+    private IDictionary<string, string>? GetFileTags(string fileName)
+    {
+        _fileTags.TryGetValue(fileName, out var tags);
+
+        return tags;
+    }
+
+    private string GetFileTag(string fileName, string tag)
+    {
+        if (_fileTags.TryGetValue(fileName, out var tags))
+        {
+            (string tagName, string tagValue) = tags.Where(t => t.Key == tag).FirstOrDefault();
+
+            return tagValue ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
+
+    private void SetFileTag(string fileName, string tagName, string tagValue)
+    {
+        if (_fileTags.TryGetValue(fileName, out var tags))
+        {
+            if (tags.ContainsKey(tagName))
+            {
+                tags[tagName] = tagValue;
+            }
+            else
+            {
+                tags.Add(tagName, tagValue);
+            }
+        }
+        else
+        {
+            _fileTags.Add(fileName, new Dictionary<string, string>());
+        }
+    }
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            _files.Add(file);
+        }
+    }
+
+    private async Task Clear()
+    {
+        _clearing = true;
+        _files.Clear();
+        await Task.Delay(100);
+        _clearing = false;
+    }
+
+    private async Task Upload()
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+
+        try
+        {
+            var documentToUpload = _files.Select(f => new Application.Documents.Commands.UploadDocument.Document(f.Name, f.ContentType, GetFileTags(f.Name), f.OpenReadStream(maxAllowedSize: 10485760)));
+            await Mediator.Send(new UploadDocumentCommand(documentToUpload));
+            Snackbar.Add("Files uploaded successfully!", Severity.Success);
+            await Clear();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to upload files! Reason: {ex.Message}", Severity.Error);
+        }
+    }
+}

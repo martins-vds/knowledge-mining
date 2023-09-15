@@ -1,0 +1,83 @@
+﻿@using KnowledgeMining.Application.Documents.Queries.GenerateEntityMap
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject IMediator Mediator
+
+<div class="d-flex flex-row">
+    <div class="flex-grow-1">
+        <svg id="@_entityMapContainerId"></svg>
+    </div>
+    <div class="d-flex flex-column">
+        <MudSlider Min="1" Max="3" Step="1" Value="_maxLevels" T="int" ValueChanged="UpdateEntityMapLevel" ValueLabel="true">Max Levels: @_maxLevels</MudSlider>
+        <MudSlider Min="3" Max="30" Step="1" Value="_maxNodes" T="int" ValueChanged="UpdateEntityMapNodes" ValueLabel="true">Max Nodes: @_maxNodes</MudSlider>
+        <MudExpansionPanels Class="mt-6">
+            <MudExpansionPanel Text="Facets">
+                <MudSelect T="string" Placeholder="Select facets" MultiSelection="true" SelectedValuesChanged="UpdateEntityMapFacets">
+                    @foreach (var facet in FacetableFields)
+                    {
+                        <MudSelectItem T="string" Value="@facet">@facet</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </div>
+</div>
+
+@code{
+    [Parameter]
+    public string? SearchText { get; set; } = default;
+    [Parameter]
+    public IEnumerable<string> FacetableFields { get; set; } = Enumerable.Empty<string>();
+
+    private string _entityMapContainerId = "entity-map";
+    private int _maxLevels = 10;
+    private int _maxNodes = 10;
+
+    private IEnumerable<string> _selectedEntityMapFacets = new HashSet<string>();
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/entityMapV2.js");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GenerateEntityMap();
+    }
+
+    private Task UpdateEntityMapLevel(int levels)
+    {
+        _maxLevels = levels;
+        return GenerateEntityMap();
+    }
+
+    private Task UpdateEntityMapNodes(int nodes)
+    {
+        _maxNodes = nodes;
+        return GenerateEntityMap();
+    }
+
+    private Task UpdateEntityMapFacets(IEnumerable<string> facets)
+    {
+        _selectedEntityMapFacets = facets;
+        return GenerateEntityMap();
+    }
+
+    private async Task GenerateEntityMap()
+    {
+        var entityMapData = await Mediator.Send(new GenerateEntityMapQuery(SearchText, _selectedEntityMapFacets, _maxLevels, _maxNodes));
+        await module.InvokeVoidAsync("renderEntityGraph", _entityMapContainerId, entityMapData, _maxLevels);
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
+    }
+}

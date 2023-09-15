@@ -1,0 +1,46 @@
+﻿@using KnowledgeMining.Application.Documents.Queries.SearchDocuments
+@foreach (var aggregateFacet in Facets)
+{
+    <MudExpansionPanels Class="mt-6">
+        <MudExpansionPanel Text="@($"{aggregateFacet.Name.SplitCamelCase().ToTitleCase()} ({aggregateFacet.Values.Count()})")" Disabled="@(aggregateFacet.Values.Any() is false)">
+            @foreach (var facet in aggregateFacet.Values)
+            {
+                <MudCheckBox T="bool" Label="@($"{facet.Value} ({facet.Count})")" Checked="@(IsSelected(facet))" CheckedChanged="@(isSelected => HandleCheckedChanged(facet, isSelected))"></MudCheckBox>
+            }
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+}
+
+@code {
+    private IDictionary<Facet, bool> _selectedFacets = new Dictionary<Facet, bool>();
+
+    [Parameter]
+    public IEnumerable<SummarizedFacet>? Facets { get; set; }
+
+    [Parameter]
+    public EventCallback<Facet> OnFacetSelectedChanged { get; set; }
+
+    private bool IsSelected(Facet facet)
+    {
+        if(_selectedFacets.TryGetValue(facet, out bool isSelected))
+        {
+            return isSelected;
+        }
+
+        return false;
+    }
+
+    private Task HandleCheckedChanged(Facet facet, bool isSelected)
+    {
+        if (_selectedFacets.ContainsKey(facet))
+        {
+            _selectedFacets[facet] = isSelected;
+        }
+        else
+        {
+            _selectedFacets.Add(facet, isSelected);
+        }
+
+        return OnFacetSelectedChanged.InvokeAsync(facet);
+    }
+}
