@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-dotnet publish ./app/KnowledgeMining.Functions.Skills/KnowledgeMining.Functions.Skills.csproj -c Release -o ./dist/skills/linux-x64/ -r linux-x64 -f 'net6.0' --self-contained
+dotnet publish ./app/KnowledgeMining.Functions.Skills/KnowledgeMining.Functions.Skills.csproj -c Release -o ./dist/skills/linux-x64/ -r linux-x64 -f 'net8.0' --self-contained
 
 pushd ./dist/skills/linux-x64
 
