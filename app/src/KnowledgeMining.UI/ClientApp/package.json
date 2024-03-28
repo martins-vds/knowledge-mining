@@ -3,10 +3,10 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@types/d3": "7.4.0",
-    "@types/jquery": "3.5.14"
+    "@types/d3": "7.4.3",
+    "@types/jquery": "3.5.29"
   },
   "dependencies": {
-    "d3": "7.5.0"
+    "d3": "7.9.0"
   }
 }
