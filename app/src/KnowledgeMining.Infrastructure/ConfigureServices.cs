@@ -30,7 +30,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<ISearchService, SearchService>();
             services.AddScoped<IStorageService, StorageService>();
 
-
             services.AddSingleton(Channel.CreateUnbounded<SearchIndexerJobContext>(new UnboundedChannelOptions() { SingleWriter = true, SingleReader = true }));
             services.AddSingleton(provider =>
             {

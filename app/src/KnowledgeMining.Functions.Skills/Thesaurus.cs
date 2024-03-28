@@ -28,7 +28,10 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 
             foreach (IEnumerable<string> lemma in dataset)
             {
-                if (!lemma.Any()) continue;
+                if (!lemma.Any())
+                {
+                    continue;
+                }
 
                 var canonicalForm = lemma.First();
 

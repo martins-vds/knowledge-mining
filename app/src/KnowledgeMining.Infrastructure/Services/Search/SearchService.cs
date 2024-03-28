@@ -67,7 +67,6 @@ namespace KnowledgeMining.Infrastructure.Services.Search
 
             var response = await _searchClient.AutocompleteAsync(searchText, _searchOptions.SuggesterName, options, cancellationToken);
 
-
             return response.Value.Results.Select(r => r.Text).Distinct();
         }
 
@@ -190,12 +189,16 @@ namespace KnowledgeMining.Infrastructure.Services.Search
                 var density = 0;
 
                 foreach (var k in NodeMap)
+                {
                     k.Value.Distance += originalDistance;
+                }
 
                 foreach (var t in currentLevelTerms)
                 {
                     if (levelNodeCount >= maxNodes)
+                    {
                         break;
+                    }
 
                     int facetsToGrab = 10;
 
@@ -260,7 +263,9 @@ namespace KnowledgeMining.Infrastructure.Services.Search
                 }
 
                 if (densestNodeThisLayer != null)
+                {
                     densestNodeThisLayer.LayerCornerStone = CurrentLevel;
+                }
             }
 
             foreach (KeyValuePair<string, NodeInfo> entry in NodeMap)
@@ -351,7 +356,7 @@ namespace KnowledgeMining.Infrastructure.Services.Search
             var facets = schema.Facets.Select(f => f.Name).ToList();
             foreach (string? f in facets)
             {
-                if(f is not null)
+                if (f is not null)
                 {
                     options.Facets.Add($"{f},sort:count");
                 }
@@ -388,7 +393,7 @@ namespace KnowledgeMining.Infrastructure.Services.Search
                     }
                     else if (facet?.Type == typeof(string))
                     {
-                        if(filterInitialized is false)
+                        if (filterInitialized is false)
                         {
                             clause = $"{facetFilter.Name} eq '{facetValues}'";
                             filterInitialized = true;

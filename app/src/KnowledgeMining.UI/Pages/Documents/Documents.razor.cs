@@ -61,7 +61,7 @@ namespace KnowledgeMining.UI.Pages.Documents
 
             try
             {
-                await Mediator.Send(new DeleteDocumentCommand(document.Name));                
+                await Mediator.Send(new DeleteDocumentCommand(document.Name));
                 await Search(_searchText);
 
                 Snackbar.Add("Document deleted", Severity.Success);
@@ -97,7 +97,7 @@ namespace KnowledgeMining.UI.Pages.Documents
             _isLoading = true;
             response = await Mediator.Send(new GetDocumentsQuery(searchText, _pageSize, nextPage));
             _isLoading = false;
-            
+
             if (string.IsNullOrWhiteSpace(nextPage))
             {
                 CleanPageHistory();

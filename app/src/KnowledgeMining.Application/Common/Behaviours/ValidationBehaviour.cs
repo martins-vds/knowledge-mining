@@ -29,7 +29,9 @@ namespace KnowledgeMining.Application.Common.Behaviours
                     .ToList();
 
                 if (failures.Any())
+                {
                     throw new ValidationException(failures);
+                }
             }
             return await next();
         }

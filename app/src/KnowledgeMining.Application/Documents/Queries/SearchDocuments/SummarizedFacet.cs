@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace KnowledgeMining.Application.Documents.Queries.SearchDocuments
+﻿namespace KnowledgeMining.Application.Documents.Queries.SearchDocuments
 {
     public class SummarizedFacet : IEquatable<SummarizedFacet>
     {

@@ -42,7 +42,7 @@ namespace KnowledgeMining.UI
             builder.Services.AddInfrastructureServices(builder.Configuration);
 
             builder.Services.AddScoped<ILinkGenerator, DocumentPreviewLinkGenerator>();
-            
+
             builder.Services.AddApplicationInsightsTelemetry();
             builder.Services.AddHttpContextAccessor();
 
