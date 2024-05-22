@@ -1,4 +1,4 @@
-﻿@using System.ComponentModel
+﻿@    using System.ComponentModel
 @inject ILinkGenerator LinkGenerator;
 
 <MudOverlay Visible="@IsVisible" DarkBackground="true" AutoClose="true">
@@ -41,9 +41,9 @@
                             </RowTemplate>
                         </MudTable>
                     </MudTabPanel>
-                    @*<MudTabPanel Text="Maps" Disabled="true">
-                    <MudText>Content Disabled</MudText>
-                    </MudTabPanel>*@
+                    <MudTabPanel Text="Chat" Disabled="true">
+                        <DocumentChatComponent Context="@Document!.Content" />
+                    </MudTabPanel>
                 </MudTabs>
                 <MudButton OnClick="@ClosePopover" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
             </div>

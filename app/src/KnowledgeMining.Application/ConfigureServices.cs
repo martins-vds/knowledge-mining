@@ -22,6 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Configure<SearchOptions>(configuration.GetSection(SearchOptions.Search));
             services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.Storage));
             services.Configure<AzureSignalROptions>(configuration.GetSection(AzureSignalROptions.SignalR));
+            services.Configure<EmbeddedReportOptions>(configuration.GetSection(EmbeddedReportOptions.EmbeddedReport));
 
             return services;
         }

@@ -1,0 +1,54 @@
+﻿@page "/extractions"
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+@inject IReportService ReportService
+
+<div @ref="reportReference" style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"></div>
+
+@code {
+    private Lazy<Task<IJSObjectReference>>? _embedModuleTask;
+
+    private ElementReference reportReference { get; set; }
+
+    [Inject]
+    private IOptionsMonitor<EmbeddedReportOptions>? _options { get; set; }
+
+    [Parameter]
+    public string Width { get; set; } = "100%";
+
+    [Parameter]
+    public string Height { get; set; } = "600px";
+
+    [Parameter]
+    public string MaxWidth { get; set; } = "2000px";
+
+    private Guid _workspaceId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _embedModuleTask = new(() => JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/blazor-power-bi.js").AsTask());
+        }
+
+        if (_options?.CurrentValue is null)
+        {
+            return;
+        }
+
+        var module = await _embedModuleTask!.Value;
+
+        var embeddedReport = await ReportService.GenerateEmbeddedReport(_options.CurrentValue.WorkspaceId, _options.CurrentValue.ReportId);
+
+        await module.InvokeAsync<object>("embedReport", reportReference, embeddedReport.Id, embeddedReport.Url, embeddedReport.Token);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_embedModuleTask?.IsValueCreated ?? false)
+        {
+            var module = await _embedModuleTask.Value;
+            await module.DisposeAsync();
+        }
+    }
+}

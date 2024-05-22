@@ -5,6 +5,7 @@
         <MudImage Src="images/logo.png" Height="35" Elevation="0" onclick="@(() => NavigateToHomePage())" />
         <MudButton Variant="Variant.Text" OnClick="NavigateToSearchPage">Search</MudButton>
         <MudButton Variant="Variant.Text" OnClick="@NavigateToDocumentsPage">Documents</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="@NavigateToExtractionsPage">Extractions</MudButton>
     </MudStack>
 </MudAppBar>
 
@@ -24,5 +25,10 @@
     private void NavigateToDocumentsPage()
     {
         NavigationManager.NavigateTo("/documents");
+    }
+
+    private void NavigateToExtractionsPage()
+    {
+        NavigationManager.NavigateTo("/extractions");
     }
 }

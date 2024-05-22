@@ -1,6 +1,7 @@
 using KnowledgeMining.Application.Common.Interfaces;
 using KnowledgeMining.UI.Api;
 using KnowledgeMining.UI.Services.Links;
+using KnowledgeMining.UI.Shared.Links;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Azure;
 using MudBlazor.Services;

@@ -4,10 +4,13 @@ using KnowledgeMining.Application.Common.Options;
 using KnowledgeMining.Application.Documents.Commands.DeleteDocument;
 using KnowledgeMining.Infrastructure.Extensions;
 using KnowledgeMining.Infrastructure.Jobs;
+using KnowledgeMining.Infrastructure.Services.PowerBi;
 using KnowledgeMining.Infrastructure.Services.Search;
 using KnowledgeMining.Infrastructure.Services.Storage;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.PowerBI.Api;
+using Microsoft.Rest;
 using System.Threading.Channels;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -40,6 +43,23 @@ namespace Microsoft.Extensions.DependencyInjection
                 return provider.GetService<Channel<SearchIndexerJobContext>>()!.Reader;
             });
             services.AddHostedService<SearchIndexerJob>();
+
+            services.AddBlazorPowerBI(configuration);
+
+            return services;
+        }
+
+        private static IServiceCollection AddBlazorPowerBI(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<PowerBiOptions>(configuration.GetSection(PowerBiOptions.PowerBi));
+            services.AddTransient<PowerBiTokenProvider>();
+            services.AddScoped<IPowerBIClient, PowerBIClient>(options =>
+            {
+                var tokenProvider = options.GetRequiredService<PowerBiTokenProvider>();
+
+                return new PowerBIClient(new TokenCredentials(tokenProvider));
+            });
+            services.AddTransient<IReportService, PowerBiReportService>();
 
             return services;
         }
