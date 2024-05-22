@@ -19,12 +19,17 @@ namespace KnowledgeMining.Infrastructure.Services.PowerBi
             _powerBiClient = powerBiClient;
         }
 
-        public async Task<EmbeddedReport> GenerateEmbeddedReport(Guid workspaceId, Guid reportId)
+        public async Task<EmbeddedReport> GenerateEmbeddedReport(Guid workspaceId, Guid reportId, CancellationToken cancellationToken = default)
         {
             var report = await _powerBiClient.Reports.GetReportInGroupAsync(workspaceId, reportId);
 
-            var tokenRequest = new GenerateTokenRequest(TokenAccessLevel.View, report.DatasetId);
-            var embedToken = await _powerBiClient.Reports.GenerateTokenInGroupAsync(workspaceId, reportId, tokenRequest);
+            var tokenRequest = new GenerateTokenRequestV2(
+                reports: new List<GenerateTokenRequestV2Report>() { new GenerateTokenRequestV2Report(reportId) },
+                datasets: new List<GenerateTokenRequestV2Dataset>() { new GenerateTokenRequestV2Dataset(report.DatasetId) },
+                targetWorkspaces: new List<GenerateTokenRequestV2TargetWorkspace>() { new GenerateTokenRequestV2TargetWorkspace(workspaceId) }
+                );
+
+            var embedToken = await _powerBiClient.EmbedToken.GenerateTokenAsync(tokenRequest, cancellationToken: cancellationToken);
 
             return new EmbeddedReport
             {

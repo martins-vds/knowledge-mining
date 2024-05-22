@@ -26,4 +26,9 @@
     let newHeight = $(window).height() - ($('header').height() + heightBuffer);
 
     $(container).height(newHeight);
+
+    $(window).resize(function () {
+        var newHeight = $(window).height() - ($("header").height() + heightBuffer);
+        $(container).height(newHeight);
+    });
 }

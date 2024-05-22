@@ -9,6 +9,6 @@ namespace KnowledgeMining.Application.Common.Interfaces
 {
     public interface IReportService
     {
-        Task<EmbeddedReport> GenerateEmbeddedReport(Guid workspaceId, Guid reportId);
+        Task<EmbeddedReport> GenerateEmbeddedReport(Guid workspaceId, Guid reportId, CancellationToken cancellationToken = default);
     }
 }

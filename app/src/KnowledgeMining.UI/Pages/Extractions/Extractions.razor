@@ -2,8 +2,13 @@
 @implements IAsyncDisposable
 @inject IJSRuntime JsRuntime
 @inject IReportService ReportService
+@inject ISnackbar Snackbar
 
-<div @ref="reportReference" style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"></div>
+@* <div @ref="reportReference" style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"></div> *@
+<iframe style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"
+        src="https://msit.powerbi.com/reportEmbed?reportId=fe93f837-5add-4f0a-ad91-e5effbd56fbc&autoAuth=true&ctid=72f988bf-86f1-41af-91ab-2d7cd011db47"
+        frameborder="0"
+        allowFullScreen="true"></iframe>
 
 @code {
     private Lazy<Task<IJSObjectReference>>? _embedModuleTask;
@@ -17,12 +22,10 @@
     public string Width { get; set; } = "100%";
 
     [Parameter]
-    public string Height { get; set; } = "600px";
+    public string Height { get; set; } = "100%";
 
     [Parameter]
     public string MaxWidth { get; set; } = "2000px";
-
-    private Guid _workspaceId;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -36,11 +39,18 @@
             return;
         }
 
-        var module = await _embedModuleTask!.Value;
+        try
+        {
+            var module = await _embedModuleTask!.Value;
 
-        var embeddedReport = await ReportService.GenerateEmbeddedReport(_options.CurrentValue.WorkspaceId, _options.CurrentValue.ReportId);
+            var embeddedReport = await ReportService.GenerateEmbeddedReport(_options.CurrentValue.WorkspaceId, _options.CurrentValue.ReportId);
 
-        await module.InvokeAsync<object>("embedReport", reportReference, embeddedReport.Id, embeddedReport.Url, embeddedReport.Token);
+            await module.InvokeAsync<object>("embedReport", reportReference, embeddedReport.Id, embeddedReport.Url, embeddedReport.Token);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load Report {_options.CurrentValue.ReportId}. Reason: {ex.Message}", Severity.Error);
+        }
     }
 
     public async ValueTask DisposeAsync()

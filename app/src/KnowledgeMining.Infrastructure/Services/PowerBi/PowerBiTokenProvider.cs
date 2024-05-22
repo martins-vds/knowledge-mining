@@ -28,10 +28,11 @@ namespace KnowledgeMining.Infrastructure.Services.PowerBi
 
         private async Task<AuthenticationResult> GetAccessTokenAsync(CancellationToken cancellationToken = default)
         {
-            var daemonClient = ConfidentialClientApplicationBuilder.Create(_options.ClientId)
-                                                                                              .WithAuthority(_options.Authority)
-                                                                                              .WithClientSecret(_options.ClientSecret)
-                                                                                              .Build();
+            var daemonClient = ConfidentialClientApplicationBuilder
+                                    .Create(_options.ClientId)
+                                    .WithAuthority(_options.Authority)
+                                    .WithClientSecret(_options.ClientSecret)
+                                    .Build();
             
             return await daemonClient.AcquireTokenForClient([PowerBiOptions.MSGraphScope]).ExecuteAsync(cancellationToken);
         }
