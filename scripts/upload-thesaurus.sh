@@ -17,7 +17,7 @@ ip_address=$(host myip.opendns.com resolver1.opendns.com | grep "myip.opendns.co
 
 az storage account network-rule add -g $rg_name --account-name $storage_account_name --ip-address $ip_address
 
-sleep 10
+sleep 20
 
 az storage blob upload --account-name $storage_account_name -f $thesaurus_file_path -c $synonyms_container -n thesaurus.json --overwrite
 
