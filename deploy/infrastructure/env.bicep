@@ -4,6 +4,13 @@ param deployFunction bool = true
 param location string = resourceGroup().location
 param servicePrincipalId string = ''
 
+param powerBiWorkspaceId string = ''
+param powerBiReportId string = ''
+param powerBiTenantId string = ''
+param powerBiClientId string = ''
+@secure()
+param powerBiClientSecret string = ''
+
 var uniqueness = uniqueString(resourceGroup().id)
 var keyVaultName = 'akv-${uniqueness}'
 var searchName = 'search-${uniqueness}'
@@ -583,6 +590,34 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'Customizations__OrganizationWebSiteUrl'
           value: 'https://www.microsoft.com'
+        }
+        {
+          name: 'EmbeddedReport__WorkspaceId'
+          value: powerBiWorkspaceId
+        }
+        {
+          name: 'EmbeddedReport__ReportId'
+          value: powerBiReportId
+        }
+        {
+          name: 'PowerBi__TenantId'
+          value: powerBiTenantId
+        }
+        {
+          name: 'PowerBi__ClientId'
+          value: powerBiClientId
+        }
+        {
+          name: 'PowerBi__ClientSecret'
+          value: powerBiClientSecret
+        }
+        {
+          name: 'WEBSITE_NODE_DEFAULT_VERSION'
+          value: '10.14.1'
+        }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
         }
       ]
     }

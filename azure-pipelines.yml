@@ -26,7 +26,7 @@ variables:
     value: 'documents'
   - name: deploymentTemplate
     value: './deploy/infrastructure/env.bicep'
-
+  - group: knowledge-mining-powerbi
 stages:
   - stage: infra
     displayName: Infrastructure
@@ -42,7 +42,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'scriptPath'
               scriptPath: './scripts/deploy-infra.sh'
-              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$(servicePrincipalId)"'
+              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$(servicePrincipalId)" "$(PowerBiWorkspaceId)" "$(PowerBiReportId)" "$(PowerBiTenantId)" "$(PowerBiClientId)" "$(PowerBiClientSecret)"'
           
           - task: AzureCLI@2
             displayName: 'Upload Thesaurus'
