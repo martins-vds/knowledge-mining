@@ -4,16 +4,28 @@
 @inject IReportService ReportService
 @inject ISnackbar Snackbar
 
-@* <div @ref="reportReference" style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"></div> *@
-<iframe style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"
-        src="https://msit.powerbi.com/reportEmbed?reportId=fe93f837-5add-4f0a-ad91-e5effbd56fbc&autoAuth=true&ctid=72f988bf-86f1-41af-91ab-2d7cd011db47"
-        frameborder="0"
-        allowFullScreen="true"></iframe>
+@{
+    if (reportGenerated && embeddedReport is not null)
+    {
+        <div @ref="reportReference" style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"></div>
+    }
+    else
+    {
+        <iframe style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"
+            src="https://msit.powerbi.com/reportEmbed?reportId=fe93f837-5add-4f0a-ad91-e5effbd56fbc&autoAuth=true&ctid=72f988bf-86f1-41af-91ab-2d7cd011db47"
+            frameborder="0" allowFullScreen="true"></iframe>
+    }
+}
+
 
 @code {
     private Lazy<Task<IJSObjectReference>>? _embedModuleTask;
 
     private ElementReference reportReference { get; set; }
+
+    private EmbeddedReport embeddedReport { get; set; } = default;
+
+    private bool reportGenerated = false;
 
     [Inject]
     private IOptionsMonitor<EmbeddedReportOptions>? _options { get; set; }
@@ -43,12 +55,19 @@
         {
             var module = await _embedModuleTask!.Value;
 
-            var embeddedReport = await ReportService.GenerateEmbeddedReport(_options.CurrentValue.WorkspaceId, _options.CurrentValue.ReportId);
+            reportGenerated = false;
 
-            await module.InvokeAsync<object>("embedReport", reportReference, embeddedReport.Id, embeddedReport.Url, embeddedReport.Token);
+            embeddedReport = await ReportService.GenerateEmbeddedReport(_options.CurrentValue.WorkspaceId,
+            _options.CurrentValue.ReportId);
+
+            await module.InvokeAsync<object>("embedReport", reportReference, embeddedReport.Id,
+            embeddedReport.Url, embeddedReport.Token);
+
+            reportGenerated = true;
         }
         catch (Exception ex)
         {
+            reportGenerated = false;
             Snackbar.Add($"Failed to load Report {_options.CurrentValue.ReportId}. Reason: {ex.Message}", Severity.Error);
         }
     }
