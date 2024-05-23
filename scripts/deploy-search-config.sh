@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 function trim(){
     local string=$(echo $1 | tr -d '[[='"'"'=]]')
@@ -8,7 +8,7 @@ function trim(){
 }
 
 # Constants
-SEARCH_SERVICE_APIVERSION="2021-04-30-Preview"
+SEARCH_SERVICE_APIVERSION="2023-11-01"
 
 # Define variables
 WORKING_DIRECTORY=$(trim "$1")
@@ -36,7 +36,7 @@ sed -e "s~__STORAGE_RESOURCE_ID__~${STORAGE_RESOURCE_ID}~g" $BASE_DATA_SOURCE_FI
 sed -i "s/__STORAGE_CONTAINER__/${STORAGE_ACCOUNT_CONTAINER}/g" $DATA_SOURCE_FILE 
 
 curl --request PUT \
---url "${SEARCH_SERVICE_ENDPOINT}/datasources/${DATA_SOURCE_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
+--url "${SEARCH_SERVICE_ENDPOINT}/datasources('${DATA_SOURCE_NAME}')?api-version=${SEARCH_SERVICE_APIVERSION}" \
 --header 'Content-Type: application/json' \
 --header "api-key: ${SEARCH_SERVICE_SECRET}" \
 --header 'cache-control: no-cache' \
@@ -46,7 +46,7 @@ curl --request PUT \
 SYNMAP_FILE="${WORKING_DIRECTORY}/base-synonyms.json"
 
 curl --request PUT \
---url "${SEARCH_SERVICE_ENDPOINT}/synonymmaps/${SYNMAP_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
+--url "${SEARCH_SERVICE_ENDPOINT}/synonymmaps('${SYNMAP_NAME}')?api-version=${SEARCH_SERVICE_APIVERSION}" \
 --header 'Content-Type: application/json' \
 --header "api-key: ${SEARCH_SERVICE_SECRET}" \
 --header 'cache-control: no-cache' \
@@ -56,7 +56,7 @@ curl --request PUT \
 INDEX_FILE="${WORKING_DIRECTORY}/base-index.json"
 
 curl --request PUT \
---url "${SEARCH_SERVICE_ENDPOINT}/indexes/${INDEX_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
+--url "${SEARCH_SERVICE_ENDPOINT}/indexes('${INDEX_NAME}')?api-version=${SEARCH_SERVICE_APIVERSION}" \
 --header 'Content-Type: application/json' \
 --header "api-key: ${SEARCH_SERVICE_SECRET}" \
 --header 'cache-control: no-cache' \
@@ -71,7 +71,7 @@ sed -i "s/__FUNCTION_NAME__/${FUNCTION_NAME}/g" $SKILLS_FILE
 sed -i "s/__FUNCTION_APICODE__/${FUNCTION_APICODE}/g" $SKILLS_FILE 
 
 curl --request PUT \
---url "${SEARCH_SERVICE_ENDPOINT}/skillsets/${SKILLS_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
+--url "${SEARCH_SERVICE_ENDPOINT}/skillsets('${SKILLS_NAME}')?api-version=${SEARCH_SERVICE_APIVERSION}" \
 --header 'Content-Type: application/json' \
 --header "api-key: ${SEARCH_SERVICE_SECRET}" \
 --header 'cache-control: no-cache' \
@@ -86,7 +86,7 @@ sed -i "s/__INDEX_NAME__/${INDEX_NAME}/g" $INDEXER_FILE
 sed -i "s/__SKILLSET_NAME__/${SKILLS_NAME}/g" $INDEXER_FILE 
 
 curl --request PUT \
---url "${SEARCH_SERVICE_ENDPOINT}/indexers/${INDEXER_NAME}/?api-version=${SEARCH_SERVICE_APIVERSION}" \
+--url "${SEARCH_SERVICE_ENDPOINT}/indexers('${INDEXER_NAME}')?api-version=${SEARCH_SERVICE_APIVERSION}" \
 --header 'Content-Type: application/json' \
 --header "api-key: ${SEARCH_SERVICE_SECRET}" \
 --header 'cache-control: no-cache' \
