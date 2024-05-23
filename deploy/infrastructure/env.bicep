@@ -647,7 +647,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' =
       serverFarmId: azure_app_service_plan.id
       siteConfig: {
         alwaysOn: true
-        linuxFxVersion: 'DOTNET|8.0'
+        linuxFxVersion: 'DOTNET-ISOLATED|8.0'
         appSettings: [
           {
             name: 'APPINSIGHTS_PROFILERFEATURE_VERSION'
