@@ -3,6 +3,7 @@
 @inject IJSRuntime JsRuntime
 @inject IReportService ReportService
 @inject ISnackbar Snackbar
+@inject IOptions<EmbeddedReportOptions> EmbeddedReportOptions
 
 @{
     if (reportGenerated && embeddedReport is not null)
@@ -12,7 +13,7 @@
     else
     {
         <iframe style="@($"width:{Width};height:{Height};max-width:{MaxWidth}")"
-            src="https://msit.powerbi.com/reportEmbed?reportId=fe93f837-5add-4f0a-ad91-e5effbd56fbc&autoAuth=true&ctid=72f988bf-86f1-41af-91ab-2d7cd011db47"
+            src="@(EmbeddedReportOptions.Value.FallbackUrl)"
             frameborder="0" allowFullScreen="true"></iframe>
     }
 }

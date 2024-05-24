@@ -13,5 +13,7 @@ namespace KnowledgeMining.Application.Common.Options
         public Guid WorkspaceId { get; set; }
 
         public Guid ReportId { get; set; }
+
+        public string FallbackUrl { get; set; } = string.Empty;
     }
 }

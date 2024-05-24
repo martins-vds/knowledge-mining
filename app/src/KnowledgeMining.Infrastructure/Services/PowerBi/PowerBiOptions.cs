@@ -19,6 +19,5 @@ namespace KnowledgeMining.Infrastructure.Services.PowerBi
         public string ClientSecret { get; set; } = string.Empty;
 
         public string Authority => $"https://login.microsoftonline.com/{TenantId}";
-
     }
 }

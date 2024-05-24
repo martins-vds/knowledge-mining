@@ -10,6 +10,7 @@ param powerBiTenantId string = ''
 param powerBiClientId string = ''
 @secure()
 param powerBiClientSecret string = ''
+param powerBiFallbackUrl string = ''
 
 var uniqueness = uniqueString(resourceGroup().id)
 var keyVaultName = 'akv-${uniqueness}'
@@ -610,6 +611,10 @@ resource app_services_website 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'PowerBi__ClientSecret'
           value: powerBiClientSecret
+        }
+        {
+          name: 'PowerBi__FallbackUrl'
+          value: powerBiFallbackUrl
         }
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
