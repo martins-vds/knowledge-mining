@@ -69,6 +69,10 @@
 
     private async Task GenerateEntityMap()
     {
+        if(module is null){
+            return;
+        }
+
         var entityMapData = await Mediator.Send(new GenerateEntityMapQuery(SearchText, _selectedEntityMapFacets, _maxLevels, _maxNodes));
         await module.InvokeVoidAsync("renderEntityGraph", _entityMapContainerId, entityMapData, _maxLevels);
     }
@@ -78,6 +82,7 @@
         if (module is not null)
         {
             await module.DisposeAsync();
+            module = null;
         }
     }
 }
