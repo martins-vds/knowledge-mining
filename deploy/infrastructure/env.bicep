@@ -4,6 +4,10 @@ param deployFunction bool = true
 param location string = resourceGroup().location
 param servicePrincipalId string = ''
 
+param useExistingVnet bool = false
+param vnetName string = 'vnet-${uniqueString(resourceGroup().id)}'
+param vnetResourceGroup string = resourceGroup().name
+
 param powerBiWorkspaceId string = ''
 param powerBiReportId string = ''
 param powerBiTenantId string = ''
@@ -32,16 +36,6 @@ var secretKeyStorageConnectionString = 'STORAGEACCOUNTCONNECTIONSTRING'
 
 var subnetAppServiceName = 'AppService'
 var subnetPrivateEndpointsName = 'PrivateEndpoints'
-var privateDnsZone = 'privatelink.blob.${environment().suffixes.storage}'
-
-var blobDataContributorRoleDefinitionId = resourceId(
-  'Microsoft.Authorization/roleDefinitions',
-  'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-)
-var blobDataReaderRoleDefinitionId = resourceId(
-  'Microsoft.Authorization/roleDefinitions',
-  '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
-)
 
 /*
   Example:
@@ -59,56 +53,22 @@ var blobDataReaderRoleDefinitionId = resourceId(
 */
 var ipAddressToAllow = []
 
-// Networking
-resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-  location: location
+var blobDataContributorRoleDefinitionId = resourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+)
+var blobDataReaderRoleDefinitionId = resourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+)
+
+module vnet './modules/vnet.bicep' = {
   name: 'vnet'
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-      ]
-    }
-    subnets: [
-      {
-        name: subnetAppServiceName
-        properties: {
-          addressPrefix: '10.0.1.0/24'
-          delegations: [
-            {
-              name: 'appservice-serverfarm'
-              properties: {
-                serviceName: 'Microsoft.Web/serverFarms'
-              }
-            }
-          ]
-        }
-      }
-      {
-        name: subnetPrivateEndpointsName
-        properties: {
-          addressPrefix: '10.0.2.0/24'
-          privateEndpointNetworkPolicies: 'Disabled'
-        }
-      }
-    ]
-  }
-}
-
-resource storageBlobPrivateZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: privateDnsZone
-  location: 'global'
-}
-
-resource storageBlobPrivateZoneVirtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: storageBlobPrivateZone
-  name: uniqueString(vnet.id)
-  location: 'global'
-  properties: {
-    virtualNetwork: {
-      id: vnet.id
-    }
-    registrationEnabled: false
+  params: {
+    location: location
+    name: vnetName
+    useExistingVnet: useExistingVnet    
+    vnetResourceGroup: vnetResourceGroup
   }
 }
 
@@ -321,7 +281,7 @@ resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@
   name: '${azure_storage_account_data.name}-blob-endpoint'
   properties: {
     subnet: {
-      id: '${vnet.id}/subnets/${subnetPrivateEndpointsName}'
+      id: '${vnet.outputs.id}/subnets/${subnetPrivateEndpointsName}'
     }
     privateLinkServiceConnections: [
       {
@@ -337,6 +297,13 @@ resource azure_storage_account_data_blob_pe 'Microsoft.Network/privateEndpoints@
   }
 }
 
+module storageBlobPrivateZone './modules/private-dns-zone.bicep' = {
+  name: 'private-dns-zone'
+  params: {
+    vnetId: vnet.outputs.id
+  }
+}
+
 resource azure_storage_account_data_blob_pe_dns_reg 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
   parent: azure_storage_account_data_blob_pe
   name: 'default'
@@ -345,7 +312,7 @@ resource azure_storage_account_data_blob_pe_dns_reg 'Microsoft.Network/privateEn
       {
         name: 'privatelink_blob_core_windows_net'
         properties: {
-          privateDnsZoneId: storageBlobPrivateZone.id
+          privateDnsZoneId: storageBlobPrivateZone.outputs.id
         }
       }
     ]
@@ -377,7 +344,7 @@ resource azure_storage_account_functions_blob_pe 'Microsoft.Network/privateEndpo
     name: '${azure_storage_account_functions.name}-blob-endpoint'
     properties: {
       subnet: {
-        id: '${vnet.id}/subnets/${subnetPrivateEndpointsName}'
+        id: '${vnet.outputs.id}/subnets/${subnetPrivateEndpointsName}'
       }
       privateLinkServiceConnections: [
         {
@@ -402,7 +369,7 @@ resource azure_storage_account_functions_blob_pe_dns_reg 'Microsoft.Network/priv
         {
           name: 'privatelink_blob_core_windows_net'
           properties: {
-            privateDnsZoneId: storageBlobPrivateZone.id
+            privateDnsZoneId: storageBlobPrivateZone.outputs.id
           }
         }
       ]
@@ -635,7 +602,7 @@ resource app_services_website_vnet 'Microsoft.Web/sites/networkConfig@2020-06-01
   parent: app_services_website
   name: 'virtualNetwork'
   properties: {
-    subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
+    subnetResourceId: '${vnet.outputs.id}/subnets/${subnetAppServiceName}'
     swiftSupported: true
   }
 }
@@ -772,7 +739,7 @@ resource app_services_function_app_vnet 'Microsoft.Web/sites/networkConfig@2020-
     parent: app_services_function_app
     name: 'virtualNetwork'
     properties: {
-      subnetResourceId: '${vnet.id}/subnets/${subnetAppServiceName}'
+      subnetResourceId: '${vnet.outputs.id}/subnets/${subnetAppServiceName}'
       swiftSupported: true
     }
   }

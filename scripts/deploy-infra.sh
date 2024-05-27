@@ -13,6 +13,9 @@ powerBi_tenant_id="$8"
 powerBi_client_id="$9"
 powerBi_client_secret="${10}"
 powerBi_fallback_url="${11}"
+use_existing_vnet="${12}"
+vnet_name="${13}"
+vnet_rg="${14}"
 
 if [[ $(az group exists -n $resource_group) == 'false' ]]; then
     az group create -l $location -n $resource_group
@@ -31,7 +34,10 @@ az deployment group create -g $resource_group \
                                         powerBiTenantId=$powerBi_tenant_id \
                                         powerBiClientId=$powerBi_client_id \
                                         powerBiClientSecret=$powerBi_client_secret \
-                                        powerBiFallbackUrl=$powerBi_fallback_url
+                                        powerBiFallbackUrl=$powerBi_fallback_url \
+                                        useExistingVnet=$use_existing_vnet \
+                                        vnetName=$vnet_name \
+                                        vnetResourceGroup=$vnet_rg
 
 storage_account_id=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_id.value -o tsv | tr -dc '[[:print:]]')
 storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_name.value -o tsv | tr -dc '[[:print:]]')
