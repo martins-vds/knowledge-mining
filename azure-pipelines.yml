@@ -37,8 +37,9 @@ stages:
               azureSubscription: 'azure-knowledge-mining-arm-connection'
               scriptType: 'bash'
               scriptLocation: 'scriptPath'
+              addSpnToEnvironment: true
               scriptPath: './scripts/deploy-infra.sh'
-              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$(servicePrincipalId)" "$(PowerBiWorkspaceId)" "$(PowerBiReportId)" "$(PowerBiTenantId)" "$(PowerBiClientId)" "$(PowerBiClientSecret)" "$(PowerBiFallbackUrl)" "$(UseExistingVnet)" "$(VnetName)" "$(VnetResourceGroup)"'
+              arguments: '"$(location)" "$(rgName)" "$(deploymentTemplate)" "$(docsContainerName)" "$servicePrincipalId" "$(PowerBiWorkspaceId)" "$(PowerBiReportId)" "$(PowerBiTenantId)" "$(PowerBiClientId)" "$(PowerBiClientSecret)" "$(PowerBiFallbackUrl)" "$(UseExistingVnet)" "$(VnetName)" "$(VnetResourceGroup)"'
           
           - task: AzureCLI@2
             displayName: 'Upload Thesaurus'
