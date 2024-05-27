@@ -18,10 +18,6 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  - name: rgName
-    value: 'poc-knowledge-mining'
-  - name: location
-    value: 'westus3'
   - name: docsContainerName
     value: 'documents'
   - name: deploymentTemplate
