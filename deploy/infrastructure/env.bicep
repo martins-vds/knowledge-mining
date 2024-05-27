@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param servicePrincipalId string = ''
 
 param useExistingVnet bool = false
-param vnetName string = 'vnet-${uniqueString(resourceGroup().id)}'
+param vnetName string
 param vnetResourceGroup string = resourceGroup().name
 
 param powerBiWorkspaceId string = ''
@@ -66,7 +66,7 @@ module vnet './modules/vnet.bicep' = {
   name: 'vnet'
   params: {
     location: location
-    name: vnetName
+    name: empty(vnetName) ? 'vnet-${uniqueness}' : vnetName
     useExistingVnet: useExistingVnet    
     vnetResourceGroup: vnetResourceGroup
   }
