@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param servicePrincipalId string = ''
 
 param useExistingVnet bool = false
-param vnetName string
+param vnetName string = ''
 param vnetResourceGroup string = resourceGroup().name
 
 param powerBiWorkspaceId string = ''
