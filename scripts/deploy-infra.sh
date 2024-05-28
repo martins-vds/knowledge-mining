@@ -45,9 +45,6 @@ array_of_parameters=("$(set_if_not_empty "docsContainerName" $docs_container_nam
 "$(set_if_not_empty "vnetName" $vnet_name)"
 "$(set_if_not_empty "vnetResourceGroup" $vnet_rg)")
 
-# Remove empty strings from the array
-array_of_parameters=("${array_of_parameters[@]//""/}")
-
 az deployment group create -g $resource_group \
     -n $deployment_name \
     --template-file $deployment_template \
