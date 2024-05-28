@@ -45,10 +45,19 @@ array_of_parameters=("$(set_if_not_empty "docsContainerName" $docs_container_nam
 "$(set_if_not_empty "vnetName" $vnet_name)"
 "$(set_if_not_empty "vnetResourceGroup" $vnet_rg)")
 
+# Add non-empty parameters to a second array
+declare -a array_of_parameters_non_empty
+for i in "${array_of_parameters[@]}"
+do
+    if [[ -n $i ]]; then
+        array_of_parameters_non_empty+=("$i")
+    fi
+done
+
 az deployment group create -g $resource_group \
     -n $deployment_name \
     --template-file $deployment_template \
-    --parameters "${array_of_parameters[@]}"
+    --parameters "${array_of_parameters_non_empty[@]}"
 
 storage_account_id=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_id.value -o tsv | tr -dc '[[:print:]]')
 storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_name.value -o tsv | tr -dc '[[:print:]]')
