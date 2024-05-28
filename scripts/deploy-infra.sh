@@ -17,6 +17,15 @@ use_existing_vnet="${12}"
 vnet_name="${13}"
 vnet_rg="${14}"
 
+# Function that returns string1=string2 if string2 is not empty, otherwise returns empty string
+function set_if_not_empty {
+    if [[ -n $2 ]]; then
+        echo "$1=$2"
+    else
+        echo ""
+    fi
+}
+
 if [[ $(az group exists -n $resource_group) == 'false' ]]; then
     az group create -l $location -n $resource_group
 fi
@@ -24,20 +33,25 @@ fi
 let "uniqueness=RANDOM*RANDOM"
 readonly deployment_name=deploy-knowledge-mining-$uniqueness
 
+array_of_parameters=("$(set_if_not_empty "docsContainerName" $docs_container_name)"
+"$(set_if_not_empty "servicePrincipalId" $service_principal_id)"
+"$(set_if_not_empty "powerBiWorkspaceId" $powerBi_workspace_id)"
+"$(set_if_not_empty "powerBiReportId" $powerBi_report_id)"
+"$(set_if_not_empty "powerBiTenantId" $powerBi_tenant_id)"
+"$(set_if_not_empty "powerBiClientId" $powerBi_client_id)"
+"$(set_if_not_empty "powerBiClientSecret" $powerBi_client_secret)"
+"$(set_if_not_empty "powerBiFallbackUrl" $powerBi_fallback_url)"
+"$(set_if_not_empty "useExistingVnet" $use_existing_vnet)"
+"$(set_if_not_empty "vnetName" $vnet_name)"
+"$(set_if_not_empty "vnetResourceGroup" $vnet_rg)")
+
+# Remove empty strings from the array
+array_of_parameters=("${array_of_parameters[@]//""/}")
+
 az deployment group create -g $resource_group \
-                           -n $deployment_name \
-                           --template-file $deployment_template \
-                           --parameters docsContainerName=$docs_container_name \
-                                        servicePrincipalId=$service_principal_id \
-                                        powerBiWorkspaceId=$powerBi_workspace_id \
-                                        powerBiReportId=$powerBi_report_id \
-                                        powerBiTenantId=$powerBi_tenant_id \
-                                        powerBiClientId=$powerBi_client_id \
-                                        powerBiClientSecret=$powerBi_client_secret \
-                                        powerBiFallbackUrl=$powerBi_fallback_url \
-                                        useExistingVnet=$use_existing_vnet \
-                                        vnetName=$vnet_name \
-                                        vnetResourceGroup=$vnet_rg
+    -n $deployment_name \
+    --template-file $deployment_template \
+    --parameters "${array_of_parameters[@]}"
 
 storage_account_id=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_id.value -o tsv | tr -dc '[[:print:]]')
 storage_account_name=$(az deployment group show -g $resource_group -n $deployment_name --query properties.outputs.storage_data_name.value -o tsv | tr -dc '[[:print:]]')
