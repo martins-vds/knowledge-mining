@@ -2,12 +2,14 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.  
 
 using KnowledgeMining.Functions.Skills.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using FromBodyAttribute = Microsoft.Azure.Functions.Worker.Http.FromBodyAttribute;
 
 namespace KnowledgeMining.Functions.Skills.Distinct
 {
@@ -17,7 +19,8 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 
         [Function(FunctionName)]        
         public static IActionResult RunDistinct(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] WebApiSkillRequest request,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [FromBody] WebApiSkillRequest request,
             [BlobInput("synonyms/thesaurus.json", Connection = "SynonymsStorage")] string synBlob,
             ILogger logger)
         {
