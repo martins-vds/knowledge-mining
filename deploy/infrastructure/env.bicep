@@ -307,7 +307,7 @@ module storageBlobPrivateZone './modules/private-dns-zone.bicep' = {
     vnetId: vnet.outputs.id
     resourceGroupName: resourceGroup().name
     subscriptionId: subscription().subscriptionId
-    useExistingDnsZones: false
+    useExistingDnsZones: useExistingDnsZones
   }
 }
 
