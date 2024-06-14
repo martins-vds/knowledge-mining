@@ -4,13 +4,16 @@ using KnowledgeMining.Application.Common.Options;
 using KnowledgeMining.Application.Documents.Commands.DeleteDocument;
 using KnowledgeMining.Infrastructure.Extensions;
 using KnowledgeMining.Infrastructure.Jobs;
+using KnowledgeMining.Infrastructure.Services.OpenAI;
 using KnowledgeMining.Infrastructure.Services.PowerBi;
 using KnowledgeMining.Infrastructure.Services.Search;
 using KnowledgeMining.Infrastructure.Services.Storage;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.PowerBI.Api;
 using Microsoft.Rest;
+using OpenAI;
 using System.Threading.Channels;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -32,6 +35,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddScoped<ISearchService, SearchService>();
             services.AddScoped<IStorageService, StorageService>();
+
+            services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.OpenAI));
+            services.AddScoped(services =>
+            {
+                var options = services.GetRequiredService<IOptions<OpenAIOptions>>().Value;
+                return new OpenAIClient(new System.ClientModel.ApiKeyCredential(options.ApiKey), new OpenAIClientOptions() { Endpoint = options.Endpoint });
+            });
+            services.AddScoped<IChatService, OpenAIService>();
 
             services.AddSingleton(Channel.CreateUnbounded<SearchIndexerJobContext>(new UnboundedChannelOptions() { SingleWriter = true, SingleReader = true }));
             services.AddSingleton(provider =>

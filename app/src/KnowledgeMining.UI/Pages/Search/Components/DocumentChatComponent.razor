@@ -1,6 +1,29 @@
-﻿@using System.ComponentModel
+﻿@using KnowledgeMining.Application.Common.Interfaces
+@inject IChatService ChatService
+
+<MudStack Reverse="true">
+    @foreach (var message in _messages)
+    {
+        <MudPaper Class="pa-3">@message</MudPaper>
+    }
+</MudStack>
+<MudTextField @bind-Value="_message" Label="Outlined" Variant="Variant.Outlined"></MudTextField>
+<MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Send" Color="Color.Primary" Disabled="@(_message.Length == 0)">Send</MudButton>
 
 @code {
     [Parameter]
-    public string? Context { get; set; }
+    public string Context { get; set; }
+
+    private string _message { get; set; } = string.Empty;
+    private IEnumerable<string> _messages { get; set; } = new List<string>();
+
+    protected async Task SendMessage()
+    {
+        _messages = _messages.Append(_message);
+        _message = string.Empty;
+
+        var response = await ChatService.AskQuestionAboutDocument(_message, Context);
+
+        _messages = _messages.Append(response);
+    }
 }

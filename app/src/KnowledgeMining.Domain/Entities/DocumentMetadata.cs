@@ -34,6 +34,8 @@ namespace KnowledgeMining.Domain.Entities
         public string? DocumentType { get; set; }
         [JsonPropertyName("merged_content")]
         public string? MergedContent { get; set; }
+        [JsonPropertyName("vector")]
+        public IEnumerable<float>? Embedding { get; set; }
 
         public IDictionary<string, object?> ToDictionary()
         {
@@ -48,7 +50,8 @@ namespace KnowledgeMining.Domain.Entities
                 { ToLowerFirstChar(nameof(Date)), Date },
                 { ToLowerFirstChar(nameof(Mission)), Mission },
                 { ToLowerFirstChar(nameof(DocumentType)), DocumentType },
-                { ToLowerFirstChar(nameof(MergedContent)), MergedContent }
+                { ToLowerFirstChar(nameof(MergedContent)), MergedContent },
+                { ToLowerFirstChar(nameof(Embedding)), Embedding }
             };
         }
 

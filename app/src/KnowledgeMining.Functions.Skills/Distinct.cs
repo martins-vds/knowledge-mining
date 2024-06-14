@@ -3,8 +3,7 @@
 
 using KnowledgeMining.Functions.Skills.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -16,11 +15,10 @@ namespace KnowledgeMining.Functions.Skills.Distinct
     {
         public const string FunctionName = "distinct";
 
-        [FunctionName(FunctionName)]
-        [StorageAccount("SynonymsStorage")]
+        [Function(FunctionName)]        
         public static IActionResult RunDistinct(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] WebApiSkillRequest request,
-            [Blob("synonyms/thesaurus.json", FileAccess.Read)] string synBlob,
+            [BlobInput("synonyms/thesaurus.json", Connection = "SynonymsStorage")] string synBlob,
             ILogger logger)
         {
             logger.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
