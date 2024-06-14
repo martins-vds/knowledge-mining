@@ -50,17 +50,22 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             }
         }
 
-        public IEnumerable<string> Dedupe(IEnumerable<string>? words)
+        public IEnumerable<string> Dedupe(IEnumerable<string?>? words)
         {
             if (words is null)
             {
-                return Enumerable.Empty<string>();
+                return [];
             }
 
             var normalizedToWord = new Dictionary<string, string>();
 
-            foreach (string word in words)
+            foreach (string? word in words)
             {
+                if (word is null)
+                {
+                    continue;
+                }
+
                 string normalized = Normalize(word);
                 string canonical = Synonyms.TryGetValue(normalized, out string? canonicalFromThesaurus) ?
                     canonicalFromThesaurus :
@@ -75,8 +80,8 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             return normalizedToWord.Values.Distinct();
         }
 
-        private string Normalize(string word)
-            => new(word
+        private string Normalize(string? word)
+            => new((word ?? string.Empty)
                 .Normalize()
                 .ToLowerInvariant()
                 .Where(c => !(char.IsPunctuation(c) || char.IsSeparator(c)))
