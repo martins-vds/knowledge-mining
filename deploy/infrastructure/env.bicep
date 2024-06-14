@@ -8,6 +8,10 @@ param useExistingVnet bool = false
 param vnetName string = ''
 param vnetResourceGroup string = resourceGroup().name
 
+param useExistingDnsZones bool = false
+param dnsZonesResourceGroup string = resourceGroup().name
+param dnsZonesSubscriptionId string = subscription().subscriptionId
+
 param powerBiWorkspaceId string = ''
 param powerBiReportId string = ''
 param powerBiTenantId string = ''
@@ -301,6 +305,9 @@ module storageBlobPrivateZone './modules/private-dns-zone.bicep' = {
   name: 'private-dns-zone'
   params: {
     vnetId: vnet.outputs.id
+    resourceGroupName: resourceGroup().name
+    subscriptionId: subscription().subscriptionId
+    useExistingDnsZones: false
   }
 }
 
@@ -683,7 +690,7 @@ resource app_services_function_app 'Microsoft.Web/sites@2020-06-01' =
           }
           {
             name: 'FUNCTIONS_WORKER_RUNTIME'
-            value: 'dotnet'
+            value: 'dotnet-isolated'
           }
           {
             name: 'FUNCTIONS_EXTENSION_VERSION'
