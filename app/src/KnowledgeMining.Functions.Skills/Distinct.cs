@@ -13,18 +13,24 @@ using FromBodyAttribute = Microsoft.Azure.Functions.Worker.Http.FromBodyAttribut
 
 namespace KnowledgeMining.Functions.Skills.Distinct
 {
-    public static class Distinct
+    public class Distinct
     {
         public const string FunctionName = "distinct";
 
+        private readonly ILogger<Distinct> _logger;
+
+        public Distinct(ILogger<Distinct> logger)
+        {
+            _logger = logger;
+        }
+
         [Function(FunctionName)]        
-        public static IActionResult RunDistinct(
+        public IActionResult RunDistinct(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             [FromBody] WebApiSkillRequest request,
-            [BlobInput("synonyms/thesaurus.json", Connection = "SynonymsStorage")] string synBlob,
-            ILogger logger)
+            [BlobInput("synonyms/thesaurus.json", Connection = "SynonymsStorage")] string synBlob)
         {
-            logger.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
+            _logger.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
 
             Thesaurus thesaurus;
             try
