@@ -11,19 +11,17 @@ namespace KnowledgeMining.Functions.Skills.Distinct
 {
     public class Thesaurus
     {
-        public IDictionary<string, string> Synonyms { get; }
+        public IDictionary<string, string> Synonyms { get; private set; } = new Dictionary<string, string>();
 
-        public Thesaurus(string? blob)
+        public Thesaurus()
         {
-            ArgumentNullException.ThrowIfNull(blob, nameof(blob));
-
-            Synonyms = new Dictionary<string, string>();
-
-            ParseThesaurus(blob);
+            
         }
 
-        private void ParseThesaurus(string json)
+        public void ParseThesaurus(string json)
         {
+            ArgumentNullException.ThrowIfNull(json, nameof(json));
+
             var dataset = JsonSerializer.Deserialize<IEnumerable<IEnumerable<string>>>(json) ?? Enumerable.Empty<IEnumerable<string>>();
 
             foreach (IEnumerable<string> lemma in dataset)

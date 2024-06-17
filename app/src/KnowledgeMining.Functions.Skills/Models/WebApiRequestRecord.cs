@@ -7,24 +7,7 @@ namespace KnowledgeMining.Functions.Skills.Models
 {
     public class WebApiRequestRecord
     {
-        public string? RecordId { get; set; }
-
-        private IDictionary<string, object>? _data;
-        public IDictionary<string, object> Data
-        {
-            get { return _data!; }
-
-            set
-            {
-                if (value is not null)
-                {
-                    this._data = value;
-                }
-                else
-                {
-                    this._data = new Dictionary<string, object>();
-                }
-            }
-        }
+        public string RecordId { get; set; } = string.Empty;
+        public IDictionary<string, object>? Data { get; set; } = new Dictionary<string, object>();
     }
 }

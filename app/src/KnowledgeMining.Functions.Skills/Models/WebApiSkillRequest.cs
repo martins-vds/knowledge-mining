@@ -7,6 +7,6 @@ namespace KnowledgeMining.Functions.Skills.Models
 {
     public class WebApiSkillRequest
     {
-        public IList<WebApiRequestRecord> Values { get; set; } = new List<WebApiRequestRecord>();
+        public IList<WebApiRequestRecord> Values { get; set; } = [];
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using System.Linq;
 using FromBodyAttribute = Microsoft.Azure.Functions.Worker.Http.FromBodyAttribute;
 
 namespace KnowledgeMining.Functions.Skills.Distinct
@@ -24,7 +25,7 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             _logger = logger;
         }
 
-        [Function(FunctionName)]        
+        [Function(FunctionName)]
         public IActionResult RunDistinct(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             [FromBody] WebApiSkillRequest request,
@@ -32,17 +33,17 @@ namespace KnowledgeMining.Functions.Skills.Distinct
         {
             _logger.LogInformation("Distinct Custom Skill: C# HTTP trigger function processed a request.");
 
-            Thesaurus thesaurus;
+            var thesaurus = new Thesaurus();
             try
             {
-                thesaurus = new Thesaurus(synBlob);
+                thesaurus.ParseThesaurus(synBlob);
+
+                return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
             }
             catch (ArgumentNullException)
             {
                 return new UnprocessableEntityObjectResult($"Failed to read and parse thesaurus.json");
             }
-
-            return new OkObjectResult(ProcessRequestRecords(request, thesaurus));
         }
 
         private static WebApiSkillResponse ProcessRequestRecords(WebApiSkillRequest request, Thesaurus thesaurus)
@@ -53,19 +54,28 @@ namespace KnowledgeMining.Functions.Skills.Distinct
             {
                 var outRecord = new WebApiResponseRecord() { RecordId = inRecord!.RecordId ?? string.Empty };
 
-                if (inRecord!.Data.TryGetValue("words", out object? wordsParameterObject) && wordsParameterObject is not null)
+                if (inRecord!.Data is not null)
                 {
-                    var wordsArray = wordsParameterObject as JArray;
-                    var words = wordsArray!.Values<string>();
+                    if (inRecord!.Data.TryGetValue("words", out object? wordsParameterObject) && wordsParameterObject is not null)
+                    {
+                        var wordsArray = wordsParameterObject as JArray;
+                        var words = wordsArray?.Values<string>()?.Where(w => w is not null) ?? [];
 
-                    outRecord.Data["distinct"] = thesaurus.Dedupe(words);
+                        outRecord.Data["distinct"] = thesaurus.Dedupe(words);
+                    }
+                    else
+                    {
+                        outRecord.Errors.Add(new WebApiErrorWarning() { Message = $"{FunctionName} - Error processing the request record: Input data is missing a `words` array of words to de-duplicate." });
+                    }
+
+                    response.Values.Add(outRecord);
                 }
                 else
                 {
-                    outRecord.Errors.Add(new WebApiErrorWarning() { Message = $"{FunctionName} - Error processing the request record: Input data is missing a `words` array of words to de-duplicate." });
-                }
+                    outRecord.Errors.Add(new WebApiErrorWarning() { Message = $"{FunctionName} - Error processing the request record: Input data is missing." });
+                    response.Values.Add(outRecord);
 
-                response.Values.Add(outRecord);
+                }
             }
 
             return response;
