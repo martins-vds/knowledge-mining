@@ -1,29 +1,106 @@
 ﻿@using KnowledgeMining.Application.Common.Interfaces
 @inject IChatService ChatService
 
-<MudStack Reverse="true">
-    @foreach (var message in _messages)
-    {
-        <MudPaper Class="pa-3">@message</MudPaper>
-    }
-</MudStack>
-<MudTextField @bind-Value="_message" Label="Outlined" Variant="Variant.Outlined"></MudTextField>
-<MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Send" Color="Color.Primary" Disabled="@(_message.Length == 0)">Send</MudButton>
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12">
+        <MudPaper Outlined="true" Class="overflow-x-auto">
+            <MudStack Reverse="false" Spacing="12" Style="height: 40vh" Class="pa-2">
+                @foreach (var turn in _messages)
+                {
+                    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Start" Spacing="4">
+                        <MudPaper Class="pa-6 align-self-end" Elevation="3">
+                            <MudText Typo="Typo.body1" Align="Align.End">
+                                @turn.Question
+                            </MudText>
+                        </MudPaper>
+                        @if(@turn.Answer is null)
+                        {
+                            <MudPaper Class="pa-6" Elevation="3">
+                                <MudProgressCircular Indeterminate="true" />
+                            </MudPaper>
+                        }
+                        else
+                        {
+                            <MudPaper Class="pa-6" Elevation="3" MaxWidth="80%">
+                                <MudText Typo="Typo.body1" Align="Align.End">
+                                    @turn.Answer
+                                </MudText>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" Class="rounded">
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="11" Class="pa-3">
+                <MudTextField @bind-Value="_message" Placeholder="Type your message" Variant="Variant.Outlined" Immediate="true" Margin="Margin.None" Class="mt-0"></MudTextField>
+            </MudItem>
+            <MudItem xs="1" Class="pa-3">
+                <MudFab StartIcon="@Icons.Material.Filled.Send" Size="Size.Large" Label="Send" Disabled="@(string.IsNullOrEmpty(_message) || _isReceivingMessage)" OnClick="SendMessage" />
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>
 
 @code {
-    [Parameter]
-    public string Context { get; set; }
+        [Parameter]
+        public string Context { get; set; } = string.Empty;
 
     private string _message { get; set; } = string.Empty;
-    private IEnumerable<string> _messages { get; set; } = new List<string>();
+    private List<ChatTurn> _messages { get; set; } = [];
+
+    private bool _isReceivingMessage;
+
+    protected Task CheckEnterPressed(KeyboardEventArgs args)
+    {
+        if (args.Code == "Enter" || args.Code == "NumpadEnter")
+        {
+            return SendMessage();
+        }
+
+        return Task.CompletedTask;
+    }
 
     protected async Task SendMessage()
     {
-        _messages = _messages.Append(_message);
+        if (string.IsNullOrWhiteSpace(_message))
+        {
+            return;
+        }
+
+        var latestMessage = _message;
+
+        var turn = new ChatTurn()
+            {
+                Question = latestMessage,
+            };
+
+        _messages.Add(turn);
         _message = string.Empty;
 
-        var response = await ChatService.AskQuestionAboutDocument(_message, Context);
+        try
+        {
+            _isReceivingMessage = true;
+            var response = await ChatService.AskQuestionAboutDocument(latestMessage, Context);
 
-        _messages = _messages.Append(response);
+            turn.Answer = response;
+        }
+        catch (Exception ex)
+        {
+            turn.Answer = $"Failed to send message. Reason: {ex.Message}";
+        }
+        finally
+        {
+            _isReceivingMessage = false;
+        }
+    }
+
+    private class ChatTurn
+    {
+        public string Question { get; set; } = string.Empty;
+        public string? Answer { get; set; }
+        public DateTime AskedOn { get; set; } = DateTime.Now;
     }
 }

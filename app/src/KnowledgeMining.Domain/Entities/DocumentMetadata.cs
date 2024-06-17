@@ -50,8 +50,7 @@ namespace KnowledgeMining.Domain.Entities
                 { ToLowerFirstChar(nameof(Date)), Date },
                 { ToLowerFirstChar(nameof(Mission)), Mission },
                 { ToLowerFirstChar(nameof(DocumentType)), DocumentType },
-                { ToLowerFirstChar(nameof(MergedContent)), MergedContent },
-                { ToLowerFirstChar(nameof(Embedding)), Embedding }
+                { ToLowerFirstChar(nameof(MergedContent)), MergedContent }
             };
         }
 

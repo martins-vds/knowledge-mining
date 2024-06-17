@@ -1,4 +1,6 @@
-﻿using Azure.Identity;
+﻿using Azure;
+using Azure.AI.OpenAI;
+using Azure.Identity;
 using KnowledgeMining.Application.Common.Interfaces;
 using KnowledgeMining.Application.Common.Options;
 using KnowledgeMining.Application.Documents.Commands.DeleteDocument;
@@ -13,7 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.PowerBI.Api;
 using Microsoft.Rest;
-using OpenAI;
+
 using System.Threading.Channels;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -40,7 +42,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped(services =>
             {
                 var options = services.GetRequiredService<IOptions<OpenAIOptions>>().Value;
-                return new OpenAIClient(new System.ClientModel.ApiKeyCredential(options.ApiKey), new OpenAIClientOptions() { Endpoint = options.Endpoint });
+                return new OpenAIClient(options.Endpoint, new AzureKeyCredential(options.ApiKey));
             });
             services.AddScoped<IChatService, OpenAIService>();
 

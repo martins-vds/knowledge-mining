@@ -13,7 +13,7 @@
                         <MudGrid>
                             <MudItem xs="12" sm="8">
                                 <pre style="max-width: 60vw; max-height: 50vh; width: 60vw; height: 50vh; overflow-x: auto; overflow-y: scroll; white-space: pre-wrap; word-wrap: break-word; ">
-                                <MudHighlighter Text="@Document!.Content" HighlightedText="@_textToHighlight" Style="background-color: darkblue; font-weight:bold; color: white"></MudHighlighter>
+                                <MudHighlighter Text="@GetDocumentContent()" HighlightedText="@_textToHighlight" Style="background-color: darkblue; font-weight:bold; color: white"></MudHighlighter>
                                 </pre>
                             </MudItem>
                             <MudItem xs="12" sm="4">
@@ -41,8 +41,8 @@
                             </RowTemplate>
                         </MudTable>
                     </MudTabPanel>
-                    <MudTabPanel Text="Chat" Disabled="true">
-                        <DocumentChatComponent Context="@Document!.Content" />
+                    <MudTabPanel Text="Chat">
+                        <DocumentChatComponent Context="@GetDocumentContent()" />
                     </MudTabPanel>
                 </MudTabs>
                 <MudButton OnClick="@ClosePopover" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
@@ -83,8 +83,33 @@
             }
             else
             {
-                return metadataValue!.ToString();
+                return metadataValue?.ToString() ?? string.Empty;
             }
+        }
+
+        return string.Empty;
+    }
+
+    private string GetDocumentContent()
+    {
+        if (Document is null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(Document.Content))
+        {
+            return Document.Content;
+        }
+
+        if (!string.IsNullOrWhiteSpace(Document.MergedContent))
+        {
+            return Document.MergedContent;
+        }
+
+        if (Document.Text?.Any() ?? false)
+        {
+            return string.Join(" ", Document.Text);
         }
 
         return string.Empty;
