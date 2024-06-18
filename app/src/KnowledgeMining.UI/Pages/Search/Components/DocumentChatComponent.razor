@@ -3,12 +3,12 @@
 
 <MudGrid Justify="Justify.Center">
     <MudItem xs="12">
-        <MudPaper Outlined="true" Class="overflow-x-auto">
+        <MudPaper Outlined="true" Class="overflow-x-auto" Style="background-color: whitesmoke">
             <MudStack Reverse="false" Spacing="12" Style="height: 40vh" Class="pa-2">
                 @foreach (var turn in _messages)
                 {
                     <MudStack Justify="Justify.Center" AlignItems="AlignItems.Start" Spacing="4">
-                        <MudPaper Class="pa-6 align-self-end" Elevation="3">
+                        <MudPaper Class="pa-6 align-self-end" Outlined="true" Style="background-color: aqua">
                             <MudText Typo="Typo.body1" Align="Align.End">
                                 @turn.Question
                             </MudText>
@@ -21,7 +21,7 @@
                         }
                         else
                         {
-                            <MudPaper Class="pa-6" Elevation="3" MaxWidth="80%">
+                            <MudPaper Class="pa-6" Outlined="true" MaxWidth="80%" Style="background-color: aquamarine">
                                 <MudText Typo="Typo.body1" Align="Align.End">
                                     @turn.Answer
                                 </MudText>
