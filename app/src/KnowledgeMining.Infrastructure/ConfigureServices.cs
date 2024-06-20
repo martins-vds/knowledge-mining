@@ -37,15 +37,17 @@ namespace Microsoft.Extensions.DependencyInjection
                 clientBuilder.AddSearchIndexerClient(configuration.GetSection(SearchOptions.Search));
             });
 
-            //services.Configure<ChunkSearchOptions>(configuration.GetSection(ChunkSearchOptions.ChunkSearch));
-            //services.AddKeyedScoped("chunk", (services, obje) =>
-            //{
-            //    var options = services.GetRequiredService<IOptions<ChunkSearchOptions>>().Value;
-            //    return new SearchClient(new Uri(options.Endpoint), options.IndexName, new DefaultAzureCredential());
-            //});
+            services.Configure<ChunkSearchOptions>(configuration.GetSection(ChunkSearchOptions.ChunkSearch));
+            services.AddKeyedScoped("chunk", (services, obje) =>
+            {
+                var options = services.GetRequiredService<IOptions<ChunkSearchOptions>>().Value;
+                var apiKey = configuration.GetSection(ChunkSearchOptions.ChunkSearch)["Credential:Key"] ?? throw new ArgumentNullException("azure search credential key is empty.");
+                return new SearchClient(new Uri(options.Endpoint), options.IndexName, new AzureKeyCredential(apiKey));
+            });
 
             services.AddScoped<ISearchService, SearchService>();
-            services.AddScoped<IChunkSearchService, MockChunkSearchService>();
+            services.AddScoped<IChunkSearchService, ChunkSearchService
+                >();
             services.AddScoped<IStorageService, StorageService>();
 
             services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.OpenAI));

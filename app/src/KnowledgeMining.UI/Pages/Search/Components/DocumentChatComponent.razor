@@ -13,7 +13,7 @@
                                 @turn.Question
                             </MudText>
                         </MudPaper>
-                        @if(@turn.Answer is null)
+                        @if (@turn.Answer is null)
                         {
                             <MudPaper Class="pa-6" Elevation="3">
                                 <MudProgressCircular Indeterminate="true" />
@@ -45,8 +45,11 @@
 </MudGrid>
 
 @code {
-        [Parameter]
-        public string Context { get; set; } = string.Empty;
+    [Parameter]
+    public string DocumentId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Content { get; set; } = string.Empty;
 
     private string _message { get; set; } = string.Empty;
     private List<ChatTurn> _messages { get; set; } = [];
@@ -83,7 +86,7 @@
         try
         {
             _isReceivingMessage = true;
-            var response = await ChatService.AskQuestionAboutDocument(latestMessage, Context);
+            var response = await ChatService.AskQuestionAboutDocument(latestMessage, Content, DocumentId);
 
             turn.Answer = response;
         }

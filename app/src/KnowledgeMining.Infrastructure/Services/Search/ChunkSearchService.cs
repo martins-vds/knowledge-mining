@@ -1,7 +1,9 @@
 ﻿using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 using KnowledgeMining.Application.Common.Interfaces;
+using KnowledgeMining.Application.Common.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,15 +20,16 @@ namespace KnowledgeMining.Infrastructure.Services.Search
         }
     }
 
-    public class ChunkSearchService([FromKeyedServices("chunk")]SearchClient searchClient) : IChunkSearchService
+    public class ChunkSearchService([FromKeyedServices("chunk")]SearchClient searchClient, IOptions<ChunkSearchOptions> options) : IChunkSearchService
     {
         private readonly SearchClient _searchClient = searchClient;
+        private readonly ChunkSearchOptions _options = options.Value;
 
         public async Task<IEnumerable<string>> QueryDocumentChuncksAsync(float[] embedding, string document, CancellationToken cancellationToken = default)
         {
-            var filter = $"metadata_storage_path eq '{document}'";
+            var filter = $"{_options.KeyField} eq '{document}'";
 
-            SearchOptions searchOptions = new()
+            Azure.Search.Documents.SearchOptions searchOptions = new()
             {
                 Filter = filter,
                 QueryType = SearchQueryType.Semantic,
@@ -44,7 +47,7 @@ namespace KnowledgeMining.Infrastructure.Services.Search
                 KNearestNeighborsCount = k
             };
 
-            vectorQuery.Fields.Add("embedding");
+            vectorQuery.Fields.Add("text_vector");
             searchOptions.VectorSearch = new();
             searchOptions.VectorSearch.Queries.Add(vectorQuery);
 

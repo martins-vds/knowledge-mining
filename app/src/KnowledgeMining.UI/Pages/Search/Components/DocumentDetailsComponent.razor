@@ -42,7 +42,7 @@
                         </MudTable>
                     </MudTabPanel>
                     <MudTabPanel Text="Chat">
-                        <DocumentChatComponent Context="@GetDocumentContent()" />
+                        <DocumentChatComponent Content="@GetDocumentContent()" DocumentId="@Document?.Name" />
                     </MudTabPanel>
                 </MudTabs>
                 <MudButton OnClick="@ClosePopover" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
