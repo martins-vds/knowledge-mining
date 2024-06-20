@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
 using Azure.Identity;
+using Azure.Search.Documents;
 using KnowledgeMining.Application.Common.Interfaces;
 using KnowledgeMining.Application.Common.Options;
 using KnowledgeMining.Application.Documents.Commands.DeleteDocument;
@@ -17,6 +18,7 @@ using Microsoft.PowerBI.Api;
 using Microsoft.Rest;
 
 using System.Threading.Channels;
+using SearchOptions = KnowledgeMining.Application.Common.Options.SearchOptions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -35,7 +37,15 @@ namespace Microsoft.Extensions.DependencyInjection
                 clientBuilder.AddSearchIndexerClient(configuration.GetSection(SearchOptions.Search));
             });
 
+            //services.Configure<ChunkSearchOptions>(configuration.GetSection(ChunkSearchOptions.ChunkSearch));
+            //services.AddKeyedScoped("chunk", (services, obje) =>
+            //{
+            //    var options = services.GetRequiredService<IOptions<ChunkSearchOptions>>().Value;
+            //    return new SearchClient(new Uri(options.Endpoint), options.IndexName, new DefaultAzureCredential());
+            //});
+
             services.AddScoped<ISearchService, SearchService>();
+            services.AddScoped<IChunkSearchService, MockChunkSearchService>();
             services.AddScoped<IStorageService, StorageService>();
 
             services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.OpenAI));

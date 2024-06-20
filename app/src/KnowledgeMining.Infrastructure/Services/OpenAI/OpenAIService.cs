@@ -10,16 +10,17 @@ using System.Threading.Tasks;
 
 namespace KnowledgeMining.Infrastructure.Services.OpenAI
 {
-    public class OpenAIService(OpenAIClient client, IOptions<OpenAIOptions> options) : IChatService
+    public class OpenAIService(OpenAIClient client, IChunkSearchService searchService, IOptions<OpenAIOptions> options) : IChatService
     {
         private readonly OpenAIClient _openAIClient = client;
         private readonly OpenAIOptions _options = options.Value;
+        private readonly IChunkSearchService _searchService = searchService;
         private IList<ChatRequestMessage> _messages = new List<ChatRequestMessage>();
 
-        public async Task<string> AskQuestionAboutDocument(string question, string document, CancellationToken ct = default)
+        public async Task<string> AskQuestionAboutDocument(string question, string content, string documentId = "", CancellationToken ct = default)
         {
             var systemPrompt = @$" ## Source ##
-{document}
+{content}
 ## End ##
 
 You answer needs to be a valid json object with the following format.
@@ -42,6 +43,10 @@ You answer needs to be a valid json object with the following format.
                     new ChatRequestUserMessage(question)
                 }
             };
+
+            var questionEmbedding = await _openAIClient.GetEmbeddingsAsync(new EmbeddingsOptions(_options.EmbeddingDeployment, [question]));
+
+            var chunks = await _searchService.QueryDocumentChuncksAsync(questionEmbedding.Value.Data[0].Embedding.ToArray(), documentId, ct);
 
             var answer = await _openAIClient.GetChatCompletionsAsync(chatCompletions);
 

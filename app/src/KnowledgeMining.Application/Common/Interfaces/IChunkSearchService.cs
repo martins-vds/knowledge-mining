@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace KnowledgeMining.Application.Common.Interfaces
 {
-    public interface IChatService
+    public interface IChunkSearchService
     {
-        Task<string> AskQuestionAboutDocument(string question, string content, string documentId = "", CancellationToken ct = default);
+        Task<IEnumerable<string>> QueryDocumentChuncksAsync(float[] embedding, string document, CancellationToken cancellationToken = default);
     }
 }
