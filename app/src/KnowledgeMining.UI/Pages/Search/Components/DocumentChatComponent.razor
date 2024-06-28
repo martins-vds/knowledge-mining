@@ -1,5 +1,4 @@
-﻿@using KnowledgeMining.Application.Common.Interfaces
-@inject IChatService ChatService
+﻿@inject IChatService ChatService
 
 <MudGrid Justify="Justify.Center">
     <MudItem xs="12">
@@ -22,8 +21,26 @@
                         else
                         {
                             <MudPaper Class="pa-6" Outlined="true" MaxWidth="80%" Style="background-color: aquamarine">
-                                <MudText Typo="Typo.body1" Align="Align.End">
-                                    @turn.Answer
+                                <MudText Typo="Typo.body1" Align="Align.Left">
+                                    @turn.Answer.Answer
+                                </MudText>
+                                @if (turn.Answer.Excerpts.Any())
+                                {
+                                    <MudText Typo="Typo.body2" Align="Align.Left" Class="pt-3">
+                                        <strong>Excerpts:</strong>
+                                    </MudText>
+                                    <div>
+                                        @foreach (var excerpt in turn.Answer.Excerpts)
+                                        {
+                                            <DocumentExcerptChip Excerpt="@excerpt" />
+                                        }
+                                    </div>
+                                }
+                                <MudText Typo="Typo.body2" Align="Align.Left" Class="pt-3">
+                                    <strong>Thought Process:</strong>
+                                </MudText>
+                                <MudText Typo="Typo.body2" Align="Align.Left">
+                                    @turn.Answer.Thoughts
                                 </MudText>
                             </MudPaper>
                         }
@@ -92,7 +109,10 @@
         }
         catch (Exception ex)
         {
-            turn.Answer = $"Failed to send message. Reason: {ex.Message}";
+            turn.Answer = new ChatAnswer()
+                {
+                    Answer = $"Failed to send message. Reason: {ex.Message}"
+                };
         }
         finally
         {
@@ -103,7 +123,7 @@
     private class ChatTurn
     {
         public string Question { get; set; } = string.Empty;
-        public string? Answer { get; set; }
+        public ChatAnswer? Answer { get; set; }
         public DateTime AskedOn { get; set; } = DateTime.Now;
     }
 }

@@ -1,0 +1,25 @@
+﻿<MudChip Color="Color.Secondary" OnClick="@ToggleOpen" @onblur="((e) => ToggleOpen())">
+    @Excerpt.Source
+    <MudIcon Icon="@Icons.Material.Filled.Info" Class="ml-2"></MudIcon>
+    <MudPopover Open="@_isOpen" OverflowBehavior="OverflowBehavior.FlipNever" Class="p-2" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.BottomLeft">
+        <div class="d-flex flex-row align-items-center justify-content-center">
+            <MudText Align="Align.Center">@Excerpt.ShortText</MudText>
+            <MudIconButton OnClick="@ToggleOpen" Color="Color.Error" Icon="@Icons.Material.Filled.Close"></MudIconButton>
+        </div>
+    </MudPopover>
+</MudChip>
+
+@code {
+    [Parameter]
+    public Excerpt Excerpt { get; set; }
+
+    public bool _isOpen;
+
+    public void ToggleOpen()
+    {
+        if (_isOpen)
+            _isOpen = false;
+        else
+            _isOpen = true;
+    }
+}

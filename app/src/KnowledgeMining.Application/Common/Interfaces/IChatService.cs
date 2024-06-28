@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KnowledgeMining.Application.Common.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,6 @@ namespace KnowledgeMining.Application.Common.Interfaces
 {
     public interface IChatService
     {
-        Task<string> AskQuestionAboutDocument(string question, string content, string documentId = "", CancellationToken ct = default);
+        Task<ChatAnswer> AskQuestionAboutDocument(string question, string content, string documentId = "", CancellationToken ct = default);
     }
 }
