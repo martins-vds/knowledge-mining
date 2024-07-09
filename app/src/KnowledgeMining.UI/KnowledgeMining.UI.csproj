@@ -19,7 +19,7 @@
 		<PackageReference Include="Microsoft.ApplicationInsights.Profiler.AspNetCore" Version="2.7.1" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.4" />
 		<PackageReference Include="Microsoft.Spatial" Version="7.21.3" />		
-		<PackageReference Include="System.Text.Json" Version="8.0.3" />
+		<PackageReference Include="System.Text.Json" Version="8.0.4" />
 		<PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.4.421302">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
